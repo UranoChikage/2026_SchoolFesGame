@@ -3,21 +3,16 @@ using UnityEngine.InputSystem;
 
 namespace Pirates
 {
+    /// <summary>
+    /// デバッグ用：クリックした照準位置にマーカー（Gameビューでも見える）とGizmoを出す。
+    /// 判定そのものは AimController が行う。
+    /// </summary>
     public class ClickPointGizmo : MonoBehaviour
     {
-        [Header("レイを飛ばすカメラ（未設定ならMainCamera）")]
         [SerializeField]
-        Camera targetCamera;
+        AimController aim;
 
-        [Header("判定")]
-        [SerializeField]
-        [Tooltip("レイが当たる最大距離")]
-        float maxDistance = 1000f;
-        [SerializeField]
-        [Tooltip("当たり判定を取るレイヤー")]
-        LayerMask layerMask = ~0;
-
-        [Header("Gizmo")]
+        [Header("表示")]
         [SerializeField]
         float radius = 0.3f;
         [SerializeField]
@@ -25,23 +20,38 @@ namespace Pirates
 
         bool hasHit;
         Vector3 hitPoint;
+        Transform marker; // Gameビューでも見えるマーカー
 
         void Update()
         {
             var mouse = Mouse.current;
-            if (mouse == null || !mouse.leftButton.wasPressedThisFrame) return;
+            if (aim == null || mouse == null || !mouse.leftButton.wasPressedThisFrame) return;
 
-            Camera cam = targetCamera != null ? targetCamera : Camera.main;
-            if (cam == null) return;
+            aim.Refresh();
+            if (!aim.HasAim) return;
 
-            Ray ray = cam.ScreenPointToRay(mouse.position.ReadValue());
+            hasHit = true;
+            hitPoint = aim.AimPoint;
+            ShowMarker(hitPoint);
+        }
 
-            // Skyboxにはコライダーが無いので、メッシュ（コライダー）に当たったときだけ更新される
-            if (Physics.Raycast(ray, out RaycastHit hit, maxDistance, layerMask, QueryTriggerInteraction.Ignore))
+        void ShowMarker(Vector3 position)
+        {
+            if (marker == null)
             {
-                hasHit = true;
-                hitPoint = hit.point;
+                var go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                go.name = "ClickPointMarker";
+                Destroy(go.GetComponent<Collider>()); // マーカー自身がレイに当たらないように
+                go.transform.localScale = Vector3.one * radius * 2f;
+                go.GetComponent<Renderer>().material.color = color;
+                marker = go.transform;
             }
+            marker.position = position;
+        }
+
+        void OnDestroy()
+        {
+            if (marker != null) Destroy(marker.gameObject);
         }
 
         void OnDrawGizmos()
