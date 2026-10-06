@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace Chambara
 {
@@ -13,20 +14,44 @@ namespace Chambara
         [SerializeField] int attackIndex;   
         public int AttackIndex => attackIndex;
 
-        private KeyCode[] attackKeys = {
-            KeyCode.Alpha1,
-            KeyCode.Alpha2,
-            KeyCode.Alpha3,
-            KeyCode.Alpha4,
-            KeyCode.Alpha5,
-            KeyCode.Alpha6,
-            KeyCode.Alpha7,
-            KeyCode.Alpha8,
-        };
+        InputSystem_Actions inputActions;
+        private InputAction[] attackActions;
+
+        private void Awake()
+        {
+            inputActions = new InputSystem_Actions();
+
+            var chambara = inputActions.Chambara;
+            attackActions = new InputAction[] {
+                chambara._1,
+                chambara._2,
+                chambara._3,
+                chambara._4,
+                chambara._5,
+                chambara._6,
+                chambara._7,
+                chambara._8,
+            };
+        }
+
+        private void OnEnable()
+        {
+            inputActions.Chambara.Enable();
+        }
+
+        private void OnDisable()
+        {
+            inputActions.Chambara.Disable();
+        }
+
+        private void OnDestroy()
+        {
+            inputActions.Dispose();
+        }
 
         private void Start()
         {
-            if(player != null)
+            if (player != null)
             {
                 var playerComponent = player.GetComponent<ISetInputContext>();
                 if (playerComponent != null)
@@ -42,14 +67,14 @@ namespace Chambara
 
         private void Update()
         {
-            if (Input.GetKey(KeyCode.Space))
+            if (inputActions.Chambara.Guard.IsPressed())
             {
                 inputType = ChambaraInputType.Guard;
                 return;
             }
-            for (int i = 0; i < attackKeys.Length; i++)
+            for (int i = 0; i < attackActions.Length; i++)
             {
-                if (Input.GetKeyDown(attackKeys[i]))
+                if (attackActions[i].WasPressedThisFrame())
                 {
                     inputType = ChambaraInputType.Attack;
                     attackIndex = i;

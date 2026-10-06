@@ -5,9 +5,6 @@ namespace Chambara
 {
     public class Player : MonoBehaviour, ISetInputContext
     {
-        [SerializeField] PlayerStats playerStats;
-
-
         [SerializeField] Transform startPosition;
         [SerializeField] Transform endPosition;
 
@@ -43,13 +40,7 @@ namespace Chambara
             {
                 Debug.Log("PlayerAttck" + inputContext.AttackIndex.ToString());
                 isAttacking = true;
-                StartCoroutine(AttackDelay());
             }
-        }
-        private IEnumerator AttackDelay()
-        {
-            yield return new WaitForSeconds(playerStats.AttackCooldown);
-            isAttacking = false;
         }
 
     }
