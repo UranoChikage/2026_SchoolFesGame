@@ -3,85 +3,47 @@ using UnityEngine.InputSystem;
 
 namespace Chambara
 {
+    /// <summary>
+    /// キーボードでのデバッグ入力
+    /// 方向キーを押す → その方向に振る / ガードキー + 方向キーを押し続ける → その方向に構える
+    /// 1P: QWE/A D/ZXC + 左Shift　2P: テンキー789/4 6/123 + テンキー0
+    /// </summary>
     public class DebugInputContext : MonoBehaviour, IChambaraInputContext
     {
-        [SerializeField] private GameObject player; 
-
-
-        [SerializeField] ChambaraInputType inputType;
-        public ChambaraInputType InputType => inputType;
-
-        [SerializeField] int attackIndex;   
-        public int AttackIndex => attackIndex;
-
-        InputSystem_Actions inputActions;
-        private InputAction[] attackActions;
-
-        private void Awake()
+        // 上=0から時計回り
+        static readonly Key[][] DirKeys =
         {
-            inputActions = new InputSystem_Actions();
+            new[] { Key.W, Key.E, Key.D, Key.C, Key.X, Key.Z, Key.A, Key.Q },
+            new[] { Key.Numpad8, Key.Numpad9, Key.Numpad6, Key.Numpad3, Key.Numpad2, Key.Numpad1, Key.Numpad4, Key.Numpad7 },
+        };
+        static readonly Key[] GuardKeys = { Key.LeftShift, Key.Numpad0 };
 
-            var chambara = inputActions.Chambara;
-            attackActions = new InputAction[] {
-                chambara._1,
-                chambara._2,
-                chambara._3,
-                chambara._4,
-                chambara._5,
-                chambara._6,
-                chambara._7,
-                chambara._8,
-            };
-        }
+        int playerIndex;
+        int pose = -1;
+        int pendingSwing = -1;
 
-        private void OnEnable()
+        public void Init(int playerIndex) => this.playerIndex = playerIndex;
+
+        public PlayerInput Read()
         {
-            inputActions.Chambara.Enable();
-        }
-
-        private void OnDisable()
-        {
-            inputActions.Chambara.Disable();
-        }
-
-        private void OnDestroy()
-        {
-            inputActions.Dispose();
-        }
-
-        private void Start()
-        {
-            if (player != null)
-            {
-                var playerComponent = player.GetComponent<ISetInputContext>();
-                if (playerComponent != null)
-                {
-                    playerComponent.SetInputContext(this);
-                }
-                else
-                {
-                    Debug.LogError("ISetInputContext���A�^�b�`���ĂȂ�");
-                }
-            }
+            var input = new PlayerInput { pose = pose, swing = pendingSwing };
+            pendingSwing = -1;
+            return input;
         }
 
         private void Update()
         {
-            if (inputActions.Chambara.Guard.IsPressed())
+            var kb = Keyboard.current;
+            if (kb == null) return;
+
+            Key[] keys = DirKeys[playerIndex];
+            bool guard = kb[GuardKeys[playerIndex]].isPressed;
+            pose = -1;
+            for (int i = 0; i < keys.Length; i++)
             {
-                inputType = ChambaraInputType.Guard;
-                return;
+                if (guard && kb[keys[i]].isPressed) pose = i;
+                if (!guard && kb[keys[i]].wasPressedThisFrame) pendingSwing = i;
             }
-            for (int i = 0; i < attackActions.Length; i++)
-            {
-                if (attackActions[i].WasPressedThisFrame())
-                {
-                    inputType = ChambaraInputType.Attack;
-                    attackIndex = i;
-                    return;
-                }
-            }
-            inputType = ChambaraInputType.Idle;
         }
     }
 }

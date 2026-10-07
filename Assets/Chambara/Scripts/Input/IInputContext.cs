@@ -1,18 +1,15 @@
-using UnityEngine;
-
 namespace Chambara
 {
+    /// <summary>
+    /// プレイヤー1人分の入力元（デバッグ用キーボード、Joy-Conなど）
+    /// </summary>
     public interface IChambaraInputContext
     {
-        ChambaraInputType InputType { get; }
-        int AttackIndex{ get; }
-    }
+        void Init(int playerIndex);
 
-    public enum ChambaraInputType
-    {
-        None,
-        Idle,
-        Attack,
-        Guard,
+        /// <summary>
+        /// シミュレーション1フレーム分の入力を返す。振り入力は読んだら消費される
+        /// </summary>
+        PlayerInput Read();
     }
 }

@@ -1,47 +1,22 @@
-using System.Collections;
-using UnityEngine;
-
 namespace Chambara
 {
-    public class Player : MonoBehaviour, ISetInputContext
+    public class Player
     {
-        [SerializeField] Transform startPosition;
-        [SerializeField] Transform endPosition;
+        public PlayerData Data { get; private set; }
+        public Move Move { get; private set; }
 
-        IChambaraInputContext inputContext;
-        bool isAttacking = false;
+        private PlayerConfig config;
 
-        void Start()
+        public Player(PlayerConfig config,IChambaraInputContext inputContext)
         {
-            transform.position = startPosition.position;
+            this.config = config;
+            Data = new PlayerData();
+            Move = new Move(config, Data);
         }
 
-        private void Update()
+        public void Tick(float f)
         {
-            InputCheck();
+            Move.Tick(f);
         }
-
-        public void Init(Transform startPos,Transform endPos)
-        {
-            startPosition = startPos;
-            endPosition = endPos;
-        }
-
-        public void SetInputContext(IChambaraInputContext inputContext)
-        {
-            this.inputContext = inputContext;
-        }
-
-        private void InputCheck()
-        {
-            if (inputContext == null) return;
-
-            if (!isAttacking && inputContext.InputType == ChambaraInputType.Attack)
-            {
-                Debug.Log("PlayerAttck" + inputContext.AttackIndex.ToString());
-                isAttacking = true;
-            }
-        }
-
     }
 }

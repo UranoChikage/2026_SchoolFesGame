@@ -6,7 +6,8 @@ namespace Chambara
     public class PlayerConfig : ScriptableObject
     {
         [Header("Movement")]
-        [SerializeField] float moveSpeed = 0.3f;
+        [Tooltip("1•bŠÔ‚É‚Ç‚ê‚¾‚¯i‚Ş‚©")]
+        public float moveSpeed = 0.3f;
 
         [Header("Attack")]
         public int attackStartup = 20;
