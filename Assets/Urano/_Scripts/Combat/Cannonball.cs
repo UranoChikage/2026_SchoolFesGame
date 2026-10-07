@@ -62,7 +62,7 @@ namespace Pirates
             transform.position = end;
 
             lifeTime -= dt;
-            if (lifeTime <= 0f) Destroy(gameObject);
+            if (lifeTime <= 0f) PoolManager.Release(gameObject);
         }
 
         bool TryFindHit(Vector3 origin, Vector3 direction, float length, out Vector3 point)
@@ -89,7 +89,7 @@ namespace Pirates
         {
             if (explosionPrefab != null)
             {
-                Destroy(Instantiate(explosionPrefab, point, Quaternion.identity), 5f);
+                PoolManager.Spawn(explosionPrefab, point, Quaternion.identity, 5f);
             }
 
             // 範囲内のIDamageableに1回ずつダメージ（コライダーが複数あっても重複させない）
@@ -102,7 +102,7 @@ namespace Pirates
                 if (target != null && damaged.Add(target)) target.TakeDamage(damage, point);
             }
 
-            Destroy(gameObject);
+            PoolManager.Release(gameObject);
         }
     }
 }

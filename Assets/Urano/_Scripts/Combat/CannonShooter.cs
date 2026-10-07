@@ -70,6 +70,7 @@ namespace Pirates
         float cooldown = 1.5f;
 
         float nextFireTime;
+        Cannonball fallbackPrefab;
 
         /// <summary>弾速(m/s)</summary>
         public float ProjectileSpeed => projectileSpeed;
@@ -93,9 +94,7 @@ namespace Pirates
             if (!IsReady) return false;
 
             Vector3 origin = Muzzle.position;
-            Cannonball ball = projectilePrefab != null
-                ? Instantiate(projectilePrefab, origin, Quaternion.identity)
-                : CreateFallbackBall(origin);
+            Cannonball ball = PoolManager.Spawn(projectilePrefab != null ? projectilePrefab : FallbackPrefab, origin, Quaternion.identity);
             ball.Launch(velocity, explosionRadius, damage, hitMask, water, owner, explosionPrefab, 15f);
 
             nextFireTime = Time.time + cooldown;
@@ -109,14 +108,22 @@ namespace Pirates
             return TrySolveVelocity(Muzzle.position, target, out Vector3 velocity) && TryFire(velocity);
         }
 
-        Cannonball CreateFallbackBall(Vector3 position)
+        /// <summary>Prefab未設定時に使う球。プールの元Prefabとして1つだけ作って使い回す</summary>
+        Cannonball FallbackPrefab
         {
-            var go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            go.name = "Cannonball";
-            Destroy(go.GetComponent<Collider>());
-            go.transform.position = position;
-            go.transform.localScale = Vector3.one * fallbackBallSize;
-            return go.AddComponent<Cannonball>();
+            get
+            {
+                if (fallbackPrefab == null)
+                {
+                    var go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                    go.name = "Cannonball";
+                    Destroy(go.GetComponent<Collider>());
+                    go.transform.localScale = Vector3.one * fallbackBallSize;
+                    fallbackPrefab = go.AddComponent<Cannonball>();
+                    go.SetActive(false);
+                }
+                return fallbackPrefab;
+            }
         }
 
         bool TrySolveVelocity(Vector3 origin, Vector3 target, out Vector3 velocity)
