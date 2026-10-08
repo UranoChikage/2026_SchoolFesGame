@@ -867,7 +867,7 @@ MonoBehaviour:
   owner: {fileID: 7262536529021641307}
   water: {fileID: 4254453295608203131}
   projectilePrefab: {fileID: 8299707208915026063, guid: 689b16d8b2446a143b29cbfa390f4406, type: 3}
-  explosionVfx: {fileID: 11400000, guid: cb77bed7bfe04337b9b9949a8c4edf88, type: 2}
+  explosionVfx: {fileID: 11400000, guid: 83d71a82294302243b32d783648538a0, type: 2}
   fallbackBallSize: 0.5
   mode: 0
   projectileSpeed: 40
@@ -897,7 +897,7 @@ MonoBehaviour:
   leadFactor: 0.8
   aimError: 8
   screenMargin: 0.02
-  markerPrefab: {fileID: 0}
+  markerPrefab: {fileID: 7883687950039992156, guid: a3ffa50aee1ebe34185e1e6657d934ed, type: 3}
   showTrajectory: 1
   trajectoryColor: {r: 1, g: 0.25, b: 0.2, a: 0.85}
   markerHeightOffset: 0.3
@@ -914,6 +914,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6e0f94d2bac3ca047bdfc952c37d4168, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Pirates.TrajectoryLine
+  material: {fileID: 2100000, guid: 4a3724e57efca0842a8c736cc6342e15, type: 2}
   color: {r: 1, g: 0, b: 0, a: 0.85}
   width: 0.2
   timeStep: 0.05
