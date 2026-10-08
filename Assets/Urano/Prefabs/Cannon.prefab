@@ -43,6 +43,7 @@ GameObject:
   - component: {fileID: 7720109929013838106}
   - component: {fileID: 3975321433207722274}
   - component: {fileID: 8628198920000537608}
+  - component: {fileID: 7378329920550427385}
   m_Layer: 3
   m_Name: Cannon
   m_TagString: Untagged
@@ -82,7 +83,7 @@ MonoBehaviour:
   owner: {fileID: 0}
   water: {fileID: 0}
   projectilePrefab: {fileID: 8299707208915026063, guid: 689b16d8b2446a143b29cbfa390f4406, type: 3}
-  explosionPrefab: {fileID: 0}
+  explosionVfx: {fileID: 11400000, guid: cb77bed7bfe04337b9b9949a8c4edf88, type: 2}
   fallbackBallSize: 0.5
   mode: 0
   projectileSpeed: 40
@@ -139,6 +140,23 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 55
   water: {fileID: 0}
+--- !u!114 &7378329920550427385
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4227882559362864241}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e0f94d2bac3ca047bdfc952c37d4168, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Pirates.TrajectoryLine
+  color: {r: 0, g: 1, b: 0.10700154, a: 0.85}
+  width: 0.2
+  timeStep: 0.05
+  maxPoints: 120
+  cooldownAlpha: 0.3
 --- !u!1 &8079932088230854283
 GameObject:
   m_ObjectHideFlags: 0

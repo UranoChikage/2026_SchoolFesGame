@@ -10,6 +10,7 @@ namespace Pirates
     public class Cannonball : MonoBehaviour
     {
         const int HitBufferSize = 16;
+        const float ExplosionHeight = 20f; // 爆発判定の上下の広がり(m)
         static readonly RaycastHit[] hitBuffer = new RaycastHit[HitBufferSize];
         static readonly HashSet<IDamageable> damaged = new HashSet<IDamageable>();
 
@@ -19,11 +20,11 @@ namespace Pirates
         LayerMask hitMask;
         BoatBuoyancy water;
         Transform owner;
-        GameObject explosionPrefab;
+        VfxAsset explosionVfx;
         float lifeTime;
 
         public void Launch(Vector3 initialVelocity, float explosionRadius, float damage,
-            LayerMask hitMask, BoatBuoyancy water, Transform owner, GameObject explosionPrefab, float lifeTime)
+            LayerMask hitMask, BoatBuoyancy water, Transform owner, VfxAsset explosionVfx, float lifeTime)
         {
             velocity = initialVelocity;
             this.explosionRadius = explosionRadius;
@@ -31,7 +32,7 @@ namespace Pirates
             this.hitMask = hitMask;
             this.water = water;
             this.owner = owner;
-            this.explosionPrefab = explosionPrefab;
+            this.explosionVfx = explosionVfx;
             this.lifeTime = lifeTime;
         }
 
@@ -87,14 +88,13 @@ namespace Pirates
 
         void Explode(Vector3 point)
         {
-            if (explosionPrefab != null)
-            {
-                PoolManager.Spawn(explosionPrefab, point, Quaternion.identity, 5f);
-            }
+            if (explosionVfx != null) explosionVfx.Play(point);
 
             // 範囲内のIDamageableに1回ずつダメージ（コライダーが複数あっても重複させない）
             damaged.Clear();
-            Collider[] colliders = Physics.OverlapSphere(point, explosionRadius, hitMask, QueryTriggerInteraction.Ignore);
+            // 着地点から水平半径r（マーカーの円と同じ）で判定する。高さ方向は広く取った縦長のカプセル
+            Vector3 up = Vector3.up * ExplosionHeight;
+            Collider[] colliders = Physics.OverlapCapsule(point + up, point - up, explosionRadius, hitMask, QueryTriggerInteraction.Ignore);
             foreach (Collider c in colliders)
             {
                 if (owner != null && c.transform.IsChildOf(owner)) continue;

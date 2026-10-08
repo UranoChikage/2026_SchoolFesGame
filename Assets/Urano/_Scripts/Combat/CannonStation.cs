@@ -54,6 +54,9 @@ namespace Pirates
         [SerializeField]
         Color cursorColor = Color.red;
         [SerializeField]
+        [Tooltip("カーソルの画像（任意）。未設定なら十字を描く。VFX/Textures/Crosshair.png など")]
+        Texture2D cursorTexture;
+        [SerializeField]
         float cursorSize = 40f;
         [SerializeField]
         [Tooltip("JoyConの傾きに対するカーソルの追従の速さ")]
@@ -67,6 +70,7 @@ namespace Pirates
 
         CannonShooter shooter;
         AimController aim;
+        TrajectoryLine trajectory;
         Vector2 cursor;
         string status = "";
         Quaternion barrelRotInStation = Quaternion.identity; // 砲身の初期姿勢（この砲を基準）
@@ -75,6 +79,8 @@ namespace Pirates
         {
             shooter = GetComponent<CannonShooter>();
             aim = GetComponent<AimController>();
+            trajectory = GetComponent<TrajectoryLine>(); // 付いていれば予測線を出す（任意）
+            if (trajectory != null) trajectory.SetColor(cursorColor);
             if (barrel != null) barrelRotInStation = Quaternion.Inverse(transform.rotation) * barrel.rotation;
         }
 
@@ -118,6 +124,23 @@ namespace Pirates
             {
                 UpdateBarrel(aim.AimPoint);
                 if (fire) shooter.TryFireAt(aim.AimPoint);
+            }
+
+            UpdateTrajectory(status != "waiting");
+        }
+
+        // 予測線：選ばれている砲だけ、カーソルが指す位置へ撃った弾道を表示する
+        void UpdateTrajectory(bool active)
+        {
+            if (trajectory == null) return;
+
+            if (active && aim.HasAim && shooter.TryGetLaunchVelocity(aim.AimPoint, out Vector3 velocity))
+            {
+                trajectory.Show(shooter.MuzzlePosition, velocity, aim.AimPoint.y, shooter.IsReady);
+            }
+            else
+            {
+                trajectory.Hide();
             }
         }
 
@@ -200,8 +223,15 @@ namespace Pirates
 
             Color old = GUI.color;
             GUI.color = cursorColor;
-            GUI.DrawTexture(new Rect(x - size * 0.5f, y - 2f, size, 4f), Texture2D.whiteTexture);
-            GUI.DrawTexture(new Rect(x - 2f, y - size * 0.5f, 4f, size), Texture2D.whiteTexture);
+            if (cursorTexture != null)
+            {
+                GUI.DrawTexture(new Rect(x - size * 0.5f, y - size * 0.5f, size, size), cursorTexture);
+            }
+            else
+            {
+                GUI.DrawTexture(new Rect(x - size * 0.5f, y - 2f, size, 4f), Texture2D.whiteTexture);
+                GUI.DrawTexture(new Rect(x - 2f, y - size * 0.5f, 4f, size), Texture2D.whiteTexture);
+            }
             // 番号と状態（デバッグ表示）。aim:NG は照準がどこにも当たっていない（Water未設定など）
             GUI.Label(new Rect(x + size * 0.5f + 4f, y - 12f, 200f, 24f),
                 $"{stationNumber} {status} aim:{(aim.HasAim ? "OK" : "NG")}");

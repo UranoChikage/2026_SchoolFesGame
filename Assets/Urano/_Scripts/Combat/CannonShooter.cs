@@ -32,8 +32,8 @@ namespace Pirates
         [Tooltip("砲弾のPrefab（Cannonball付き）。未設定なら球を自動生成")]
         Cannonball projectilePrefab;
         [SerializeField]
-        [Tooltip("爆発エフェクトのPrefab（任意）")]
-        GameObject explosionPrefab;
+        [Tooltip("着弾時の爆発の演出（任意）。Assets/Urano/VFX のVfxAsset")]
+        VfxAsset explosionVfx;
         [SerializeField]
         [Tooltip("砲弾の見た目の大きさ（Prefab未設定時）")]
         float fallbackBallSize = 0.5f;
@@ -70,7 +70,11 @@ namespace Pirates
         float cooldown = 1.5f;
 
         float nextFireTime;
-        Cannonball fallbackPrefab;
+        // 全砲で1つを共有（砲ごとに作ると、元Prefabもプールも別々になる）
+        static Cannonball fallbackPrefab;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetStatic() => fallbackPrefab = null;
 
         /// <summary>弾速(m/s)</summary>
         public float ProjectileSpeed => projectileSpeed;
@@ -88,6 +92,32 @@ namespace Pirates
 
         Transform Muzzle => muzzle != null ? muzzle : transform;
 
+        /// <summary>砲口の位置</summary>
+        public Vector3 MuzzlePosition => Muzzle.position;
+        /// <summary>爆発の半径(m)。着弾予測マーカーの大きさに使う</summary>
+        public float ExplosionRadius => explosionRadius;
+
+        /// <summary>指定位置に撃ったときの初速。弾道の予測線用。撃てない位置ならfalse</summary>
+        public bool TryGetLaunchVelocity(Vector3 target, out Vector3 velocity)
+        {
+            return TrySolveVelocity(Muzzle.position, target, out velocity);
+        }
+
+        /// <summary>指定位置に撃ったときの滞空時間(秒)。撃てない位置ならfalse</summary>
+        public bool TryGetFlightTime(Vector3 target, out float time)
+        {
+            time = 0f;
+            if (!TrySolveVelocity(Muzzle.position, target, out Vector3 velocity)) return false;
+
+            Vector3 flat = target - Muzzle.position;
+            flat.y = 0f;
+            float horizontalSpeed = Vector3.ProjectOnPlane(velocity, Vector3.up).magnitude;
+            if (horizontalSpeed < 0.01f) return false;
+
+            time = flat.magnitude / horizontalSpeed;
+            return true;
+        }
+
         /// <summary>指定した初速で発射する。撃てたらtrue</summary>
         bool TryFire(Vector3 velocity)
         {
@@ -95,7 +125,8 @@ namespace Pirates
 
             Vector3 origin = Muzzle.position;
             Cannonball ball = PoolManager.Spawn(projectilePrefab != null ? projectilePrefab : FallbackPrefab, origin, Quaternion.identity);
-            ball.Launch(velocity, explosionRadius, damage, hitMask, water, owner, explosionPrefab, 15f);
+            BoatBuoyancy surface = water != null ? water : PlayerTarget.Current?.Water; // 未設定ならプレイヤー船の水面
+            ball.Launch(velocity, explosionRadius, damage, hitMask, surface, owner, explosionVfx, 15f);
 
             nextFireTime = Time.time + cooldown;
             return true;
