@@ -205,7 +205,7 @@ namespace Pirates
                     go.transform.localScale = new Vector3(1f, 0.05f, 1f);
 
                     var rend = go.GetComponent<Renderer>();
-                    rend.sharedMaterial = new Material(Shader.Find("Sprites/Default")) { color = new Color(1f, 0.1f, 0.1f, 0.45f) };
+                    rend.sharedMaterial = new Material(Shader.Find("Sprites/Default")) { color = new Color(1f, 0.1f, 0.1f, 0.45f), renderQueue = 3100 }; // 水面より後に描く
                     rend.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
 
                     go.SetActive(false);

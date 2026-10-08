@@ -102,7 +102,7 @@ namespace Pirates
         {
             get
             {
-                if (sharedMaterial == null) sharedMaterial = new Material(Shader.Find("Sprites/Default"));
+                if (sharedMaterial == null) sharedMaterial = new Material(Shader.Find("Sprites/Default")) { renderQueue = 3100 }; // 水面(2900)より後に描く
                 return sharedMaterial;
             }
         }

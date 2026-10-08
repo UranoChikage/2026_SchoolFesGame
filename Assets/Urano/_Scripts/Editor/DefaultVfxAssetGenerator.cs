@@ -38,7 +38,7 @@ namespace Pirates.EditorTools
             if (existing != null) return existing;
 
             // Sprites/Default は頂点カラー／色で着色でき、どのレンダーパイプラインでも描ける
-            var mat = new Material(Shader.Find("Sprites/Default")) { color = color };
+            var mat = new Material(Shader.Find("Sprites/Default")) { color = color, renderQueue = 3100 }; // 水面(2900)より後に描く
             AssetDatabase.CreateAsset(mat, path);
             return mat;
         }
