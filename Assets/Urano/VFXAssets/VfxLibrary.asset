@@ -1,0 +1,17 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e61ef2f7fbfca0f40b6a2fe4940df3ac, type: 3}
+  m_Name: VfxLibrary
+  m_EditorClassIdentifier: Assembly-CSharp::Pirates.VfxLibrary
+  entries:
+  - {fileID: 11400000, guid: 83d71a82294302243b32d783648538a0, type: 2}
+  - {fileID: 11400000, guid: 81662aa82d3e35d44a46eff222944f69, type: 2}
