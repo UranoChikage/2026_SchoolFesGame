@@ -3,19 +3,21 @@ using System;
 namespace Chambara
 {
     /// <summary>
-    /// チャンバラのルール・調整値
+    /// ChambaraSimulatorの判定に使う値
     /// </summary>
     [Serializable]
     public class ChambaraRule
     {
         public int directions      = 8;        // 攻撃・防御の方向数（上=0から時計回り）
-        public int matchFrames     = 60 * 60;  // 試合時間（1分）
-        public int guardHoldFrames = 60;       // 同じ方向にこのフレーム数構えるとガード成立
-        public int attackStartup   = 12;       // 振ってから当たるまで
-        public int attackRecovery  = 20;       // 攻撃後の硬直
-        public int parriedStun     = 50;       // ガードされた側の怯み
-        public int clashStun       = 30;       // 完全に同時だったときの怯み
-        public int tieFrames       = 0;        // 当たるタイミングの差がこれ以内なら「完全に同時」
-        public int closeCallFrames = 6;        // 当たるタイミングの差がこれ以内なら「ほぼ同時」
+
+        // 距離は両端の間を1、接触を0とする
+        public float moveSpeed     = 0.3f;     // 1人が1秒に進む距離
+        public float slowDistance  = 0.3f;     // この距離から減速し始める
+        public float stopDistance  = 0.05f;    // この距離で速度が0になる
+        public float attackRange   = 0.15f;    // この距離より遠いと空振り
+
+        // 2人の攻撃時刻の差（秒）
+        public float closeCallTime = 0.1f;     // これ以内なら「ほぼ同時」→ 速い方が勝ち
+        public float tieTime       = 0.01f;    // これ以内なら「同時」→ 相殺
     }
 }

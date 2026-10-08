@@ -21,7 +21,7 @@ namespace Chambara
         int playerIndex;
         int pose = -1;
         int pendingSwing = -1;
-
+        
         public void Init(int playerIndex) => this.playerIndex = playerIndex;
 
         public PlayerInput Read()
