@@ -36,6 +36,10 @@ namespace Pirates
         public float wheelLockDeg = 540f;
         [Tooltip("キーボード操作時の舵輪の回転速度（度/秒）。実物同様、離してもその角度のまま")]
         public float keyboardWheelSpeed = 180f;
+        [Tooltip("キーボード操作で、キーを離したら舵輪が中央へ戻る。曲がり続けにくく扱いやすい（JoyCon操作には影響しない）")]
+        public bool keyboardAutoCenter = true;
+        [Tooltip("中央へ戻る速さ（度/秒）")]
+        public float keyboardCenterSpeed = 240f;
         [Tooltip("舵輪の見た目（任意）。ローカルZ軸まわりに回す")]
         public Transform wheelVisual;
 
@@ -79,7 +83,15 @@ namespace Pirates
             if (UsingKeyboard)
             {
                 hasPrevTilt = false;
-                wheelAngle += KeyboardDir() * keyboardWheelSpeed * Time.deltaTime;
+                float dir = KeyboardDir();
+                if (dir != 0f)
+                {
+                    wheelAngle += dir * keyboardWheelSpeed * Time.deltaTime;
+                }
+                else if (keyboardAutoCenter)
+                {
+                    wheelAngle = Mathf.MoveTowards(wheelAngle, 0f, keyboardCenterSpeed * Time.deltaTime);
+                }
                 if (Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame) wheelAngle = 0f; // センター戻し
             }
             else
