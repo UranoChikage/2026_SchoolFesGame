@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using UnityEngine;
 
 namespace Chambara
@@ -28,9 +29,21 @@ namespace Chambara
         public GameState GameState => gameState;
         public event Action<GameState> OnGameStateChanged;
 
+        [Header("Slow Motion Settings")]
+        [SerializeField] float slowTimeScale = 0.2f;
+        [SerializeField] float slowInTime = 0.1f;    // 剣がぶつかるまでの時間（実時間）。この間にスローにする
+        [SerializeField] float slowDuration = 1f;    // 剣がぶつかってからスローを保つ時間（実時間）
+        [SerializeField] float slowOutTime = 0.5f;   // 元の速さに戻るまで（実時間）
+        public float SlowTimeScale => slowTimeScale;
+        public float SlowDuration => slowDuration;
+        [SerializeField] AnimationCurve slowMotionCurve;
+        public AnimationCurve SlowMotionCurve => slowMotionCurve;
+        float defaultFixedDeltaTime;
+
         private void Awake()
         {
             instance = this;
+            defaultFixedDeltaTime = Time.fixedDeltaTime;
         }
         private void Start()
         {
@@ -58,7 +71,7 @@ namespace Chambara
 
         private void Update()
         {
-            if (gameState is GameState.Playing or GameState.Slow)
+            if (gameState is GameState.Playing)
             {
                 sim.Advance(Time.deltaTime);
                 foreach (var p in players) p.UpdateState(Time.deltaTime);
@@ -92,16 +105,97 @@ namespace Chambara
             ClashResult result = sim.Clash(p0.AttackTime, p1.AttackTime);
             if (result == ClashResult.None) return;
 
+            p0.Resolved = p1.Resolved = true;   // 結果は剣がぶつかった瞬間に出すので、通常の判定はさせない
+
+            // 後から振った方が振り切る時刻（ゲーム内時間）
+            float impactTime = Mathf.Max(p0.AttackTime + p0.AttackStartup, p1.AttackTime + p1.AttackStartup);
             string both = $"{AttackLog(0)} {AttackLog(1)}=>";
             if (result == ClashResult.Tie)
             {
-                Debug.Log(both + "相打ち");
-                p0.Stun(true);
-                p1.Stun(true);
+                StartCoroutine(SlowMotion(impactTime, () =>
+                {
+                    Debug.Log(both + "相打ち");
+                    p0.Stun(true);
+                    p1.Stun(true);
+                }));
                 return;
             }
             int winner = result == ClashResult.Player0 ? 0 : 1;
-            Finish(both + $"ほぼ同時 {winner + 1}P:勝ち", 1 - winner);   // TODO: スロー・ズーム演出
+            impactTime = players[winner].AttackTime + players[winner].AttackStartup;   // 勝った方の剣が届いた瞬間に決着
+            StartCoroutine(SlowMotion(impactTime, () => Finish(both + $"ほぼ同時 {winner + 1}P:勝ち", 1 - winner)));
+        }
+
+        // 振っている途中からスローにして、impactTimeに onImpact を呼び、しばらくしたら元の速さに戻す
+        IEnumerator SlowMotion(float impactTime, Action onImpact)
+        {
+            SetGameState(GameState.Slow);
+
+            //剣が届くまでの残り（ゲーム内時間）を、ちょうどslowInTime（実時間）かけて進むように減速する
+            //カーブを何乗かして減速の早さを調整するので、剣の振りの速さ自体は変えない
+            float power = SolveSlowInPower((impactTime - Time.time) / slowInTime);
+            for (float t = 0f; Time.time < impactTime; t += Time.unscaledDeltaTime)
+            {
+                float k = Mathf.Pow(Mathf.Clamp01(EvaluateSlowCurve(Mathf.Clamp01(t / slowInTime))), power);
+                SetTimeScale(Mathf.Lerp(1f, slowTimeScale, k));
+                yield return null;
+            }
+            SetTimeScale(slowTimeScale);
+            onImpact();
+
+            yield return new WaitForSecondsRealtime(slowDuration);
+
+            //slowOutTimeの時間をかけて元に戻す
+            yield return ChangeTimeScale(slowTimeScale, 1f, slowOutTime);
+            if (gameState == GameState.Slow) SetGameState(GameState.Playing);
+        }
+
+        // 減速中の平均の速さが avgScale になる（＝残り時間をslowInTimeで進む）ように、カーブを何乗するか求める
+        // avgScale が slowTimeScale〜1 の外だと間に合わないので、近い方の端（すぐスロー / ほぼ減速なし）になる
+        float SolveSlowInPower(float avgScale)
+        {
+            float lo = -10f, hi = 10f;   // 2の何乗か
+            for (int i = 0; i < 30; i++)
+            {
+                float mid = (lo + hi) / 2f;
+                if (AverageSlowInScale(Mathf.Pow(2f, mid)) > avgScale) hi = mid;   // 乗数が大きいほど減速が遅れて平均が速くなる
+                else lo = mid;
+            }
+            return Mathf.Pow(2f, (lo + hi) / 2f);
+        }
+
+        float AverageSlowInScale(float power)
+        {
+            const int samples = 32;
+            float sum = 0f;
+            for (int i = 0; i < samples; i++)
+            {
+                float k = Mathf.Pow(Mathf.Clamp01(EvaluateSlowCurve((i + 0.5f) / samples)), power);
+                sum += Mathf.Lerp(1f, slowTimeScale, k);
+            }
+            return sum / samples;
+        }
+
+        IEnumerator ChangeTimeScale(float from, float to, float duration)
+        {
+            for (float t = 0f; t < duration; t += Time.unscaledDeltaTime)
+            {
+                SetTimeScale(Mathf.Lerp(from, to, EvaluateSlowCurve(t / duration)));
+                yield return null;
+            }
+            SetTimeScale(to);
+        }
+
+        // カーブ未設定時は線形
+        float EvaluateSlowCurve(float t)
+        {
+            if (slowMotionCurve == null || slowMotionCurve.length == 0) return t;
+            return slowMotionCurve.Evaluate(t);
+        }
+
+        void SetTimeScale(float scale)
+        {
+            Time.timeScale = scale;
+            Time.fixedDeltaTime = defaultFixedDeltaTime * Mathf.Max(scale, 0.01f); // 物理もスローに合わせて滑らかにする
         }
 
         void CheckAttack(int atk)

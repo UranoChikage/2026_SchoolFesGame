@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 namespace Chambara
@@ -5,6 +6,16 @@ namespace Chambara
     public class CameraManager : MonoBehaviour
     {
         [SerializeField] Camera mainCamera;
+
+        [Header("SlowCamera Settings")]
+        [SerializeField] private Camera slowCamera;
+        [SerializeField] private float slowStartDistance = 4f;   // 横から見る距離（開始時）
+        [SerializeField] private float slowFarDistance   = 6f;   // 横から見る距離（一番引いたとき）
+        [SerializeField] private float slowEndDistance   = 1.5f; // 横から見る距離（近づき終わり）
+        [SerializeField] private float slowPullBackTime  = 0.1f; // 引きにかける時間（実時間・秒）
+        [SerializeField] private float slowApproachTime  = 1f;   // 寄りにかける時間（実時間・秒）
+        [SerializeField] private float slowHeight        = 1.2f; // カメラと注視点の高さ
+        Coroutine slowCameraRoutine;
 
 
         [Header("Camera Settings")]
@@ -22,19 +33,21 @@ namespace Chambara
         }
         private void ChangeGameState(GameState newState)
         {
-            currentState = newState;
             switch (newState)
             {
                 case GameState.Ready:
                     Initialize();
                     break;
                 case GameState.Playing:
+                    ChangePlayingMode();
                     break;
                 case GameState.Slow:
+                    ChangeSlowMode();
                     break;
                 case GameState.Finished:
                     break;
             }
+            currentState = newState;
         }
 
         private void Update()
@@ -45,6 +58,7 @@ namespace Chambara
 
                 SetPlayerCameraPos(ChambaraManager.Instance.Players[1].transform, playerCamera2);
             }
+
         }
 
         private void Initialize()
@@ -68,6 +82,65 @@ namespace Chambara
 
             camera.transform.position = p.position + yaw * cameraOffset;
             camera.transform.LookAt(p.position + yaw * lookOffset);
+        }
+
+        private void ChangePlayingMode()
+        {
+            if (slowCameraRoutine != null) StopCoroutine(slowCameraRoutine);
+            playerCamera.gameObject.SetActive(true);
+            playerCamera2.gameObject.SetActive(true);
+            slowCamera.gameObject.SetActive(false);
+        }
+
+        private void ChangeSlowMode()
+        {
+            slowCamera.gameObject.SetActive(true);
+            playerCamera.gameObject.SetActive(false);
+            playerCamera2.gameObject.SetActive(false);
+            if (slowCameraRoutine != null) StopCoroutine(slowCameraRoutine);
+            slowCameraRoutine = StartCoroutine(ChangeCameraBack());
+        }
+
+        //プレイヤーとプレイヤーの間の位置を横から見て、一度引いてからだんだん近づく
+        IEnumerator ChangeCameraBack()
+        {
+            Transform p0 = ChambaraManager.Instance.Players[0].transform;
+            Transform p1 = ChambaraManager.Instance.Players[1].transform;
+
+            AnimationCurve curve = ChambaraManager.Instance.SlowMotionCurve;
+            bool hasCurve = curve != null && curve.length > 0;   // カーブ未設定時は線形
+
+            // 2人を結ぶ線に垂直な水平方向から見る（向きはスロー開始時に固定）
+            Vector3 line = Vector3.ProjectOnPlane(p1.position - p0.position, Vector3.up);
+            Vector3 side = line.sqrMagnitude > 0.0001f ? Vector3.Cross(line.normalized, Vector3.up) : Vector3.right;
+
+            // スロー中はtimeScaleが下がるので実時間で進める。Finished後も最後まで近づく
+            for (float t = 0f; ; t += Time.unscaledDeltaTime)
+            {
+                float distance;
+                bool done = false;
+                if (t < slowPullBackTime)
+                {
+                    // 引き：開始距離 → 最遠距離を一瞬で（減速しながら引く）
+                    float p = t / slowPullBackTime;
+                    distance = Mathf.Lerp(slowStartDistance, slowFarDistance, Mathf.Sin(p * Mathf.PI * 0.5f));
+                }
+                else
+                {
+                    // 寄り：最遠距離 → 終了距離
+                    float p = slowApproachTime > 0f ? Mathf.Clamp01((t - slowPullBackTime) / slowApproachTime) : 1f;
+                    float k = hasCurve ? curve.Evaluate(p) : p;
+                    distance = Mathf.LerpUnclamped(slowFarDistance, slowEndDistance, k);
+                    done = p >= 1f;
+                }
+
+                Vector3 center = (p0.position + p1.position) / 2f + Vector3.up * slowHeight;
+                slowCamera.transform.position = center + side * distance;
+                slowCamera.transform.LookAt(center);
+                if (done) break;
+                yield return null;
+            }
+            slowCameraRoutine = null;
         }
     }
 }

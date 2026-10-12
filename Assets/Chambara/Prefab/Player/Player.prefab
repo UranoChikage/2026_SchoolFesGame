@@ -18,7 +18,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &7744698608606868949
 Transform:
   m_ObjectHideFlags: 0
@@ -151,6 +151,7 @@ Transform:
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 7744698608606868949}
+  - {fileID: 3215359003603790}
   m_Father: {fileID: 561624497389214272}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!23 &9070008802075865162
@@ -358,3 +359,125 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 682be09bdeb70eb459a33827621164db, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Chambara.DebugInputContext
+--- !u!1001 &540947795444585637
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 5627438160774870255}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: 6b7593e1e550ffc49a8f83fd41059422, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 700
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 6b7593e1e550ffc49a8f83fd41059422, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 700
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 6b7593e1e550ffc49a8f83fd41059422, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 700
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 6b7593e1e550ffc49a8f83fd41059422, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 6b7593e1e550ffc49a8f83fd41059422, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 6b7593e1e550ffc49a8f83fd41059422, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 2.75
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 6b7593e1e550ffc49a8f83fd41059422, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.7071068
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 6b7593e1e550ffc49a8f83fd41059422, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0.7071068
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 6b7593e1e550ffc49a8f83fd41059422, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0.000000030908623
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 6b7593e1e550ffc49a8f83fd41059422, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0.000000030908623
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 6b7593e1e550ffc49a8f83fd41059422, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 6b7593e1e550ffc49a8f83fd41059422, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 6b7593e1e550ffc49a8f83fd41059422, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 6b7593e1e550ffc49a8f83fd41059422, type: 3}
+      propertyPath: m_ConstrainProportionsScale
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -7511558181221131132, guid: 6b7593e1e550ffc49a8f83fd41059422, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 113fdeb55155deb499c9f420bdaaa690, type: 2}
+    - target: {fileID: -5754084199372789682, guid: 6b7593e1e550ffc49a8f83fd41059422, type: 3}
+      propertyPath: m_Mesh
+      value: 
+      objectReference: {fileID: -1387407503233429609, guid: a22b0d3e721ee954c9d304d90b18bcd5, type: 3}
+    - target: {fileID: 919132149155446097, guid: 6b7593e1e550ffc49a8f83fd41059422, type: 3}
+      propertyPath: m_Name
+      value: SinaiVer2
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 6b7593e1e550ffc49a8f83fd41059422, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6763968783023563253}
+  m_SourcePrefab: {fileID: 100100000, guid: 6b7593e1e550ffc49a8f83fd41059422, type: 3}
+--- !u!4 &3215359003603790 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 6b7593e1e550ffc49a8f83fd41059422, type: 3}
+  m_PrefabInstance: {fileID: 540947795444585637}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &810855699848129012 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 6b7593e1e550ffc49a8f83fd41059422, type: 3}
+  m_PrefabInstance: {fileID: 540947795444585637}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &6763968783023563253
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 810855699848129012}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4d622e182598de648bec20cc7c9a5981, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Chambara.Sword
+  pivot: {fileID: 5627438160774870255}
+  directions: 8
+  gripPosition: {x: 0, y: 0, z: 0.7}
+  idleAngle: 45
+  stunAngle: -45
+  swingStart: 0
+  swingEnd: 180
+  handMove: 0.1
+  windupRatio: 0.3
+  guardOffset: {x: -0.2, y: 0.3}
+  guardTilt: 0
+  returnSpeed: 15
+  previewState: 1
+  previewDir: 4
+  previewSwing: 0
+  player: {fileID: 2389350721131182169}
