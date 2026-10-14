@@ -10,6 +10,8 @@ namespace Pirates
     public class Cannonball : MonoBehaviour
     {
         const int HitBufferSize = 16;
+        const float ExplosionHeight = 20f; // 爆発判定の上下の広がり(m)
+        const float RangeGizmoDuration = 5f; // 爆発範囲の表示を残す時間(秒)
         static readonly RaycastHit[] hitBuffer = new RaycastHit[HitBufferSize];
         static readonly HashSet<IDamageable> damaged = new HashSet<IDamageable>();
 
@@ -19,11 +21,11 @@ namespace Pirates
         LayerMask hitMask;
         BoatBuoyancy water;
         Transform owner;
-        GameObject explosionPrefab;
+        VfxAsset explosionVfx;
         float lifeTime;
 
         public void Launch(Vector3 initialVelocity, float explosionRadius, float damage,
-            LayerMask hitMask, BoatBuoyancy water, Transform owner, GameObject explosionPrefab, float lifeTime)
+            LayerMask hitMask, BoatBuoyancy water, Transform owner, VfxAsset explosionVfx, float lifeTime)
         {
             velocity = initialVelocity;
             this.explosionRadius = explosionRadius;
@@ -31,7 +33,7 @@ namespace Pirates
             this.hitMask = hitMask;
             this.water = water;
             this.owner = owner;
-            this.explosionPrefab = explosionPrefab;
+            this.explosionVfx = explosionVfx;
             this.lifeTime = lifeTime;
         }
 
@@ -87,22 +89,42 @@ namespace Pirates
 
         void Explode(Vector3 point)
         {
-            if (explosionPrefab != null)
-            {
-                PoolManager.Spawn(explosionPrefab, point, Quaternion.identity, 5f);
-            }
+            if (explosionVfx != null) explosionVfx.Play(point, explosionRadius * 2f);
+            DrawExplosionRange(point);
 
             // 範囲内のIDamageableに1回ずつダメージ（コライダーが複数あっても重複させない）
             damaged.Clear();
-            Collider[] colliders = Physics.OverlapSphere(point, explosionRadius, hitMask, QueryTriggerInteraction.Ignore);
+            // 着地点から水平半径r（マーカーの円と同じ）で判定する。高さ方向は広く取った縦長のカプセル
+            Vector3 up = Vector3.up * ExplosionHeight;
+            Collider[] colliders = Physics.OverlapCapsule(point + up, point - up, explosionRadius, hitMask, QueryTriggerInteraction.Ignore);
             foreach (Collider c in colliders)
             {
                 if (owner != null && c.transform.IsChildOf(owner)) continue;
                 var target = c.GetComponentInParent<IDamageable>();
-                if (target != null && damaged.Add(target)) target.TakeDamage(damage, point);
+                if (target != null && damaged.Add(target))
+                {
+                    Debug.Log($"[Hit] {(owner != null ? owner.name : "不明")} の砲弾が {((Component)target).name} に命中 (ダメージ {damage})", (Component)target);
+                    target.TakeDamage(damage, point);
+                }
             }
 
             PoolManager.Release(gameObject);
+        }
+
+        // 爆発の効果範囲を、一定時間シーンビューに残す（Gizmosを有効にすると見える）
+        [System.Diagnostics.Conditional("UNITY_EDITOR")]
+        void DrawExplosionRange(Vector3 point)
+        {
+            const int Segments = 32;
+            Vector3 prev = point + new Vector3(explosionRadius, 0f, 0f);
+            for (int i = 1; i <= Segments; i++)
+            {
+                float a = i * Mathf.PI * 2f / Segments;
+                Vector3 next = point + new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)) * explosionRadius;
+                Debug.DrawLine(prev, next, Color.red, RangeGizmoDuration);
+                prev = next;
+            }
+            Debug.DrawLine(point, point + Vector3.up * 3f, Color.red, RangeGizmoDuration);
         }
     }
 }

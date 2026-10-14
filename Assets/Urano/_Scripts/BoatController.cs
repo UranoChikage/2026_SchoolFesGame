@@ -3,7 +3,7 @@ using UnityEngine;
 namespace Pirates
 {
     [RequireComponent(typeof(Rigidbody))]
-    public class BoatController : MonoBehaviour
+    public class BoatController : MonoBehaviour, ISlowable
     {
         [Header("入力ソース")]
         [SerializeField]
@@ -25,7 +25,21 @@ namespace Pirates
         [Tooltip("最高速度（m/s）")]
         float maxSpeed = 12f;
 
-        [Header("操舵")]
+        [Header("操舵（回頭速度で指定：曲がりやすい）")]
+        [SerializeField]
+        [Tooltip("ONなら舵角に応じた目標の回頭速度へ素直に追従する（扱いやすい）。OFFなら従来のトルク方式")]
+        bool directTurn = true;
+        [SerializeField]
+        [Tooltip("舵が最大のときの回頭速度(度/秒)")]
+        float maxTurnRate = 55f;
+        [SerializeField]
+        [Tooltip("目標の回頭速度に追いつく速さ。大きいほどキビキビ曲がる")]
+        float turnResponse = 4f;
+        [SerializeField]
+        [Tooltip("低速でも最低これだけは舵が効く(0〜1)。止まりかけでも曲がれる")]
+        [Range(0f, 1f)] float minSteerEffect = 0.4f;
+
+        [Header("操舵（トルク方式）")]
         [SerializeField]
         [Tooltip("舵角(-1〜+1)に対する旋回トルクの倍率")]
         float steerTorque = 800f;
@@ -40,26 +54,106 @@ namespace Pirates
         [SerializeField]
         [Tooltip("回頭の収束（角速度を減衰）")]
         float angularDamping = 2f;
+        [SerializeField]
+        [Tooltip("減速中、最高速度を超えている分を落とす強さ")]
+        float slowBrake = 3f;
 
+
+        [Header("沈没（プレイヤー）")]
+        [SerializeField]
+        [Tooltip("沈没を始めてから船を止めるまでの時間(秒)")]
+        float sinkDuration = 5f;
+        [SerializeField]
+        [Tooltip("沈む速さ(m/秒)")]
+        float sinkSpeed = 0.8f;
+        [SerializeField]
+        [Tooltip("沈みながら傾く速さ(度/秒)。0なら傾かない")]
+        float sinkRollSpeed = 6f;
+        [SerializeField]
+        [Tooltip("沈没の瞬間に出す爆発の演出（任意）。敵船のdeathVfxと同じVfxAssetを入れる")]
+        VfxAsset deathVfx;
 
         public float ForwardSpeed => Vector3.Dot(rb.linearVelocity, transform.forward);
         public float MaxSpeed => maxSpeed;// 外部参照用プロパティ
         Rigidbody rb;
+        float slowMultiplier = 1f;
+        float slowEndTime;
+        ShipHealth health;
+        bool sunk;
+
+        public bool IsSunk => sunk;
+        /// <summary>falseの間は推進も舵も効かない（ゲーム開始前の待機など）。GameFlowが切り替える</summary>
+        public bool ControlEnabled { get; set; } = true;
+
+        public void ApplySlow(float speedMultiplier, float duration)
+        {
+            slowMultiplier = Time.time < slowEndTime ? Mathf.Min(slowMultiplier, speedMultiplier) : speedMultiplier;
+            slowEndTime = Mathf.Max(slowEndTime, Time.time + duration);
+        }
 
         void Awake()
         {
             rb = GetComponent<Rigidbody>();
+            health = GetComponent<ShipHealth>();
+        }
+
+        void OnEnable()
+        {
+            if (health != null) health.Died += OnDied;
+        }
+
+        void OnDisable()
+        {
+            if (health != null) health.Died -= OnDied;
+        }
+
+        void OnDied()
+        {
+            sunk = true;
+
+            // 浮力と当たり判定を切って、FixedUpdateで自前でゆっくり沈める
+            foreach (BoatBuoyancy b in GetComponentsInChildren<BoatBuoyancy>()) b.enabled = false;
+            foreach (Collider c in GetComponentsInChildren<Collider>()) c.enabled = false;
+            rb.useGravity = false;
+            if (deathVfx != null) deathVfx.Play(transform.position);
+            Invoke(nameof(StopSinking), sinkDuration);
+        }
+
+        // 沈みきったら固定する（プレイヤーは破棄しない）
+        void StopSinking()
+        {
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+            rb.isKinematic = true;
         }
 
         void FixedUpdate()
         {
-            if (input == null || !input.IsConnected) return;
+            if (sunk)
+            {
+                if (rb.isKinematic) return;
+                Vector3 v = rb.linearVelocity;
+                v.x *= 1f - 1.5f * Time.fixedDeltaTime;
+                v.z *= 1f - 1.5f * Time.fixedDeltaTime;
+                v.y = -sinkSpeed;
+                rb.linearVelocity = v;
+                rb.angularVelocity = transform.forward * (sinkRollSpeed * Mathf.Deg2Rad);
+                return;
+            }
+
+            if (!ControlEnabled || input == null || !input.IsConnected) return;
 
             float steer = input.RudderNormalized;     // -1〜+1
     
             // 推進
+            float currentMax = maxSpeed * (Time.time < slowEndTime ? slowMultiplier : 1f);
             float forwardSpeed = Vector3.Dot(rb.linearVelocity, transform.forward);
-            if (forwardSpeed < maxSpeed)
+            if (forwardSpeed > currentMax)
+            {
+                // 減速中：最高速度を超えている分をブレーキで落とす
+                rb.AddForce(-transform.forward * ((forwardSpeed - currentMax) * slowBrake * rb.mass));
+            }
+            else
             {
                 // 質量に依らず timeToMaxSpeed 秒で最高速になる加速度
                 float accel = maxSpeed / Mathf.Max(0.01f, timeToMaxSpeed);
@@ -72,8 +166,10 @@ namespace Pirates
 
             // 操舵：速度が乗っているほど舵が効く
             float speedFactor = Mathf.Lerp(1f, Mathf.Clamp01(forwardSpeed / maxSpeed), speedSteerCoupling);
-            Vector3 torque = transform.up * (steer * steerTorque * speedFactor);
-            rb.AddTorque(torque);
+            if (!directTurn)
+            {
+                rb.AddTorque(transform.up * (steer * steerTorque * speedFactor));
+            }
 
             // 横滑り抑制：船体に対して横方向の速度成分を減衰
             Vector3 localVel = transform.InverseTransformDirection(rb.linearVelocity);
@@ -82,7 +178,17 @@ namespace Pirates
 
             // 角速度ダンピング
             Vector3 av = rb.angularVelocity;
-            av.y *= 1f - angularDamping * Time.fixedDeltaTime;
+            if (directTurn)
+            {
+                // 舵角 → 目標の回頭速度（波によるロール／ピッチは触らずヨーだけ制御）
+                float effect = Mathf.Max(minSteerEffect, Mathf.Clamp01(forwardSpeed / maxSpeed));
+                float targetYawRate = steer * maxTurnRate * effect * Mathf.Deg2Rad;
+                av.y = Mathf.Lerp(av.y, targetYawRate, 1f - Mathf.Exp(-turnResponse * Time.fixedDeltaTime));
+            }
+            else
+            {
+                av.y *= 1f - angularDamping * Time.fixedDeltaTime;
+            }
             rb.angularVelocity = av;
         }
     }

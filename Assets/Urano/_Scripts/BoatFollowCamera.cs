@@ -36,14 +36,64 @@ namespace Pirates
         [Tooltip("位置追従の遅れ(秒)")]
         float positionSmoothTime = 0.25f;
 
+        [Header("一番近い敵も映す")]
+        [SerializeField]
+        [Tooltip("注視点を自船から一番近い敵へどれだけ寄せるか（0=自船のみ、0.5=自船と敵の中間、1=敵）")]
+        [Range(0f, 1f)] float enemyWeight = 0.35f;
+        [SerializeField]
+        [Tooltip("この距離(m)より遠い敵は無視する")]
+        float enemyMaxDistance = 80f;
+        [SerializeField]
+        [Tooltip("敵との距離1mにつきカメラを引く量(m)。寄せた分、自船が画面外に出にくくする")]
+        float extraDistancePerMeter = 0.15f;
+        [SerializeField]
+        [Tooltip("引く量の上限(m)")]
+        float maxExtraDistance = 12f;
+        [SerializeField]
+        [Tooltip("注視点・引き具合が切り替わるときの滑らかさ(秒)。敵が入れ替わっても画面が飛ばない")]
+        float enemySmoothTime = 0.6f;
+
+        [Header("沈没時")]
+        [SerializeField]
+        [Tooltip("自船が沈没したときに追加で引く距離(m)")]
+        float sunkExtraDistance = 10f;
+        [SerializeField]
+        [Tooltip("沈没時のカメラ移動の滑らかさ(秒)")]
+        float sunkSmoothTime = 1.5f;
+
+        [Header("速度感の演出")]
+        [SerializeField]
+        [Tooltip("最高速度のときに広げる視野角(度)。0なら変えない")]
+        float speedFovBoost = 8f;
+        [SerializeField]
+        [Tooltip("視野角が変わるときの滑らかさ(秒)")]
+        float fovSmoothTime = 0.4f;
+        [SerializeField]
+        [Tooltip("最高速度のときのカメラの揺れ幅(m)。0なら揺らさない")]
+        float speedShake = 0.05f;
+
+        Camera cam;
+        float baseFov;
+        float fovBoost;
+        float fovBoostVelocity;
         float yaw;
         float yawVelocity;
         Vector3 focus;
         Vector3 focusVelocity;
+        Vector3 enemyOffset;      // 自船から敵方向へずらす量（平滑化済み）
+        Vector3 enemyOffsetVelocity;
+        float extraDistance;
+        float extraDistanceVelocity;
+        BoatController targetBoat;
+        float sunkExtra;
+        float sunkExtraVelocity;
 
         void Start()
         {
+            cam = GetComponent<Camera>();
+            if (cam != null) baseFov = cam.fieldOfView;
             if (target == null) return;
+            targetBoat = target.GetComponent<BoatController>();
             yaw = target.eulerAngles.y;
             focus = target.position;
             Apply();
@@ -62,6 +112,12 @@ namespace Pirates
             focus = target.position;
             yawVelocity = 0f;
             focusVelocity = Vector3.zero;
+            enemyOffset = Vector3.zero;
+            enemyOffsetVelocity = Vector3.zero;
+            extraDistance = 0f;
+            extraDistanceVelocity = 0f;
+            sunkExtra = 0f;
+            sunkExtraVelocity = 0f;
             Apply();
         }
 
@@ -77,15 +133,77 @@ namespace Pirates
             yaw = Mathf.SmoothDampAngle(yaw, target.eulerAngles.y, ref yawVelocity,
                 rotationSmoothTime, maxRotationSpeed);
             focus = Vector3.SmoothDamp(focus, target.position, ref focusVelocity, positionSmoothTime);
+
+            // 一番近い敵の方向へ注視点をずらし、そのぶんカメラも引く
+            Vector3 wantOffset = Vector3.zero;
+            float wantExtra = 0f;
+            if (TryFindNearestEnemy(out Vector3 enemyPos, out float enemyDist))
+            {
+                wantOffset = (enemyPos - target.position) * enemyWeight;
+                wantOffset.y = 0f;
+                wantExtra = Mathf.Min(enemyDist * extraDistancePerMeter, maxExtraDistance) * enemyWeight;
+            }
+            enemyOffset = Vector3.SmoothDamp(enemyOffset, wantOffset, ref enemyOffsetVelocity, enemySmoothTime);
+            extraDistance = Mathf.SmoothDamp(extraDistance, wantExtra, ref extraDistanceVelocity, enemySmoothTime);
+
+            float wantSunk = targetBoat != null && targetBoat.IsSunk ? sunkExtraDistance : 0f;
+            sunkExtra = Mathf.SmoothDamp(sunkExtra, wantSunk, ref sunkExtraVelocity, sunkSmoothTime);
+
             Apply();
+            ApplySpeedEffects();
+        }
+
+        // 速度に応じて視野角を広げ、わずかに揺らして「速く走っている」感じを出す
+        void ApplySpeedEffects()
+        {
+            if (targetBoat == null) return;
+            float speed01 = targetBoat.IsSunk ? 0f : Mathf.Clamp01(targetBoat.ForwardSpeed / Mathf.Max(0.01f, targetBoat.MaxSpeed));
+
+            if (cam != null && speedFovBoost > 0f)
+            {
+                fovBoost = Mathf.SmoothDamp(fovBoost, speedFovBoost * speed01, ref fovBoostVelocity, fovSmoothTime);
+                cam.fieldOfView = baseFov + fovBoost;
+            }
+
+            if (speedShake > 0f)
+            {
+                float t = Time.time * 18f;
+                var shake = new Vector3(Mathf.PerlinNoise(t, 0f) - 0.5f, Mathf.PerlinNoise(0f, t) - 0.5f, 0f);
+                transform.position += transform.rotation * (shake * (2f * speedShake * speed01 * speed01));
+            }
+        }
+
+        bool TryFindNearestEnemy(out Vector3 position, out float distance)
+        {
+            position = default;
+            distance = 0f;
+            float best = enemyMaxDistance * enemyMaxDistance;
+            bool found = false;
+
+            foreach (EnemyShip e in EnemyShip.Active)
+            {
+                if (e == null || e.IsSunk) continue;
+                Vector3 d = e.transform.position - target.position;
+                d.y = 0f;
+                float sqr = d.sqrMagnitude;
+                if (sqr < best)
+                {
+                    best = sqr;
+                    position = e.transform.position;
+                    distance = Mathf.Sqrt(sqr);
+                    found = true;
+                }
+            }
+            return found;
         }
 
         void Apply()
         {
             Quaternion yawRot = Quaternion.Euler(0f, yaw, 0f);
-            transform.position = focus + yawRot * new Vector3(0f, height, -distance);
+            Vector3 center = focus + enemyOffset;
+            transform.position = center + yawRot * new Vector3(0f, height + (extraDistance + sunkExtra) * 0.6f, -(distance + extraDistance + sunkExtra));
             transform.rotation = Quaternion.LookRotation(
-                focus + yawRot * lookOffset - transform.position, Vector3.up);
+                center + yawRot * lookOffset - transform.position, Vector3.up);
         }
     }
 }
