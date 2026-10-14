@@ -28,6 +28,8 @@ namespace Chambara
         [SerializeField] GameState gameState = GameState.None;
         public GameState GameState => gameState;
         public event Action<GameState> OnGameStateChanged;
+        public event Action OnTieClash;        // 相打ちで剣がぶつかった瞬間
+        public event Action<int> OnGuarded;    // ガードされた瞬間（引数は攻撃した側）
 
         [Header("Slow Motion Settings")]
         [SerializeField] float slowTimeScale = 0.2f;
@@ -115,6 +117,7 @@ namespace Chambara
                 StartCoroutine(SlowMotion(impactTime, () =>
                 {
                     Debug.Log(both + "相打ち");
+                    OnTieClash?.Invoke();
                     p0.Stun(true);
                     p1.Stun(true);
                 }));
@@ -212,6 +215,7 @@ namespace Chambara
                     break;
                 case AttackResult.Guarded:
                     Debug.Log(log + $"{2 - atk}P:ガード");
+                    OnGuarded?.Invoke(atk);
                     p.Stun(false);
                     break;
                 case AttackResult.Hit:
