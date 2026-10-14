@@ -126,7 +126,7 @@ namespace Pirates
                 if (fire) shooter.TryFireAt(aim.AimPoint);
             }
 
-            UpdateTrajectory(status != "waiting");
+            UpdateTrajectory(status != "waiting" && shooter.IsAlive);
         }
 
         // 予測線：選ばれている砲だけ、カーソルが指す位置へ撃った弾道を表示する
@@ -215,7 +215,7 @@ namespace Pirates
         // 砲手ごとの色付きカーソル（クールタイム中は小さく）
         void OnGUI()
         {
-            if (Event.current.type != EventType.Repaint) return;
+            if (Event.current.type != EventType.Repaint || !shooter.IsAlive) return;
 
             float size = cursorSize * (shooter.IsReady ? 1f : 0.6f);
             float x = cursor.x;

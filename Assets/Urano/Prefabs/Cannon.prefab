@@ -90,7 +90,7 @@ MonoBehaviour:
   launchAngle: 22
   highArc: 0
   explosionRadius: 4
-  damage: 10
+  damage: 100
   hitMask:
     serializedVersion: 2
     m_Bits: 55
@@ -139,7 +139,7 @@ MonoBehaviour:
   maxDistance: 1000
   layerMask:
     serializedVersion: 2
-    m_Bits: 55
+    m_Bits: 119
   water: {fileID: 0}
 --- !u!114 &7378329920550427385
 MonoBehaviour:

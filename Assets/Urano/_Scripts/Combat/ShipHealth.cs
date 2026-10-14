@@ -41,7 +41,11 @@ namespace Pirates
             current = Mathf.Max(0f, current - damage);
             Damaged?.Invoke(new DamageInfo(damage, hitPoint));
             HealthChanged?.Invoke(current, maxHealth);
-            if (IsDead) Died?.Invoke();
+            if (IsDead)
+            {
+                Debug.Log($"[Sunk] {name} が沈没", this);
+                Died?.Invoke();
+            }
         }
     }
 }

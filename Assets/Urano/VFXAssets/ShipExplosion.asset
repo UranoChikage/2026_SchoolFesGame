@@ -12,6 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0f6836001dffd5549baf172ee46a0da7, type: 3}
   m_Name: ShipExplosion
   m_EditorClassIdentifier: Assembly-CSharp::Pirates.VfxAsset
-  prefab: {fileID: 7613996547333973292, guid: c2b5750e74f3d2f4dbcf21104bc0877b, type: 3}
-  lifetime: 1
+  prefab: {fileID: 2201106846867017612, guid: 07c4f26bae474af4093bcbbb31be9046, type: 3}
+  lifetime: 11.5
   memo: "\u5927\u7832\u304C\u5F53\u305F\u3063\u305F\u3068\u304D\u306E\u7206\u767A"

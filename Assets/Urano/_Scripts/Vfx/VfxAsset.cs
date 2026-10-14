@@ -27,10 +27,24 @@ namespace Pirates
         public GameObject Play(Vector3 position) => Play(position, Quaternion.identity);
 
         /// <summary>指定位置で再生する（プールから取り出し、lifetime秒後に自動返却）</summary>
-        public GameObject Play(Vector3 position, Quaternion rotation)
+        public GameObject Play(Vector3 position, Quaternion rotation) => Play(position, rotation, Vector3.one);
+
+        /// <summary>
+        /// 大きさを指定して再生する。scale はPrefab本来の大きさに対する倍率
+        /// （直径1m基準のPrefabなら、直径をそのまま渡せる。ルートParticle SystemのScaling Modeは Hierarchy にする）。
+        /// </summary>
+        public GameObject Play(Vector3 position, float scale) => Play(position, Quaternion.identity, Vector3.one * scale);
+
+        /// <summary>縦横を分けた倍率で再生する（x,z=直径方向、y=高さ）</summary>
+        public GameObject Play(Vector3 position, Vector3 scale) => Play(position, Quaternion.identity, scale);
+
+        GameObject Play(Vector3 position, Quaternion rotation, Vector3 scale)
         {
             if (prefab == null) return null;
-            return PoolManager.Spawn(prefab, position, rotation, lifetime);
+            GameObject instance = PoolManager.Spawn(prefab, position, rotation, lifetime);
+            // プール再利用でスケールが残らないよう、毎回Prefab本来の大きさ×倍率に戻す
+            if (instance != null) instance.transform.localScale = Vector3.Scale(prefab.transform.localScale, scale);
+            return instance;
         }
     }
 }

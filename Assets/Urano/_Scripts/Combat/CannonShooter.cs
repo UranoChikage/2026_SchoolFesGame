@@ -88,7 +88,27 @@ namespace Pirates
 
         /// <summary>クールタイムの残り割合（0=撃てる、1=撃った直後）。UI用</summary>
         public float CooldownRatio => cooldown <= 0f ? 0f : Mathf.Clamp01((nextFireTime - Time.time) / cooldown);
-        public bool IsReady => Time.time >= nextFireTime;
+        public bool IsReady => Time.time >= nextFireTime && !OwnerSunk;
+
+        /// <summary>自分の船が沈没していなければtrue。照準や予測線の表示にも使う</summary>
+        public bool IsAlive => !OwnerSunk;
+
+        ShipHealth ownerHealth;
+        bool ownerHealthResolved;
+
+        // 自分の船が沈没したら撃てない（プレイヤー・敵共通）
+        bool OwnerSunk
+        {
+            get
+            {
+                if (!ownerHealthResolved)
+                {
+                    ownerHealth = owner != null ? owner.GetComponentInParent<ShipHealth>() : GetComponentInParent<ShipHealth>();
+                    ownerHealthResolved = true;
+                }
+                return ownerHealth != null && ownerHealth.IsDead;
+            }
+        }
 
         Transform Muzzle => muzzle != null ? muzzle : transform;
 

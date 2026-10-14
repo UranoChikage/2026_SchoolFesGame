@@ -59,11 +59,31 @@ namespace Pirates
         float slowBrake = 3f;
 
 
+        [Header("沈没（プレイヤー）")]
+        [SerializeField]
+        [Tooltip("沈没を始めてから船を止めるまでの時間(秒)")]
+        float sinkDuration = 5f;
+        [SerializeField]
+        [Tooltip("沈む速さ(m/秒)")]
+        float sinkSpeed = 0.8f;
+        [SerializeField]
+        [Tooltip("沈みながら傾く速さ(度/秒)。0なら傾かない")]
+        float sinkRollSpeed = 6f;
+        [SerializeField]
+        [Tooltip("沈没の瞬間に出す爆発の演出（任意）。敵船のdeathVfxと同じVfxAssetを入れる")]
+        VfxAsset deathVfx;
+
         public float ForwardSpeed => Vector3.Dot(rb.linearVelocity, transform.forward);
         public float MaxSpeed => maxSpeed;// 外部参照用プロパティ
         Rigidbody rb;
         float slowMultiplier = 1f;
         float slowEndTime;
+        ShipHealth health;
+        bool sunk;
+
+        public bool IsSunk => sunk;
+        /// <summary>falseの間は推進も舵も効かない（ゲーム開始前の待機など）。GameFlowが切り替える</summary>
+        public bool ControlEnabled { get; set; } = true;
 
         public void ApplySlow(float speedMultiplier, float duration)
         {
@@ -74,11 +94,54 @@ namespace Pirates
         void Awake()
         {
             rb = GetComponent<Rigidbody>();
+            health = GetComponent<ShipHealth>();
+        }
+
+        void OnEnable()
+        {
+            if (health != null) health.Died += OnDied;
+        }
+
+        void OnDisable()
+        {
+            if (health != null) health.Died -= OnDied;
+        }
+
+        void OnDied()
+        {
+            sunk = true;
+
+            // 浮力と当たり判定を切って、FixedUpdateで自前でゆっくり沈める
+            foreach (BoatBuoyancy b in GetComponentsInChildren<BoatBuoyancy>()) b.enabled = false;
+            foreach (Collider c in GetComponentsInChildren<Collider>()) c.enabled = false;
+            rb.useGravity = false;
+            if (deathVfx != null) deathVfx.Play(transform.position);
+            Invoke(nameof(StopSinking), sinkDuration);
+        }
+
+        // 沈みきったら固定する（プレイヤーは破棄しない）
+        void StopSinking()
+        {
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+            rb.isKinematic = true;
         }
 
         void FixedUpdate()
         {
-            if (input == null || !input.IsConnected) return;
+            if (sunk)
+            {
+                if (rb.isKinematic) return;
+                Vector3 v = rb.linearVelocity;
+                v.x *= 1f - 1.5f * Time.fixedDeltaTime;
+                v.z *= 1f - 1.5f * Time.fixedDeltaTime;
+                v.y = -sinkSpeed;
+                rb.linearVelocity = v;
+                rb.angularVelocity = transform.forward * (sinkRollSpeed * Mathf.Deg2Rad);
+                return;
+            }
+
+            if (!ControlEnabled || input == null || !input.IsConnected) return;
 
             float steer = input.RudderNormalized;     // -1〜+1
     
