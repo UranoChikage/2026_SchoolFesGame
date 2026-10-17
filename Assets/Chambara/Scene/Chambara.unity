@@ -413,6 +413,53 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
+--- !u!1 &331523095
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 331523097}
+  - component: {fileID: 331523096}
+  m_Layer: 0
+  m_Name: SwordClashEffect
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &331523096
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 331523095}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 45f040b4743b9c545bbfd61bce26c6f5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Chambara.SwordClashEffect
+  tieEffect: {fileID: 368367558315075664, guid: 260f890ca471865428e478d50a889d51, type: 3}
+  guardEffect: {fileID: 368367558315075664, guid: 260f890ca471865428e478d50a889d51, type: 3}
+  lifetime: 1
+--- !u!4 &331523097
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 331523095}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &587212978
 GameObject:
   m_ObjectHideFlags: 0
@@ -897,7 +944,7 @@ MonoBehaviour:
   matchTime: 60
   rule:
     directions: 8
-    moveSpeed: 0
+    moveSpeed: 0.1
     slowDistance: 0.5
     stopDistance: 0.05
     attackRange: 0.25
@@ -1379,7 +1426,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!199 &1866355191
 ParticleSystemRenderer:
   serializedVersion: 7
@@ -6438,3 +6485,4 @@ SceneRoots:
   - {fileID: 1876735956}
   - {fileID: 175555433}
   - {fileID: 1866355193}
+  - {fileID: 331523097}

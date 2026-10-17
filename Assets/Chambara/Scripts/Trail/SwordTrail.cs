@@ -17,6 +17,11 @@ namespace Chambara
         Vector3[] offsets;   // 各 Trail の pivot から見た位置
         readonly List<Vector3> points = new List<Vector3>();
 
+        // 前フレームの pivot の親（Player側）の位置と回転
+        // 移動しながら振ると、フレーム間の点を今の位置だけで計算すると移動分が段差になるので、前フレームから補間する
+        Vector3 prevParentPos;
+        Quaternion prevParentRot;
+
         private void Awake()
         {
             if (sword == null) sword = GetComponentInParent<Sword>();
@@ -51,6 +56,7 @@ namespace Chambara
         {
             // 前回の残りが今回の軌跡とつながらないように消す
             foreach (var trail in trails) trail.Clear();
+            GetParentPose(out prevParentPos, out prevParentRot);
             SetEmitting(true);
         }
 
@@ -60,6 +66,8 @@ namespace Chambara
         private void OnSwingUpdate(float from, float to)
         {
             int steps = Mathf.Max(1, Mathf.CeilToInt((to - from) * samplesPerSwing));
+            GetParentPose(out var parentPos, out var parentRot);
+            var parentScale = sword.Pivot.parent != null ? sword.Pivot.parent.lossyScale : Vector3.one;
 
             for (int i = 0; i < trails.Length; i++)
             {
@@ -67,11 +75,26 @@ namespace Chambara
                 // 最初の点だけは振り始めの位置も打つ
                 for (int j = trails[i].positionCount == 0 ? 0 : 1; j <= steps; j++)
                 {
-                    var m = sword.SwingPivotMatrix(Mathf.Lerp(from, to, (float)j / steps));
+                    float k = (float)j / steps;
+                    var parent = Matrix4x4.TRS(
+                        Vector3.Lerp(prevParentPos, parentPos, k),
+                        Quaternion.Slerp(prevParentRot, parentRot, k),
+                        parentScale);
+                    var m = sword.SwingPivotMatrix(Mathf.Lerp(from, to, k), parent);
                     points.Add(m.MultiplyPoint3x4(offsets[i]));
                 }
                 trails[i].AddPositions(points.ToArray());
             }
+
+            prevParentPos = parentPos;
+            prevParentRot = parentRot;
+        }
+
+        void GetParentPose(out Vector3 pos, out Quaternion rot)
+        {
+            var parent = sword.Pivot.parent;
+            pos = parent != null ? parent.position : Vector3.zero;
+            rot = parent != null ? parent.rotation : Quaternion.identity;
         }
 
         void SetEmitting(bool value)

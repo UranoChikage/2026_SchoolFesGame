@@ -134,9 +134,18 @@ namespace Chambara
         /// </summary>
         public Matrix4x4 SwingPivotMatrix(float s)
         {
+            var parent = pivot.parent != null ? pivot.parent.localToWorldMatrix : Matrix4x4.identity;
+            return SwingPivotMatrix(s, parent);
+        }
+
+        /// <summary>
+        /// 振った割合 s のときの pivot のワールド行列。親（Player側）の行列を指定する版
+        /// 移動中にフレーム間を補間するときに使う
+        /// </summary>
+        public Matrix4x4 SwingPivotMatrix(float s, Matrix4x4 parentMatrix)
+        {
             Swing(player.Data.dir, s, out var p, out var r);
-            var local = Matrix4x4.TRS(p, r, pivot.localScale);
-            return pivot.parent != null ? pivot.parent.localToWorldMatrix * local : local;
+            return parentMatrix * Matrix4x4.TRS(p, r, pivot.localScale);
         }
 
         /// <summary>

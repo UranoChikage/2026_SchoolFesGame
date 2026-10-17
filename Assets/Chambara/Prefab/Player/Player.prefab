@@ -248,6 +248,7 @@ MonoBehaviour:
   pivot: {fileID: 5627438160774870255}
   directions: 8
   gripPosition: {x: 0, y: 0, z: 0.7}
+  bladeLength: 1
   idleAngle: 45
   stunAngle: -45
   swingStart: 0
@@ -414,7 +415,7 @@ TrailRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: c5552adf02c0a314dafcc8c0824bc489, type: 2}
+  - {fileID: 2100000, guid: 57002690b1c14b8eb68aea24055a4d76, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -1247,6 +1248,7 @@ MonoBehaviour:
   pivot: {fileID: 5627438160774870255}
   directions: 8
   gripPosition: {x: 0, y: 0, z: 0.7}
+  bladeLength: 1
   idleAngle: 45
   stunAngle: -45
   swingStart: 0
