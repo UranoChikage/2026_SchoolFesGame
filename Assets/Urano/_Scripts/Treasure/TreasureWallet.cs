@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Pirates
 {
-    public enum TreasureRank { E, D, C, B, A, S }
+    public enum TreasureRank { B, A, S }
 
     /// <summary>
     /// 獲得したお宝の合計金額とランク判定。シーンに1つ置く。
@@ -12,11 +12,8 @@ namespace Pirates
     public class TreasureWallet : MonoBehaviour
     {
         [Header("ランクのしきい値（この金額以上でそのランク。仮置き）")]
-        [SerializeField] int thresholdD = 500;
-        [SerializeField] int thresholdC = 1500;
-        [SerializeField] int thresholdB = 3000;
-        [SerializeField] int thresholdA = 5000;
-        [SerializeField] int thresholdS = 8000;
+        [SerializeField] int thresholdA = 3000;
+        [SerializeField] int thresholdS = 6000;
 
         public static TreasureWallet Current { get; private set; }
 
@@ -57,10 +54,7 @@ namespace Pirates
         {
             if (amount >= thresholdS) return TreasureRank.S;
             if (amount >= thresholdA) return TreasureRank.A;
-            if (amount >= thresholdB) return TreasureRank.B;
-            if (amount >= thresholdC) return TreasureRank.C;
-            if (amount >= thresholdD) return TreasureRank.D;
-            return TreasureRank.E;
+            return TreasureRank.B; // Bが最低ランク（Aのしきい値未満は全てB）
         }
     }
 }
