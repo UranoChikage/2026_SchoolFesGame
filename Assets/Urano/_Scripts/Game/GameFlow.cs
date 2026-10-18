@@ -36,7 +36,7 @@ namespace Pirates
         float introDuration = 3f;
         [SerializeField]
         [Tooltip("PC用のスキップキー（導入演出中に押すと発進）")]
-        Key skipKey = Key.Return;
+        Key skipKey = Key.Enter;
 
         [Header("終了演出")]
         [SerializeField]
