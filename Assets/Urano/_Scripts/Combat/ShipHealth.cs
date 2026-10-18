@@ -22,6 +22,8 @@ namespace Pirates
         public float Current => current;
         public float Max => maxHealth;
         public bool IsDead => current <= 0f;
+        /// <summary>trueの間はダメージを受けない（船大福バリア用）</summary>
+        public bool Invulnerable { get; set; }
 
         void Awake()
         {
@@ -31,12 +33,13 @@ namespace Pirates
         // プールから再利用されるたびにHPを全回復
         void OnEnable()
         {
+            Invulnerable = false;
             current = maxHealth;
         }
 
         public void TakeDamage(float damage, Vector3 hitPoint)
         {
-            if (IsDead || damage <= 0f) return;
+            if (IsDead || Invulnerable || damage <= 0f) return;
 
             current = Mathf.Max(0f, current - damage);
             Damaged?.Invoke(new DamageInfo(damage, hitPoint));

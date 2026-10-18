@@ -22,10 +22,11 @@ namespace Pirates
         BoatBuoyancy water;
         Transform owner;
         VfxAsset explosionVfx;
+        CannonShooter source;
         float lifeTime;
 
         public void Launch(Vector3 initialVelocity, float explosionRadius, float damage,
-            LayerMask hitMask, BoatBuoyancy water, Transform owner, VfxAsset explosionVfx, float lifeTime)
+            LayerMask hitMask, BoatBuoyancy water, Transform owner, VfxAsset explosionVfx, float lifeTime, CannonShooter source = null)
         {
             velocity = initialVelocity;
             this.explosionRadius = explosionRadius;
@@ -35,6 +36,7 @@ namespace Pirates
             this.owner = owner;
             this.explosionVfx = explosionVfx;
             this.lifeTime = lifeTime;
+            this.source = source;
         }
 
         void Update()
@@ -100,6 +102,13 @@ namespace Pirates
             foreach (Collider c in colliders)
             {
                 if (owner != null && c.transform.IsChildOf(owner)) continue;
+                // 浮いているアイテムに当たったら、撃った砲手が取得する
+                if (source != null)
+                {
+                    var pickup = c.GetComponentInParent<ItemPickup>();
+                    if (pickup != null) pickup.TryCollect(source);
+                }
+
                 var target = c.GetComponentInParent<IDamageable>();
                 if (target != null && damaged.Add(target))
                 {

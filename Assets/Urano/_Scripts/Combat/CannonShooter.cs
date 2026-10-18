@@ -116,6 +116,10 @@ namespace Pirates
         public Vector3 MuzzlePosition => Muzzle.position;
         /// <summary>爆発の半径(m)。着弾予測マーカーの大きさに使う</summary>
         public float ExplosionRadius => explosionRadius;
+        /// <summary>自分の船のルート（無ければnull）</summary>
+        public Transform Owner => owner;
+        /// <summary>この砲が当てる／影響するレイヤー</summary>
+        public LayerMask HitMask => hitMask;
 
         /// <summary>指定位置に撃ったときの初速。弾道の予測線用。撃てない位置ならfalse</summary>
         public bool TryGetLaunchVelocity(Vector3 target, out Vector3 velocity)
@@ -146,7 +150,7 @@ namespace Pirates
             Vector3 origin = Muzzle.position;
             Cannonball ball = PoolManager.Spawn(projectilePrefab != null ? projectilePrefab : FallbackPrefab, origin, Quaternion.identity);
             BoatBuoyancy surface = water != null ? water : PlayerTarget.Current?.Water; // 未設定ならプレイヤー船の水面
-            ball.Launch(velocity, explosionRadius, damage, hitMask, surface, owner, explosionVfx, 15f);
+            ball.Launch(velocity, explosionRadius, damage, hitMask, surface, owner, explosionVfx, 15f, this);
 
             nextFireTime = Time.time + cooldown;
             return true;

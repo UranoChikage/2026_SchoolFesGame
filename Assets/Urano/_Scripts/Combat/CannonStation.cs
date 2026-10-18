@@ -71,10 +71,12 @@ namespace Pirates
         Vector2 cursor;
         string status = "";
         Quaternion barrelRotInStation = Quaternion.identity; // 砲身の初期姿勢（この砲を基準）
+        ItemHolder items;
 
         void Awake()
         {
             shooter = GetComponent<CannonShooter>();
+            items = ItemHolder.For(shooter);
             aim = GetComponent<AimController>();
             trajectory = GetComponent<TrajectoryLine>(); // 付いていれば予測線を出す（任意）
             if (trajectory != null) trajectory.SetColor(cursorColor);
@@ -117,10 +119,13 @@ namespace Pirates
             aim.SetScreenPosition(cursor);
             aim.Refresh();
 
+            items.Tick(aim.AimPoint, aim.HasAim);
+
             if (aim.HasAim)
             {
                 UpdateBarrel(aim.AimPoint);
-                if (fire) shooter.TryFireAt(aim.AimPoint);
+                // アイテム所持中は発射ボタンで常にアイテムを使う。ビーム使用中はこの砲は撃てない
+                if (fire && !items.TryUse() && !items.IsBeamActive) shooter.TryFireAt(aim.AimPoint);
             }
 
             UpdateTrajectory(status != "waiting" && shooter.IsAlive);
@@ -193,6 +198,12 @@ namespace Pirates
 
         static float Pick(Vector3 v, JoyConRudder.Axis a) => a == JoyConRudder.Axis.X ? v.x : a == JoyConRudder.Axis.Y ? v.y : v.z;
 
+        string ItemLabel()
+        {
+            if (items.IsBeamActive) return " [BEAM]";
+            return items.Held != null ? $" [{items.Held.DisplayName}]" : "";
+        }
+
         // 砲手ごとの色付きカーソル（クールタイム中は小さく）
         void OnGUI()
         {
@@ -215,7 +226,7 @@ namespace Pirates
             }
             // 番号と状態（デバッグ表示）。aim:NG は照準がどこにも当たっていない（Water未設定など）
             GUI.Label(new Rect(x + size * 0.5f + 4f, y - 12f, 200f, 24f),
-                $"{stationNumber} {status} aim:{(aim.HasAim ? "OK" : "NG")}");
+                $"{stationNumber} {status} aim:{(aim.HasAim ? "OK" : "NG")}{ItemLabel()}");
             GUI.color = old;
         }
     }
