@@ -49,6 +49,7 @@ namespace Pirates
         {
             if (treasure == null) return;
             Total += treasure.Value;
+            Debug.Log($"[Treasure] {treasure.DisplayName} +{treasure.Value} (合計 {Total} / ランク {Rank})", this);
             Added?.Invoke(treasure, Total);
         }
 
