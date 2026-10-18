@@ -85,7 +85,7 @@ namespace Pirates
             if (beamVisual != null) beamVisual.gameObject.SetActive(false);
         }
 
-        // 仮の見た目：縦長の半透明の円柱。専用の見た目ができたら差し替える
+        // 仮の見た目：砲口からカーソル位置へ伸びる細い半透明の円柱。専用のVFXができたら差し替える
         void ShowBeam(Vector3 point)
         {
             if (beamVisual == null)
@@ -99,9 +99,16 @@ namespace Pirates
             Color c = beam.Color;
             c.a = 0.5f;
             beamVisual.GetComponent<Renderer>().material.color = c;
-            float d = beam.BeamRadius * 2f;
-            beamVisual.localScale = new Vector3(d, 20f, d); // 円柱の高さは scale.y の2倍
-            beamVisual.position = point;
+
+            Vector3 from = shooter.MuzzlePosition;
+            Vector3 to = point - from;
+            float length = to.magnitude;
+            if (length < 0.01f) return;
+
+            float width = Mathf.Min(1f, beam.BeamRadius); // 見た目の太さ（判定の広さとは別）
+            beamVisual.position = from + to * 0.5f;
+            beamVisual.rotation = Quaternion.FromToRotation(Vector3.up, to / length); // 円柱は上方向に伸びる
+            beamVisual.localScale = new Vector3(width, length * 0.5f, width); // 円柱の高さは scale.y の2倍
         }
     }
 }
