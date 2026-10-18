@@ -72,6 +72,16 @@ namespace Pirates
         [Tooltip("最高速度のときのカメラの揺れ幅(m)。0なら揺らさない")]
         float speedShake = 0.05f;
 
+        // ビームなどの演出用（外から BeginEffect / EndEffect で指定）
+        public static BoatFollowCamera Current { get; private set; }
+        int effectCount;
+        float effectZoom;
+        float effectShake;
+        float effectExtra;
+        float effectExtraVelocity;
+        float shakeAmount;
+        float shakeVelocity;
+
         Camera cam;
         float baseFov;
         float fovBoost;
@@ -87,6 +97,35 @@ namespace Pirates
         BoatController targetBoat;
         float sunkExtra;
         float sunkExtraVelocity;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetStatic() => Current = null;
+
+        void OnEnable() => Current = this;
+
+        void OnDisable()
+        {
+            if (Current == this) Current = null;
+        }
+
+        /// <summary>演出開始：カメラを zoomOut(m) 引き、shake(m) 揺らす。複数同時に呼べる（全部終わるまで続く）</summary>
+        public void BeginEffect(float zoomOut, float shake)
+        {
+            effectCount++;
+            effectZoom = Mathf.Max(effectZoom, zoomOut);
+            effectShake = Mathf.Max(effectShake, shake);
+        }
+
+        /// <summary>BeginEffect と対で呼ぶ。全て終わったらカメラが元に戻る</summary>
+        public void EndEffect()
+        {
+            effectCount = Mathf.Max(0, effectCount - 1);
+            if (effectCount == 0)
+            {
+                effectZoom = 0f;
+                effectShake = 0f;
+            }
+        }
 
         void Start()
         {
@@ -149,8 +188,12 @@ namespace Pirates
             float wantSunk = targetBoat != null && targetBoat.IsSunk ? sunkExtraDistance : 0f;
             sunkExtra = Mathf.SmoothDamp(sunkExtra, wantSunk, ref sunkExtraVelocity, sunkSmoothTime);
 
+            effectExtra = Mathf.SmoothDamp(effectExtra, effectZoom, ref effectExtraVelocity, 0.35f);
+            shakeAmount = Mathf.SmoothDamp(shakeAmount, effectShake, ref shakeVelocity, 0.15f);
+
             Apply();
             ApplySpeedEffects();
+            ApplyEffectShake();
         }
 
         // 速度に応じて視野角を広げ、わずかに揺らして「速く走っている」感じを出す
@@ -171,6 +214,14 @@ namespace Pirates
                 var shake = new Vector3(Mathf.PerlinNoise(t, 0f) - 0.5f, Mathf.PerlinNoise(0f, t) - 0.5f, 0f);
                 transform.position += transform.rotation * (shake * (2f * speedShake * speed01 * speed01));
             }
+        }
+
+        void ApplyEffectShake()
+        {
+            if (shakeAmount <= 0.001f) return;
+            float t = Time.time * 28f;
+            var shake = new Vector3(Mathf.PerlinNoise(t, 3f) - 0.5f, Mathf.PerlinNoise(7f, t) - 0.5f, 0f);
+            transform.position += transform.rotation * (shake * (2f * shakeAmount));
         }
 
         bool TryFindNearestEnemy(out Vector3 position, out float distance)
@@ -201,7 +252,7 @@ namespace Pirates
         {
             Quaternion yawRot = Quaternion.Euler(0f, yaw, 0f);
             Vector3 center = focus + enemyOffset;
-            transform.position = center + yawRot * new Vector3(0f, height + (extraDistance + sunkExtra) * 0.6f, -(distance + extraDistance + sunkExtra));
+            transform.position = center + yawRot * new Vector3(0f, height + (extraDistance + sunkExtra + effectExtra) * 0.6f, -(distance + extraDistance + sunkExtra + effectExtra));
             transform.rotation = Quaternion.LookRotation(
                 center + yawRot * lookOffset - transform.position, Vector3.up);
         }

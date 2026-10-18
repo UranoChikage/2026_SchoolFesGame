@@ -35,8 +35,20 @@ namespace Pirates
         [Header("ビーム用")]
         [SerializeField]
         [Min(0.1f)]
-        [Tooltip("ビームの半径(m)。この範囲の船が沈む")]
+        [Tooltip("着弾点(カーソル位置)の判定の半径(m)。この範囲の船が沈む")]
         float beamRadius = 3f;
+        [SerializeField]
+        [Min(0.1f)]
+        [Tooltip("ビームの通り道の判定の半径(m)。砲口から着弾点までの間に通った船も沈む。見た目の太さにも使う")]
+        float beamWidth = 1f;
+        [SerializeField]
+        [Min(0f)]
+        [Tooltip("ビーム使用中にカメラを引く距離(m)。0なら引かない")]
+        float cameraZoomOut = 6f;
+        [SerializeField]
+        [Min(0f)]
+        [Tooltip("ビーム使用中のカメラの揺れ幅(m)。0なら揺らさない")]
+        float cameraShake = 0.15f;
 
         [Header("バリア用")]
         [SerializeField]
@@ -51,6 +63,9 @@ namespace Pirates
         public Sprite Icon => icon;
         public Color Color => color;
         public float BeamRadius => beamRadius;
+        public float BeamWidth => beamWidth;
+        public float CameraZoomOut => cameraZoomOut;
+        public float CameraShake => cameraShake;
         public float BarrierRadius => barrierRadius;
     }
 }

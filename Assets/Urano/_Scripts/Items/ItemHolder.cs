@@ -20,6 +20,7 @@ namespace Pirates
         float beamEnd;
         Transform beamVisual;
         Transform areaVisual; // 判定範囲を示す水面の円
+        bool cameraEffectOn;
 
         public ItemAsset Held => held;
         /// <summary>ビーム使用中。この間この砲手は通常の大砲を撃てない</summary>
@@ -59,6 +60,7 @@ namespace Pirates
             {
                 beam = item;
                 beamEnd = Time.time + item.Duration;
+                StartCameraEffect();
             }
             return true;
         }
@@ -66,6 +68,8 @@ namespace Pirates
         /// <summary>毎フレーム、カーソルが指す位置を渡す。ビーム使用中、その位置の船を沈める</summary>
         public void Tick(Vector3 aimPoint, bool hasAim)
         {
+            if (cameraEffectOn && !IsBeamActive) StopCameraEffect();
+
             bool active = IsBeamActive && hasAim;
             if (beamVisual != null) beamVisual.gameObject.SetActive(active);
             if (areaVisual != null) areaVisual.gameObject.SetActive(active);
@@ -74,21 +78,45 @@ namespace Pirates
             ShowBeam(aimPoint);
 
             Transform owner = shooter.Owner;
+            // 通り道：砲口から着弾点までの線上にいる船も全て攻撃判定
+            int count = Physics.OverlapCapsuleNonAlloc(shooter.MuzzlePosition, aimPoint, beam.BeamWidth, hits, shooter.HitMask, QueryTriggerInteraction.Ignore);
+            Damage(count, owner, aimPoint);
+
             // 水面の高さのずれで外れないよう、縦長のカプセルで判定する
             Vector3 up = Vector3.up * HitHeight;
-            int count = Physics.OverlapCapsuleNonAlloc(aimPoint + up, aimPoint - up, beam.BeamRadius, hits, shooter.HitMask, QueryTriggerInteraction.Ignore);
+            count = Physics.OverlapCapsuleNonAlloc(aimPoint + up, aimPoint - up, beam.BeamRadius, hits, shooter.HitMask, QueryTriggerInteraction.Ignore);
+            Damage(count, owner, aimPoint);
+        }
+
+        void Damage(int count, Transform owner, Vector3 point)
+        {
             for (int i = 0; i < count; i++)
             {
                 if (owner != null && hits[i].transform.IsChildOf(owner)) continue;
                 var health = hits[i].GetComponentInParent<ShipHealth>();
-                if (health != null && !health.IsDead) health.TakeDamage(BeamDamage, aimPoint);
+                if (health != null && !health.IsDead) health.TakeDamage(BeamDamage, point);
             }
+        }
+
+        void StartCameraEffect()
+        {
+            BoatFollowCamera cam = BoatFollowCamera.Current;
+            if (cam == null || cameraEffectOn) return;
+            cam.BeginEffect(beam.CameraZoomOut, beam.CameraShake);
+            cameraEffectOn = true;
+        }
+
+        void StopCameraEffect()
+        {
+            cameraEffectOn = false;
+            if (BoatFollowCamera.Current != null) BoatFollowCamera.Current.EndEffect();
         }
 
         void OnDisable()
         {
             if (beamVisual != null) beamVisual.gameObject.SetActive(false);
             if (areaVisual != null) areaVisual.gameObject.SetActive(false);
+            if (cameraEffectOn) StopCameraEffect();
         }
 
         // 仮の見た目：砲口からカーソル位置へ伸びる細い半透明の円柱。専用のVFXができたら差し替える
@@ -127,7 +155,7 @@ namespace Pirates
             float length = to.magnitude;
             if (length < 0.01f) return;
 
-            float width = Mathf.Min(1f, beam.BeamRadius); // 見た目の太さ（判定の広さとは別）
+            float width = beam.BeamWidth * 2f; // 通り道の判定と同じ太さ
             beamVisual.position = from + to * 0.5f;
             beamVisual.rotation = Quaternion.FromToRotation(Vector3.up, to / length); // 円柱は上方向に伸びる
             beamVisual.localScale = new Vector3(width, length * 0.5f, width); // 円柱の高さは scale.y の2倍
