@@ -8,7 +8,8 @@ namespace Pirates
     /// </summary>
     public class ItemHolder : MonoBehaviour
     {
-        const int HitBuffer = 16;
+        const int HitBuffer = 64;
+        const float HitHeight = 20f; // 判定の上下の広がり(m)。砲弾の爆発と同じく縦長に取る
         const float BeamDamage = 99999f; // 一撃で沈める
 
         static readonly Collider[] hits = new Collider[HitBuffer];
@@ -18,6 +19,7 @@ namespace Pirates
         ItemAsset beam;
         float beamEnd;
         Transform beamVisual;
+        Transform areaVisual; // 判定範囲を示す水面の円
 
         public ItemAsset Held => held;
         /// <summary>ビーム使用中。この間この砲手は通常の大砲を撃てない</summary>
@@ -66,12 +68,15 @@ namespace Pirates
         {
             bool active = IsBeamActive && hasAim;
             if (beamVisual != null) beamVisual.gameObject.SetActive(active);
+            if (areaVisual != null) areaVisual.gameObject.SetActive(active);
             if (!active) return;
 
             ShowBeam(aimPoint);
 
             Transform owner = shooter.Owner;
-            int count = Physics.OverlapSphereNonAlloc(aimPoint, beam.BeamRadius, hits, shooter.HitMask, QueryTriggerInteraction.Ignore);
+            // 水面の高さのずれで外れないよう、縦長のカプセルで判定する
+            Vector3 up = Vector3.up * HitHeight;
+            int count = Physics.OverlapCapsuleNonAlloc(aimPoint + up, aimPoint - up, beam.BeamRadius, hits, shooter.HitMask, QueryTriggerInteraction.Ignore);
             for (int i = 0; i < count; i++)
             {
                 if (owner != null && hits[i].transform.IsChildOf(owner)) continue;
@@ -83,6 +88,7 @@ namespace Pirates
         void OnDisable()
         {
             if (beamVisual != null) beamVisual.gameObject.SetActive(false);
+            if (areaVisual != null) areaVisual.gameObject.SetActive(false);
         }
 
         // 仮の見た目：砲口からカーソル位置へ伸びる細い半透明の円柱。専用のVFXができたら差し替える
@@ -99,6 +105,22 @@ namespace Pirates
             Color c = beam.Color;
             c.a = 0.5f;
             beamVisual.GetComponent<Renderer>().material.color = c;
+
+            // 判定範囲の円（薄い円柱）。ビームが当たる広さをそのまま見せる
+            if (areaVisual == null)
+            {
+                var area = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                area.name = "BeamAreaVisual";
+                Destroy(area.GetComponent<Collider>());
+                area.GetComponent<Renderer>().material = new Material(Shader.Find("Sprites/Default")) { renderQueue = 3100 };
+                areaVisual = area.transform;
+            }
+            Color ac = beam.Color;
+            ac.a = 0.25f;
+            areaVisual.GetComponent<Renderer>().material.color = ac;
+            float diameter = beam.BeamRadius * 2f;
+            areaVisual.position = point + Vector3.up * 0.05f;
+            areaVisual.localScale = new Vector3(diameter, 0.02f, diameter);
 
             Vector3 from = shooter.MuzzlePosition;
             Vector3 to = point - from;
