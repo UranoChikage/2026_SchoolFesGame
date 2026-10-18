@@ -34,6 +34,10 @@ namespace Pirates
         [SerializeField]
         float maxRadius = 80f;
         [SerializeField]
+        [Range(30f, 180f)]
+        [Tooltip("カメラの前方からこの角度(度)の範囲にだけ出す（左右それぞれ）。90なら前方の半円、180なら全方位。後ろに出ると、追うために舵を切り続けることになる")]
+        float spawnHalfAngle = 100f;
+        [SerializeField]
         [Tooltip("カメラに映らない位置を探す試行回数。全部映ってしまったらその回は出さない")]
         int placeAttempts = 8;
         [SerializeField]
@@ -110,11 +114,18 @@ namespace Pirates
             float y = (player.Water != null ? player.Water.waterY : player.transform.position.y) + spawnHeight;
             Vector3 center = player.transform.position;
 
+            // 前方の基準：カメラの向き（水平）。取れなければ船の向き
+            Camera cam = Camera.main;
+            Vector3 forward = cam != null ? cam.transform.forward : player.transform.forward;
+            forward.y = 0f;
+            if (forward.sqrMagnitude < 0.0001f) forward = Vector3.forward;
+            forward.Normalize();
+
             for (int i = 0; i < placeAttempts; i++)
             {
-                Vector2 dir = Random.insideUnitCircle.normalized;
+                Vector3 dir = Quaternion.Euler(0f, Random.Range(-spawnHalfAngle, spawnHalfAngle), 0f) * forward;
                 float radius = Random.Range(minRadius, maxRadius);
-                point = new Vector3(center.x + dir.x * radius, y, center.z + dir.y * radius);
+                point = new Vector3(center.x + dir.x * radius, y, center.z + dir.z * radius);
                 if (!IsOnScreen(point)) return true;
             }
 
