@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
 using UnityEngine.Serialization;
 
 namespace Pirates
@@ -47,8 +46,6 @@ namespace Pirates
         [SerializeField]
         [Tooltip("この角度(度)傾けると、カーソルが画面端に届く")]
         float tiltRange = 30f;
-        [SerializeField]
-        Joycon.Button fireButton = Joycon.Button.SHOULDER_2;
 
         [Header("カーソル表示")]
         [SerializeField]
@@ -95,13 +92,13 @@ namespace Pirates
         {
             SelectByNumberKey();
 
-            Joycon jc = forceMouse ? null : FindJoycon();
+            bool joycon = !forceMouse && GameInput.IsJoyconConnected(joyconIndex);
             bool fire;
 
-            if (jc != null)
+            if (joycon)
             {
                 status = "JOYCON";
-                fire = UpdateJoycon(jc);
+                fire = UpdateJoycon();
             }
             else if (activeStationNumber != stationNumber)
             {
@@ -147,27 +144,12 @@ namespace Pirates
         // 数字キー（上段／テンキー）で操作する砲手を切り替える
         void SelectByNumberKey()
         {
-            var kb = Keyboard.current;
-            if (kb == null || stationNumber < 1 || stationNumber > 9) return;
-
-            Key digit = Key.Digit1 + (stationNumber - 1);
-            Key numpad = Key.Numpad1 + (stationNumber - 1);
-            if (kb[digit].wasPressedThisFrame || kb[numpad].wasPressedThisFrame)
-            {
-                activeStationNumber = stationNumber;
-            }
+            if (GameInput.StationSelectPressed(stationNumber)) activeStationNumber = stationNumber;
         }
 
-        Joycon FindJoycon()
+        bool UpdateJoycon()
         {
-            var manager = JoyconManager.Instance;
-            if (manager == null || manager.j == null || manager.j.Count <= joyconIndex) return null;
-            return manager.j[joyconIndex];
-        }
-
-        bool UpdateJoycon(Joycon jc)
-        {
-            Vector3 accel = jc.GetAccel();
+            Vector3 accel = GameInput.GetJoyconAccel(joyconIndex);
             float down = Pick(accel, downAxis);
 
             // 重力ベクトルの傾き角（JoyConRudderと同じ考え方）
@@ -179,15 +161,14 @@ namespace Pirates
                 (Mathf.Clamp(tiltY / tiltRange, -1f, 1f) * 0.5f + 0.5f) * Screen.height);
 
             cursor = Vector2.Lerp(cursor, target, 1f - Mathf.Exp(-smoothing * Time.deltaTime));
-            return jc.GetButtonDown(fireButton);
+            return GameInput.JoyconFirePressed(joyconIndex);
         }
 
         bool UpdateMouse()
         {
-            var mouse = Mouse.current;
-            if (mouse == null) return false;
-            cursor = mouse.position.ReadValue();
-            return mouse.leftButton.wasPressedThisFrame;
+            if (!GameInput.TryGetMousePosition(out Vector2 pos)) return false;
+            cursor = pos;
+            return GameInput.MouseFirePressed();
         }
 
         // 砲身を狙う位置へ水平方向（Y軸回転のみ）に向ける（見た目だけ）。

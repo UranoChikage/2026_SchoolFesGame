@@ -1,7 +1,6 @@
 using System;
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.InputSystem;
 using UnityEngine.Playables;
 
 namespace Pirates
@@ -24,9 +23,6 @@ namespace Pirates
         [SerializeField]
         [Tooltip("ONなら開始操作を待たず、シーン開始と同時に導入演出へ進む")]
         bool autoStart = false;
-        [SerializeField]
-        [Tooltip("PC用の開始キー（待機中に押すと導入演出へ）")]
-        Key startKey = Key.Space;
 
         [Header("導入演出（UIアニメ→発進）")]
         [SerializeField]
@@ -34,9 +30,6 @@ namespace Pirates
         PlayableDirector introDirector;
         [SerializeField]
         float introDuration = 3f;
-        [SerializeField]
-        [Tooltip("PC用のスキップキー（導入演出中に押すと発進）")]
-        Key skipKey = Key.Enter;
 
         [Header("終了演出")]
         [SerializeField]
@@ -125,11 +118,11 @@ namespace Pirates
             switch (Phase)
             {
                 case GamePhase.Standby:
-                    if (Keyboard.current != null && Keyboard.current[startKey].wasPressedThisFrame) StartGame();
+                    if (GameInput.StartPressed()) StartGame();
                     break;
 
                 case GamePhase.Intro:
-                    if (Keyboard.current != null && Keyboard.current[skipKey].wasPressedThisFrame) SkipIntro();
+                    if (GameInput.SkipPressed()) SkipIntro();
                     else if (SequenceDone(introDirector)) BeginPlaying();
                     break;
 
