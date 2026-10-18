@@ -57,7 +57,7 @@ namespace Pirates
                 var go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
                 go.name = "BarrierVisual";
                 Destroy(go.GetComponent<Collider>());
-                go.GetComponent<Renderer>().material = new Material(Shader.Find("Sprites/Default"));
+                go.GetComponent<Renderer>().material = new Material(Shader.Find("Sprites/Default")) { renderQueue = 3100 }; // 海(3000, 不透明のように上書き)より後に描く
                 visual = go.transform;
                 visual.SetParent(transform, false);
             }

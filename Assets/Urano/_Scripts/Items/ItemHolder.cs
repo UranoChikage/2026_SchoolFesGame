@@ -93,7 +93,7 @@ namespace Pirates
                 var go = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
                 go.name = "BeamVisual";
                 Destroy(go.GetComponent<Collider>());
-                go.GetComponent<Renderer>().material = new Material(Shader.Find("Sprites/Default"));
+                go.GetComponent<Renderer>().material = new Material(Shader.Find("Sprites/Default")) { renderQueue = 3100 }; // 海(3000, 不透明のように上書き)より後に描く
                 beamVisual = go.transform;
             }
             Color c = beam.Color;
