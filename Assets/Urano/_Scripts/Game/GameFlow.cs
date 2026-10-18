@@ -34,6 +34,9 @@ namespace Pirates
         PlayableDirector introDirector;
         [SerializeField]
         float introDuration = 3f;
+        [SerializeField]
+        [Tooltip("PC用のスキップキー（導入演出中に押すと発進）")]
+        Key skipKey = Key.Return;
 
         [Header("終了演出")]
         [SerializeField]
@@ -126,7 +129,8 @@ namespace Pirates
                     break;
 
                 case GamePhase.Intro:
-                    if (SequenceDone(introDirector)) BeginPlaying();
+                    if (Keyboard.current != null && Keyboard.current[skipKey].wasPressedThisFrame) SkipIntro();
+                    else if (SequenceDone(introDirector)) BeginPlaying();
                     break;
 
                 case GamePhase.Playing:
