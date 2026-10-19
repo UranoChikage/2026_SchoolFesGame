@@ -128,7 +128,8 @@ namespace Pirates
                 if (fire && !items.TryUse() && !items.IsBeamActive) shooter.TryFireAt(aim.AimPoint);
             }
 
-            UpdateTrajectory(status != "waiting" && shooter.IsAlive);
+            // ビーム使用中はこの砲は撃てないので、予測線は出さない
+            UpdateTrajectory(status != "waiting" && shooter.IsAlive && !items.IsBeamActive);
         }
 
         // 予測線：選ばれている砲だけ、カーソルが指す位置へ撃った弾道を表示する
