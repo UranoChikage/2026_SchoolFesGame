@@ -77,6 +77,20 @@ namespace Pirates
             buoyancy = GetComponent<BoatBuoyancy>();
             colliders = GetComponentsInChildren<Collider>();
             defaultUseGravity = rb.useGravity;
+            MoveVisualsToSilhouetteLayer();
+        }
+
+        // 見た目だけのオブジェクトを EnemyVisual レイヤーへ移す（隠れたときのシルエット描画の対象にする）。
+        // 物理判定に影響しないよう、コライダーを持つオブジェクトは触らない
+        void MoveVisualsToSilhouetteLayer()
+        {
+            int layer = LayerMask.NameToLayer("EnemyVisual");
+            if (layer < 0) return;
+
+            foreach (Renderer r in GetComponentsInChildren<MeshRenderer>(true))
+            {
+                if (r.GetComponent<Collider>() == null) r.gameObject.layer = layer;
+            }
         }
 
         // プールから再利用されるたびに状態を初期化する
