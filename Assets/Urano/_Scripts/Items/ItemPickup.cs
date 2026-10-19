@@ -14,8 +14,16 @@ namespace Pirates
         [SerializeField]
         float bobSpeed = 2f;
 
+        /// <summary>海に出ているアイテム一覧（画面端アイコンが使う）</summary>
+        public static readonly System.Collections.Generic.List<ItemPickup> Active = new System.Collections.Generic.List<ItemPickup>();
+
+        public Color Color => item != null ? item.Color : Color.white;
+
         ItemAsset item;
         float baseY;
+
+        void OnEnable() => Active.Add(this);
+        void OnDisable() => Active.Remove(this);
 
         // 全ドロップで1つを共有（Prefab未設定時の仮の見た目）
         static ItemPickup fallbackPrefab;
