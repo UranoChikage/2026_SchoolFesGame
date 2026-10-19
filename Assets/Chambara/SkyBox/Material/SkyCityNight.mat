@@ -1,0 +1,48 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: SkyCityNight
+  m_Shader: {fileID: 4800000, guid: 8afd513ca68844e18a5d184c3354b0b3, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs: []
+    m_Ints: []
+    m_Floats:
+    - _StarIntensity: 0.7
+    - _SunSize: 0
+    - _SunGlowIntensity: 0
+    - _WindowIntensity: 2.5
+    - _WindowLitRatio: 0.45
+    - _FarHaze: 0.5
+    - _MidHaze: 0.25
+    - _NearHaze: 0.05
+    - _GroundFog: 0.4
+    - _CityGlowHeight: 0.15
+    m_Colors:
+    - _ZenithColor: {r: 0.01, g: 0.015, b: 0.045, a: 1}
+    - _HorizonColor: {r: 0.1, g: 0.07, b: 0.12, a: 1}
+    - _CityGlowColor: {r: 0.4, g: 0.2, b: 0.1, a: 1}
+    - _SunColor: {r: 0, g: 0, b: 0, a: 1}
+    - _HazeColor: {r: 0.16, g: 0.1, b: 0.12, a: 1}
+    - _BuildingColor: {r: 0.015, g: 0.015, b: 0.025, a: 1}
+    - _HillColor: {r: 0.03, g: 0.03, b: 0.04, a: 1}
+    - _GroundColor: {r: 0.03, g: 0.03, b: 0.04, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1
