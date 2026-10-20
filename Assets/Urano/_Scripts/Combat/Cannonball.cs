@@ -24,6 +24,9 @@ namespace Pirates
         VfxAsset explosionVfx;
         CannonShooter source;
         float lifeTime;
+        ParticleSystem[] particles;
+
+        void Awake() => particles = GetComponentsInChildren<ParticleSystem>(true);
 
         public void Launch(Vector3 initialVelocity, float explosionRadius, float damage,
             LayerMask hitMask, BoatBuoyancy water, Transform owner, VfxAsset explosionVfx, float lifeTime, CannonShooter source = null)
@@ -37,6 +40,13 @@ namespace Pirates
             this.explosionVfx = explosionVfx;
             this.lifeTime = lifeTime;
             this.source = source;
+
+            // プール再利用で前回の煙が残る/再生されないことがないよう、毎回頭から再生し直す
+            foreach (ParticleSystem ps in particles)
+            {
+                ps.Clear(true);
+                ps.Play(true);
+            }
         }
 
         void Update()
