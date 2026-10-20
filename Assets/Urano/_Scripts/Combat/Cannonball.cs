@@ -61,11 +61,12 @@ namespace Pirates
             foreach (Renderer rd in bodyRenderers) rd.enabled = true;
             foreach (Collider c in bodyColliders) c.enabled = true;
 
-            // プール再利用で前回の煙が残る/再生されないことがないよう、毎回頭から再生し直す
+            // 前回の着弾で切った煙の発生を戻す
             foreach (ParticleSystem ps in particles)
             {
-                ps.Clear(true);
-                ps.Play(true);
+                // Stop/Play は使わない（Stopしたものは再利用時にPlayが効かなくなる）。ループ再生のまま、発生だけ入れ替える
+                var emission = ps.emission;
+                emission.enabled = true;
             }
         }
 
@@ -167,7 +168,8 @@ namespace Pirates
             float longest = 0f;
             foreach (ParticleSystem ps in particles)
             {
-                ps.Stop(true, ParticleSystemStopBehavior.StopEmitting);
+                var emission = ps.emission;
+                emission.enabled = false; // 新しい煙だけ止める（システムは止めないので、出ている煙は寿命まで残る）
                 longest = Mathf.Max(longest, ps.main.startLifetime.constantMax);
             }
             fadeEndTime = Time.time + longest;
