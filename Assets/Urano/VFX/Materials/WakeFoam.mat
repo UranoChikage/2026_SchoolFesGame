@@ -21,7 +21,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: WakeFoam
-  m_Shader: {fileID: 10753, guid: 0000000000000000f000000000000000, type: 0}
+  m_Shader: {fileID: 4800000, guid: 75aeca32f5efbd641b804c7229ce6e7a, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -29,7 +29,7 @@ Material:
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 1
   m_DoubleSidedGI: 0
-  m_CustomRenderQueue: 3100
+  m_CustomRenderQueue: -1
   stringTagMap: {}
   disabledShaderPasses: []
   m_LockedProperties: 
@@ -40,6 +40,10 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _BaseMap:
+        m_Texture: {fileID: 2800000, guid: beeb1f8d8b6ca6c4ba72e4e2eda59a83, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _MainTex:
         m_Texture: {fileID: 2800000, guid: 49c756a0e8f47844694503d54c2c2302, type: 3}
         m_Scale: {x: 1, y: 1}
@@ -47,10 +51,19 @@ Material:
     m_Ints: []
     m_Floats:
     - PixelSnap: 0
+    - _Cull: 0
+    - _DitherScale: 1
     - _EnableExternalAlpha: 0
+    - _SphereNormal: 0
+    - _Threshold1: 0.55
+    - _Threshold2: 0
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _DarkColor: {r: 1, g: 1, b: 1, a: 1}
     - _Flip: {r: 1, g: 1, b: 1, a: 1}
+    - _LightColor: {r: 1, g: 1, b: 1, a: 1}
+    - _LightDir: {r: 0.4, g: 0.8, b: 0.3, a: 0}
+    - _MidColor: {r: 1, g: 1, b: 1, a: 1}
     - _RendererColor: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
