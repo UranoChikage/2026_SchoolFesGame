@@ -1,0 +1,17 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 70d87efe46a45f347875dc37b16e2d2f, type: 3}
+  m_Name: Surface_Ship
+  m_EditorClassIdentifier: Assembly-CSharp::Pirates.SurfaceAsset
+  cannonHitVfx: {fileID: 11400000, guid: 81662aa82d3e35d44a46eff222944f69, type: 2}
+  beamHitVfx: {fileID: 11400000, guid: 4023bcd12ef673446a35ed4f7c3a29c4, type: 2}
+  vfxScale: 1

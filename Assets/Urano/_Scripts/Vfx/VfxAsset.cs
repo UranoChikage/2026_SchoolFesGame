@@ -38,7 +38,20 @@ namespace Pirates
         /// <summary>縦横を分けた倍率で再生する（x,z=直径方向、y=高さ）</summary>
         public GameObject Play(Vector3 position, Vector3 scale) => Play(position, Quaternion.identity, scale);
 
-        GameObject Play(Vector3 position, Quaternion rotation, Vector3 scale)
+        /// <summary>
+        /// 自動返却せずに出す。呼び出し側が PoolManager.Release で返す。
+        /// 出しっぱなしにして位置を追従させたいもの（ビームの当たり演出など）用で、Prefabはループ再生にしておく。
+        /// </summary>
+        public GameObject Hold(Vector3 position, Quaternion rotation, Vector3 scale)
+        {
+            if (prefab == null) return null;
+            GameObject instance = PoolManager.Spawn(prefab, position, rotation);
+            if (instance != null) instance.transform.localScale = Vector3.Scale(prefab.transform.localScale, scale);
+            return instance;
+        }
+
+        /// <summary>向きと縦横別の倍率を指定して再生する</summary>
+        public GameObject Play(Vector3 position, Quaternion rotation, Vector3 scale)
         {
             if (prefab == null) return null;
             GameObject instance = PoolManager.Spawn(prefab, position, rotation, lifetime);

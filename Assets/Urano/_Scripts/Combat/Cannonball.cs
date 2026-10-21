@@ -21,7 +21,6 @@ namespace Pirates
         LayerMask hitMask;
         BoatBuoyancy water;
         Transform owner;
-        VfxAsset explosionVfx;
         CannonShooter source;
         float lifeTime;
         ParticleSystem[] particles;
@@ -44,7 +43,7 @@ namespace Pirates
         }
 
         public void Launch(Vector3 initialVelocity, float explosionRadius, float damage,
-            LayerMask hitMask, BoatBuoyancy water, Transform owner, VfxAsset explosionVfx, float lifeTime, CannonShooter source = null)
+            LayerMask hitMask, BoatBuoyancy water, Transform owner, float lifeTime, CannonShooter source = null)
         {
             velocity = initialVelocity;
             this.explosionRadius = explosionRadius;
@@ -52,7 +51,6 @@ namespace Pirates
             this.hitMask = hitMask;
             this.water = water;
             this.owner = owner;
-            this.explosionVfx = explosionVfx;
             this.lifeTime = lifeTime;
             this.source = source;
 
@@ -87,9 +85,9 @@ namespace Pirates
             // コライダーへの着弾（発射元の船は無視）
             Vector3 delta = end - start;
             float length = delta.magnitude;
-            if (length > 0f && TryFindHit(start, delta / length, length, out Vector3 hitPoint))
+            if (length > 0f && TryFindHit(start, delta / length, length, out Vector3 hitPoint, out HitSurface hitSurface))
             {
-                Explode(hitPoint);
+                Explode(hitPoint, hitSurface);
                 return;
             }
 
@@ -97,7 +95,7 @@ namespace Pirates
             if (water != null && end.y <= water.waterY)
             {
                 float t = Mathf.Clamp01((start.y - water.waterY) / Mathf.Max(0.0001f, start.y - end.y));
-                Explode(Vector3.Lerp(start, end, t));
+                Explode(Vector3.Lerp(start, end, t), HitSurface.Sea);
                 return;
             }
 
@@ -107,11 +105,12 @@ namespace Pirates
             if (lifeTime <= 0f) Finish();
         }
 
-        bool TryFindHit(Vector3 origin, Vector3 direction, float length, out Vector3 point)
+        bool TryFindHit(Vector3 origin, Vector3 direction, float length, out Vector3 point, out HitSurface surface)
         {
             int count = Physics.RaycastNonAlloc(origin, direction, hitBuffer, length, hitMask, QueryTriggerInteraction.Ignore);
             float nearest = float.MaxValue;
             point = default;
+            surface = null;
             bool found = false;
             for (int i = 0; i < count; i++)
             {
@@ -121,15 +120,18 @@ namespace Pirates
                 {
                     nearest = h.distance;
                     point = h.point;
+                    surface = h.collider.GetComponentInParent<HitSurface>();
                     found = true;
                 }
             }
             return found;
         }
 
-        void Explode(Vector3 point)
+        // surface: 当たった物の素材（無ければnull）。着弾演出は素材→既定の素材の順で決まる
+        void Explode(Vector3 point, HitSurface surface)
         {
-            if (explosionVfx != null) explosionVfx.Play(point, explosionRadius * 2f);
+            VfxAsset vfx = HitSurface.ResolveCannonVfx(surface);
+            if (vfx != null) vfx.Play(point, explosionRadius * 2f);
             DrawExplosionRange(point);
 
             // 範囲内のIDamageableに1回ずつダメージ（コライダーが複数あっても重複させない）

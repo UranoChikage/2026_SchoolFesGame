@@ -32,9 +32,6 @@ namespace Pirates
         [Tooltip("砲弾のPrefab（Cannonball付き）。未設定なら球を自動生成")]
         Cannonball projectilePrefab;
         [SerializeField]
-        [Tooltip("着弾時の爆発の演出（任意）。Assets/Urano/VFX のVfxAsset")]
-        VfxAsset explosionVfx;
-        [SerializeField]
         [Tooltip("砲弾の見た目の大きさ（Prefab未設定時）")]
         float fallbackBallSize = 0.5f;
 
@@ -150,7 +147,7 @@ namespace Pirates
             Vector3 origin = Muzzle.position;
             Cannonball ball = PoolManager.Spawn(projectilePrefab != null ? projectilePrefab : FallbackPrefab, origin, Quaternion.identity);
             BoatBuoyancy surface = water != null ? water : PlayerTarget.Current?.Water; // 未設定ならプレイヤー船の水面
-            ball.Launch(velocity, explosionRadius, damage, hitMask, surface, owner, explosionVfx, 15f, this);
+            ball.Launch(velocity, explosionRadius, damage, hitMask, surface, owner, 15f, this);
 
             nextFireTime = Time.time + cooldown;
             return true;
