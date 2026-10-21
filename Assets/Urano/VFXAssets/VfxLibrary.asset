@@ -13,5 +13,7 @@ MonoBehaviour:
   m_Name: VfxLibrary
   m_EditorClassIdentifier: Assembly-CSharp::Pirates.VfxLibrary
   entries:
+  - {fileID: 11400000, guid: b19a6c5fdc1a7a44ca935b58a4e8be2e, type: 2}
+  - {fileID: 11400000, guid: 4023bcd12ef673446a35ed4f7c3a29c4, type: 2}
   - {fileID: 11400000, guid: 83d71a82294302243b32d783648538a0, type: 2}
   - {fileID: 11400000, guid: 81662aa82d3e35d44a46eff222944f69, type: 2}

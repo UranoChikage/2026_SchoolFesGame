@@ -41,6 +41,29 @@ namespace Pirates
         [Min(0.1f)]
         [Tooltip("ビームの通り道の判定の半径(m)。砲口から着弾点までの間に通った船も沈む。見た目の太さにも使う")]
         float beamWidth = 1f;
+        [Header("ビームの見た目（空なら仮の見た目）")]
+        [SerializeField]
+        [Tooltip("ビーム本体のPrefab。LineRenderer（2点・Use World Space）入りか、メッシュのモデル。モデルの場合は最も長い軸が長さ方向になり、長さ=ビームの長さ、太さ=Beam Width×2 に伸縮する")]
+        GameObject beamPrefab;
+        [SerializeField]
+        [Tooltip("着弾点の判定範囲の円のPrefab。直径1mの薄い円盤にしておく（Beam Radius×2 に拡縮される）")]
+        GameObject beamAreaPrefab;
+        [SerializeField]
+        [Tooltip("ビームを撃ち始めたとき、砲口に一度だけ出す演出（砲口フラッシュ）")]
+        VfxAsset beamMuzzleVfx;
+        [SerializeField]
+        [Tooltip("ビームの終点（遮蔽や水面に当たっている位置）に1つだけ出して追従させる既定の演出。Prefabはループ再生にしておく。当たった物に HitSurface（素材）があれば、そちらが優先")]
+        VfxAsset beamHitVfx;
+
+        [Header("ビームの伸び縮み")]
+        [SerializeField]
+        [Min(1f)]
+        [Tooltip("ビームが砲口から着弾点へ伸びる速さ(m/秒)。伸びきるまで判定は出ない")]
+        float beamExtendSpeed = 80f;
+        [SerializeField]
+        [Min(1f)]
+        [Tooltip("使用時間が終わってから、ビームが根元から着弾点へ縮む速さ(m/秒)。縮む間は判定なし")]
+        float beamRetractSpeed = 120f;
         [SerializeField]
         [Min(0f)]
         [Tooltip("ビーム使用中にカメラを引く距離(m)。0なら引かない")]
@@ -64,6 +87,12 @@ namespace Pirates
         public Color Color => color;
         public float BeamRadius => beamRadius;
         public float BeamWidth => beamWidth;
+        public GameObject BeamPrefab => beamPrefab;
+        public GameObject BeamAreaPrefab => beamAreaPrefab;
+        public VfxAsset BeamMuzzleVfx => beamMuzzleVfx;
+        public VfxAsset BeamHitVfx => beamHitVfx;
+        public float BeamExtendSpeed => beamExtendSpeed;
+        public float BeamRetractSpeed => beamRetractSpeed;
         public float CameraZoomOut => cameraZoomOut;
         public float CameraShake => cameraShake;
         public float BarrierRadius => barrierRadius;
