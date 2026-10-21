@@ -38,7 +38,11 @@ namespace Pirates
         [Tooltip("カメラの前方からこの角度(度)の範囲にだけ出す（左右それぞれ）。90なら前方の半円、180なら全方位。後ろに出ると、追うために舵を切り続けることになる")]
         float spawnHalfAngle = 100f;
         [SerializeField]
-        [Tooltip("カメラに映らない位置を探す試行回数。全部映ってしまったらその回は出さない")]
+        [Min(0f)]
+        [Tooltip("出現位置は、すでにいる敵からこの距離(m)以上離す。船同士が重なって挙動がおかしくなるのを防ぐ。0なら見ない")]
+        float minSpacing = 15f;
+        [SerializeField]
+        [Tooltip("カメラに映らない位置を探す試行回数（映る位置・他の敵に近すぎる位置はやり直す）。全部だめならその回は出さない")]
         int placeAttempts = 8;
         [SerializeField]
         [Tooltip("水面からの出現高さのオフセット(m)")]
@@ -126,10 +130,26 @@ namespace Pirates
                 Vector3 dir = Quaternion.Euler(0f, Random.Range(-spawnHalfAngle, spawnHalfAngle), 0f) * forward;
                 float radius = Random.Range(minRadius, maxRadius);
                 point = new Vector3(center.x + dir.x * radius, y, center.z + dir.z * radius);
-                if (!IsOnScreen(point)) return true;
+                if (!IsOnScreen(point) && !IsTooClose(point)) return true;
             }
 
             point = default;
+            return false;
+        }
+
+        // すでにいる敵に近すぎる位置か（水平距離）
+        bool IsTooClose(Vector3 point)
+        {
+            if (minSpacing <= 0f) return false;
+
+            float limit = minSpacing * minSpacing;
+            foreach (GameObject e in alive)
+            {
+                if (e == null || !e.activeSelf) continue;
+                Vector3 d = e.transform.position - point;
+                d.y = 0f;
+                if (d.sqrMagnitude < limit) return true;
+            }
             return false;
         }
 
