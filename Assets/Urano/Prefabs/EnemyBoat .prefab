@@ -16,6 +16,7 @@ GameObject:
   - component: {fileID: 1421211537261537259}
   - component: {fileID: -4012689413317643482}
   - component: {fileID: 7543160121532258227}
+  - component: {fileID: 7084765912682369995}
   m_Layer: 6
   m_Name: 'EnemyBoat '
   m_TagString: Untagged
@@ -146,7 +147,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Pirates.EnemyShip
   preferredDistance: 300
-  maxSpeed: 15
+  maxSpeed: 30
   timeToMaxSpeed: 3
   steerTorque: 600
   slowBrake: 3
@@ -189,9 +190,25 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 9f1e3053cd00fd24cbe2dd73413b4aae, type: 2}
   - {fileID: 11400000, guid: 9d3652c9283432544ad65e0a526bfb80, type: 2}
   dropChance: 1
-  pickupPrefab: {fileID: 0}
+  pickupPrefab: {fileID: 2574053192421046994, guid: fc2a34d4c946ad545b78e2d130302440, type: 3}
   lifetime: 20
   height: 1
+--- !u!114 &7084765912682369995
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 169567721554701670}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5a34e918f0bce7f489c0e032f5315b91, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Pirates.HitSurface
+  surface: {fileID: 11400000, guid: d27c3f92cf6651c4e8a116492bf3c769, type: 2}
+  blocksBeam: 0
+  isSea: 0
+  defaultSurface: {fileID: 0}
 --- !u!1 &1080207747987200326
 GameObject:
   m_ObjectHideFlags: 0
@@ -1272,7 +1289,6 @@ MonoBehaviour:
   owner: {fileID: 7262536529021641307}
   water: {fileID: 4254453295608203131}
   projectilePrefab: {fileID: 8299707208915026063, guid: 689b16d8b2446a143b29cbfa390f4406, type: 3}
-  explosionVfx: {fileID: 11400000, guid: 83d71a82294302243b32d783648538a0, type: 2}
   fallbackBallSize: 0.5
   mode: 0
   projectileSpeed: 40
