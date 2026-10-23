@@ -29,7 +29,7 @@ Material:
     - _CameraHeight: 70
     - _CellSize: 32
     - _DowntownRadius: 700
-    - _DriftSpeed: 30
+    - _DriftSpeed: 4.7
     - _EmptyChance: 0.149
     - _Exposure: 1
     - _FloorHeight: 3.6

@@ -42,6 +42,9 @@ namespace Chambara
         public AnimationCurve SlowMotionCurve => slowMotionCurve;
         float defaultFixedDeltaTime;
 
+        [Header("Model Settings")]
+        [SerializeField] string[] playerModelNames;
+
         private void Awake()
         {
             instance = this;
@@ -60,8 +63,8 @@ namespace Chambara
                 Instantiate(playerPrefab, edgePlayerPos0.position, Quaternion.identity),
                 Instantiate(playerPrefab, edgePlayerPos1.position, Quaternion.identity),
             };
-            players[0].Init(0, sim.players[0], edgePlayerPos0, edgePlayerPos1);
-            players[1].Init(1, sim.players[1], edgePlayerPos1, edgePlayerPos0);
+            players[0].Init(0, playerModelNames[0], sim.players[0], edgePlayerPos0, edgePlayerPos1);
+            players[1].Init(1, playerModelNames[1], sim.players[1], edgePlayerPos1, edgePlayerPos0);
             startTime = Time.time;
             SetGameState(GameState.Ready);
         }
@@ -109,8 +112,8 @@ namespace Chambara
 
             p0.Resolved = p1.Resolved = true;   // 結果は剣がぶつかった瞬間に出すので、通常の判定はさせない
 
-            // 後から振った方が振り切る時刻（ゲーム内時間）
-            float impactTime = Mathf.Max(p0.AttackTime + p0.AttackStartup, p1.AttackTime + p1.AttackStartup);
+            // 後から振った方の剣がぶつかる時刻（ゲーム内時間）
+            float impactTime = Mathf.Max(p0.ClashImpactTime, p1.ClashImpactTime);
             string both = $"{AttackLog(0)} {AttackLog(1)}=>";
             if (result == ClashResult.Tie)
             {
@@ -124,7 +127,7 @@ namespace Chambara
                 return;
             }
             int winner = result == ClashResult.Player0 ? 0 : 1;
-            impactTime = players[winner].AttackTime + players[winner].AttackStartup;   // 勝った方の剣が届いた瞬間に決着
+            impactTime = players[winner].AttackImpactTime;   // 勝った方の剣が届いた瞬間に決着
             StartCoroutine(SlowMotion(impactTime, () => Finish(both + $"ほぼ同時 {winner + 1}P:勝ち", 1 - winner)));
         }
 
@@ -228,7 +231,11 @@ namespace Chambara
         void Finish(string log, int loser)
         {
             Debug.Log(log);
-            if (loser >= 0) players[loser].Lose();
+            if (loser >= 0)
+            {
+                players[loser].Lose();
+                players[1 - loser].Win();
+            }
             SetGameState(GameState.Finished);
         }
 

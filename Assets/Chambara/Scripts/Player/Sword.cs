@@ -31,6 +31,10 @@ namespace Chambara
         [SerializeField] Vector2 guardOffset = new Vector2(-0.2f, 0.3f);   // x:横 y:構える方向 にずらす
         [SerializeField] float guardTilt = 20f;                             // 刃先を前に傾ける角度
 
+        [Header("負けたとき（力が抜けて剣先が下がる）")]
+        [SerializeField] float lostAngle = 150f;   // 真上=0、正面=90、真下=180
+        [SerializeField] float lostDrop  = 0.3f;   // 握りを下げる距離
+
         [SerializeField] float returnSpeed = 15f;   // 構えの切り替えの速さ
 
         [Header("エディタでの確認用（再生していないときだけ反映）")]
@@ -44,6 +48,7 @@ namespace Chambara
         float swingProgress = 1f;   // 前フレームまでに振った割合（1なら振り切った）
 
         public Transform Pivot => pivot;
+        public float WindupRatio => windupRatio;
         public bool IsSwinging { get; private set; }
         public event Action OnSwingStart;   // 振りかぶりが終わり、振り下ろし始めた瞬間
         public event Action OnSwingEnd;     // 振り切った、または攻撃が中断された瞬間
@@ -89,7 +94,7 @@ namespace Chambara
                 SetSwinging(false);
                 return;
             }
-            else if (player.Data.state == PlayerState.Attack)
+            else if (player.Data.state == PlayerState.Attack && !player.Lost)   // 試合終了後は状態が更新されないので、負けたら振り途中でも脱力させる
             {
                 // 判定のタイミングでちょうど振り切る。判定後は振り終わりの位置で止める
                 float t = (Time.time - player.AttackTime) / player.AttackStartup;
@@ -102,8 +107,7 @@ namespace Chambara
                 }
                 else
                 {
-                    float k = Mathf.Clamp01((t - windupRatio) / (1f - windupRatio));
-                    float s = k * k;   // 加速しながら振る
+                    float s = CurrentSwing();
                     Swing(player.Data.dir, s, out pos, out rot);
 
                     // 振り切ったフレームの分も通知してから終わる
@@ -120,6 +124,11 @@ namespace Chambara
             {
                 SetSwinging(false);
                 Pose(player.Data.state, player.Data.dir, out var p, out var r);
+                if (player.Lost)
+                {
+                    r = Blade(directions / 2, lostAngle);
+                    p = gripPosition + Vector3.down * lostDrop;
+                }
                 float k = 1f - Mathf.Exp(-returnSpeed * Time.deltaTime);
                 pos = Vector3.Lerp(pos, p, k);
                 rot = Quaternion.Slerp(rot, r, k);
@@ -149,13 +158,13 @@ namespace Chambara
         }
 
         /// <summary>
-        /// 刃の根元と刃先のワールド座標。攻撃中は振り切った位置を返す（判定の瞬間はまだ表示が追いついていないことがあるため）
+        /// 刃の根元と刃先のワールド座標。攻撃中は今の時刻で振っている位置を返す（判定の瞬間はまだ表示が追いついていないことがあるため）
         /// </summary>
         public void GetBlade(out Vector3 root, out Vector3 tip)
         {
             if (Application.isPlaying && player.Data != null && player.Data.state == PlayerState.Attack)
             {
-                var m = SwingPivotMatrix(1f);
+                var m = SwingPivotMatrix(CurrentSwing());
                 root = m.MultiplyPoint3x4(Vector3.zero);
                 tip = root + m.MultiplyVector(Vector3.up).normalized * bladeLength;
                 return;
@@ -170,6 +179,14 @@ namespace Chambara
             if (pivot == null) return;
             Gizmos.color = Color.cyan;
             Gizmos.DrawLine(pivot.position, pivot.position + pivot.up * bladeLength);
+        }
+
+        // 今の時刻で振った割合（振りかぶり中は0）
+        float CurrentSwing()
+        {
+            float t = (Time.time - player.AttackTime) / player.AttackStartup;
+            float k = Mathf.Clamp01((t - windupRatio) / (1f - windupRatio));
+            return k * k;   // 加速しながら振る
         }
 
         void SetSwinging(bool value)

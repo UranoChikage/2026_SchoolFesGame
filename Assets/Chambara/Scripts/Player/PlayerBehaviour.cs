@@ -15,21 +15,34 @@ namespace Chambara
         [SerializeField] float parriedStun    = 0.8f;   // ガードされたときの怯み
         [SerializeField] float clashStun      = 0.5f;   // 相殺したときの怯み
 
+        [Header("効果が出るタイミング（0:振り始め 1:振り終わり）")]
+        [SerializeField, Range(0f, 1f)] float attackImpact = 1f;   // 攻撃が当たる・ガードされる
+        [SerializeField, Range(0f, 1f)] float clashImpact  = 1f;   // 相殺で剣がぶつかる
+
         [Header("のけぞり（怯み中）")]
         [SerializeField] float leanAngle = 25f;
         [SerializeField] float leanBack  = 0.3f;
         [SerializeField] float leanSpeed = 15f;
+
+        [Header("モデル切り替え")]
+        [SerializeField] PlayerModels playerModels;
 
         public Fighter Data { get; private set; }
         public float AttackTime { get; private set; }   // 振った時刻
         public float AttackStartup => attackStartup;
         public bool Resolved;                            // この攻撃の判定が済んだか
         public bool Lost { get; private set; }           // 負けた（試合終了後も黒く表示する）
-        public bool IsHitTiming => Data.state == PlayerState.Attack && !Resolved && Time.time >= AttackTime + attackStartup;
+        public bool Won { get; private set; }            // 勝った
+        public float AttackImpactTime => SwingTime(attackImpact);   // 攻撃の効果が出る時刻
+        public float ClashImpactTime  => SwingTime(clashImpact);    // 相殺の効果が出る時刻
+        public bool IsHitTiming => Data.state == PlayerState.Attack && !Resolved && Time.time >= AttackImpactTime;
+
+        BodyRig bodyRig;
 
         public event Action<PlayerState, int> OnStateChanged;
 
         IChambaraInputContext input;
+        Sword sword;
         Renderer rend;
         Vector3 edgePos, opponentEdgePos;
         Quaternion baseRotation;
@@ -40,16 +53,30 @@ namespace Chambara
 
         static readonly int[] guardDirections = new int[4] { 0, 2, 4, 6 };   // 上右下左の4方向
 
-        public void Init(int playerIndex, Fighter data, Transform edge, Transform opponentEdge)
+        public void Init(int playerIndex,string modelName, Fighter data, Transform edge, Transform opponentEdge)
         {
             Data = data;
             edgePos = edge.position;
             opponentEdgePos = opponentEdge.position;
             transform.LookAt(opponentEdge);
             baseRotation = transform.rotation;
+            GenerateModel(modelName);
             rend = GetComponentInChildren<Renderer>();
+            sword = GetComponentInChildren<Sword>();
             input = GetComponent<IChambaraInputContext>();
             input?.Init(playerIndex);
+            BodyRig rig = GetComponent<BodyRig>();
+            if (rig != null) rig.Init(this);
+        }
+
+        private void GenerateModel(string modelName)
+        {
+            if (playerModels == null) return;
+            GameObject modelPrefab = playerModels.GetModel(modelName);
+            if (modelPrefab == null) return;
+            GameObject modelInstance = Instantiate(modelPrefab, transform);
+            modelInstance.transform.localPosition = new Vector3(0f,-0.41f,0f);
+            modelInstance.transform.localRotation = Quaternion.Euler(0f, 90f, 0f);
         }
 
         // 入力を読んで状態を更新する
@@ -94,6 +121,14 @@ namespace Chambara
         }
 
         public void Lose() => Lost = true;
+        public void Win() => Won = true;
+
+        // 振り下ろしの割合 progress（振りかぶりの後を0、振り切りを1）に剣が来る時刻
+        float SwingTime(float progress)
+        {
+            float windup = sword != null ? sword.WindupRatio : 0f;
+            return AttackTime + attackStartup * Mathf.Lerp(windup, 1f, progress);
+        }
 
         void SetState(PlayerState state, int dir)
         {
