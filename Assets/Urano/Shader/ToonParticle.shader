@@ -17,6 +17,15 @@ Shader "Custom/ToonParticle"
         _BaseMap    ("Texture (任意。板のパーティクル用)", 2D) = "white" {}
         [Toggle(_SPHERE_NORMAL)] _SphereNormal ("板のパーティクルを球のように陰影する", Float) = 0
         [Enum(UnityEngine.Rendering.CullMode)] _Cull ("Cull", Float) = 0
+        // 既定(LEqual / ZWrite On)なら従来どおり。メッシュの背後に回したいときは Always / Off にして Render Queue を小さくする
+        // 名前は既存マテリアルに残っている古い _ZWrite と被らないようにしてある
+        [Enum(UnityEngine.Rendering.CompareFunction)] _ToonZTest ("ZTest (背後に回すなら Always)", Float) = 4
+        [Enum(Off, 0, On, 1)] _ToonZWrite ("ZWrite (背後に回すなら Off)", Float) = 1
+        // Stencil: 既定(Ref 0 / Always / Keep)なら何もしない。
+        // メッシュの後ろに回したい: 隠したい側(宝箱)は Ref=1, Pass=Replace。後光側は Ref=1, Comp=NotEqual。Queue は 宝箱 < 後光
+        _ToonStencilRef ("Stencil Ref", Range(0, 255)) = 0
+        [Enum(UnityEngine.Rendering.CompareFunction)] _ToonStencilComp ("Stencil Comp (後光は NotEqual)", Float) = 8
+        [Enum(UnityEngine.Rendering.StencilOp)] _ToonStencilPass ("Stencil Pass (宝箱は Replace)", Float) = 0
     }
 
     SubShader
@@ -34,7 +43,14 @@ Shader "Custom/ToonParticle"
             Tags { "LightMode" = "UniversalForward" }
 
             Blend Off
-            ZWrite On
+            Stencil
+            {
+                Ref [_ToonStencilRef]
+                Comp [_ToonStencilComp]
+                Pass [_ToonStencilPass]
+            }
+            ZWrite [_ToonZWrite]
+            ZTest [_ToonZTest]
             Cull [_Cull]
 
             HLSLPROGRAM
