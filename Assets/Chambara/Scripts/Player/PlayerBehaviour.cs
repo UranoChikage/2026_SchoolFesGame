@@ -25,7 +25,7 @@ namespace Chambara
         [SerializeField] float leanSpeed = 15f;
 
         [Header("モデル切り替え")]
-        [SerializeField] PlayerModels playerModels;
+        [SerializeField] ModelList playerModels;
 
         public Fighter Data { get; private set; }
         public float AttackTime { get; private set; }   // 振った時刻

@@ -49,11 +49,11 @@ MonoBehaviour:
   headName: Head
   faceOffsets:
   - {x: 0, y: 0}
-  - {x: 0.299, y: 0}
-  - {x: 0, y: -0.297}
-  - {x: 0.302, y: -0.296}
-  - {x: 0, y: -0.604}
-  - {x: 0.302, y: -0.607}
+  - {x: 0.326, y: 0}
+  - {x: 0.65, y: 0}
+  - {x: 0, y: 0.547}
+  - {x: 0.326, y: 0.547}
+  - {x: 0.65, y: 0.547}
 --- !u!1001 &7768695848301426248
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -118,13 +118,29 @@ PrefabInstance:
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: 3e60da552b4853a489a049a51e339472, type: 2}
+    - target: {fileID: -3883302534421034838, guid: 3ebe542c75564b74ea4f92aea1ca47e1, type: 3}
+      propertyPath: m_Name
+      value: Body.1
+      objectReference: {fileID: 0}
+    - target: {fileID: -2972594488341203669, guid: 3ebe542c75564b74ea4f92aea1ca47e1, type: 3}
+      propertyPath: m_Name
+      value: Head
+      objectReference: {fileID: 0}
+    - target: {fileID: -2220995187536582472, guid: 3ebe542c75564b74ea4f92aea1ca47e1, type: 3}
+      propertyPath: m_Name
+      value: hand.L
+      objectReference: {fileID: 0}
+    - target: {fileID: -58419534179879254, guid: 3ebe542c75564b74ea4f92aea1ca47e1, type: 3}
+      propertyPath: m_Name
+      value: Body.2
+      objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 3ebe542c75564b74ea4f92aea1ca47e1, type: 3}
       propertyPath: m_Name
       value: Jennifer
       objectReference: {fileID: 0}
     - target: {fileID: 2752237727071334315, guid: 3ebe542c75564b74ea4f92aea1ca47e1, type: 3}
       propertyPath: m_Name
-      value: Hear
+      value: Hair
       objectReference: {fileID: 0}
     - target: {fileID: 5970673340038222763, guid: 3ebe542c75564b74ea4f92aea1ca47e1, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
@@ -134,6 +150,10 @@ PrefabInstance:
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: 3e60da552b4853a489a049a51e339472, type: 2}
+    - target: {fileID: 8320963781043108866, guid: 3ebe542c75564b74ea4f92aea1ca47e1, type: 3}
+      propertyPath: m_Name
+      value: hand.R
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

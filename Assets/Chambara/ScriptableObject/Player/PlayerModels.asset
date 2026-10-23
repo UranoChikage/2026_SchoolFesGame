@@ -19,3 +19,7 @@ MonoBehaviour:
     Model: {fileID: 2745201151087801122, guid: df9d4e6563626f94280e30dfaba33a4b, type: 3}
   - Name: Jennifer
     Model: {fileID: 4943379614342368441, guid: 99cf101e8a5b1e545ac4472967dc10c6, type: 3}
+  - Name: Machiko
+    Model: {fileID: 4946895977744286649, guid: 37c1cfa05d2ff944e83cad41e7f4bdd2, type: 3}
+  - Name: Thomas
+    Model: {fileID: 3625936930193976682, guid: 348c3dc24d5b1e54181c8ad2a9ce4ac4, type: 3}

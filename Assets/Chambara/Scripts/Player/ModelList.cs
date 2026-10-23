@@ -2,8 +2,8 @@ using UnityEngine;
 
 namespace Chambara
 {
-    [CreateAssetMenu(fileName = "PlayerModels", menuName = "Chambara/PlayerModels")]
-    public class PlayerModels :ScriptableObject
+    [CreateAssetMenu(fileName = "ModelList", menuName = "Chambara/ModelList")]
+    public class ModelList :ScriptableObject
     {
         [SerializeField] PlayerModelData[] playerModels;
 
