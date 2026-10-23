@@ -142,11 +142,13 @@ namespace Pirates
             foreach (Collider c in colliders)
             {
                 if (owner != null && c.transform.IsChildOf(owner)) continue;
-                // 浮いているアイテムに当たったら、撃った砲手が取得する
+                // 浮いているアイテムに当たったら、撃った砲手が取得する。宝箱も同じ（敵の砲弾は source が無いので取れない）
                 if (source != null)
                 {
                     var pickup = c.GetComponentInParent<ItemPickup>();
                     if (pickup != null) pickup.TryCollect(source);
+                    var chest = c.GetComponentInParent<TreasurePickup>();
+                    if (chest != null) chest.TryCollect();
                 }
 
                 var target = c.GetComponentInParent<IDamageable>();

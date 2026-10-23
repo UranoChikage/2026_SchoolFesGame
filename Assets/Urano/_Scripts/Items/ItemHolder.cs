@@ -47,6 +47,9 @@ namespace Pirates
         GameObject hitVfxInstance; // 終点に追従させている当たり演出（1つだけ）
         VfxAsset hitVfxCurrent;
 
+        /// <summary>誰かがアイテムを取得した（獲得通知UIが使う）</summary>
+        public static event System.Action<ItemAsset> Acquired;
+
         public ItemAsset Held => held;
         /// <summary>ビーム使用中。この間この砲手は通常の大砲を撃てない</summary>
         public bool IsBeamActive => beam != null && Time.time < beamEnd;
@@ -64,6 +67,7 @@ namespace Pirates
             if (item == null || held != null) return false;
             held = item;
             Debug.Log($"[Item] {name} が {item.DisplayName} を取得", this);
+            Acquired?.Invoke(item);
             return true;
         }
 
@@ -208,6 +212,9 @@ namespace Pirates
             for (int i = 0; i < count; i++)
             {
                 if (owner != null && hits[i].transform.IsChildOf(owner)) continue;
+                // ビームに触れた宝箱は獲得（アイテムはビームでは取れない）
+                var chest = hits[i].GetComponentInParent<TreasurePickup>();
+                if (chest != null) chest.TryCollect();
                 var health = hits[i].GetComponentInParent<ShipHealth>();
                 if (health != null && !health.IsDead) health.TakeDamage(BeamDamage, point);
             }

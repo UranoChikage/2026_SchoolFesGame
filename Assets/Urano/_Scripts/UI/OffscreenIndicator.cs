@@ -30,6 +30,9 @@ namespace Pirates
         [SerializeField]
         Color itemColor = new Color(1f, 0.9f, 0.3f, 0.9f);
         [SerializeField]
+        [Tooltip("宝箱のアイコンの色")]
+        Color treasureColor = new Color(1f, 0.75f, 0.1f, 0.9f);
+        [SerializeField]
         [Tooltip("アイコンの絵（任意・上向き）。空なら仮の三角形")]
         Sprite iconSprite;
 
@@ -108,6 +111,10 @@ namespace Pirates
             foreach (ItemPickup p in ItemPickup.Active)
             {
                 Add(p.transform.position, origin, useItemColor ? p.Color : itemColor);
+            }
+            foreach (TreasurePickup t in TreasurePickup.Active)
+            {
+                Add(t.transform.position, origin, treasureColor);
             }
         }
 

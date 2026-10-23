@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: TreasureB
   m_EditorClassIdentifier: Assembly-CSharp::Pirates.TreasureAsset
   displayName: "\u304A\u5B9D"
-  value: 100
+  value: 500
   icon: {fileID: 21300000, guid: 1386767c4edc4bc4db00cc9fa62b174c, type: 3}
   dropVfx: {fileID: 0}
+  displayModel: {fileID: 0}
   weight: 1

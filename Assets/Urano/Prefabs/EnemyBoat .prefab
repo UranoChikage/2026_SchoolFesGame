@@ -174,6 +174,9 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 469a86ac4b3bb7a4e8043d34801a45d1, type: 2}
   - {fileID: 11400000, guid: d94bd8d6a04acdc4795b09d0cf5cbc4b, type: 2}
   dropChance: 1
+  pickupPrefab: {fileID: 4919159606863240096, guid: 7b03299adc5419e47a12ff35c9a8c3c7, type: 3}
+  lifetime: 40
+  height: 2
 --- !u!114 &7543160121532258227
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -189,7 +192,7 @@ MonoBehaviour:
   candidates:
   - {fileID: 11400000, guid: 9f1e3053cd00fd24cbe2dd73413b4aae, type: 2}
   - {fileID: 11400000, guid: 9d3652c9283432544ad65e0a526bfb80, type: 2}
-  dropChance: 1
+  dropChance: 0.2
   pickupPrefab: {fileID: 2574053192421046994, guid: fc2a34d4c946ad545b78e2d130302440, type: 3}
   lifetime: 20
   height: 1
