@@ -2,6 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Playables;
+using UnityEngine.SceneManagement;
 
 namespace Pirates
 {
@@ -31,12 +32,25 @@ namespace Pirates
         [SerializeField]
         float introDuration = 3f;
 
-        [Header("終了演出")]
+        [Header("終了演出（時間切れ）")]
         [SerializeField]
-        [Tooltip("終了のTimeline（任意）。終わったらリザルト。未設定ならoutroDurationだけ待つ")]
+        [Tooltip("時間切れの終了Timeline（任意）。終わったらリザルト。未設定ならoutroDurationだけ待つ")]
         PlayableDirector outroDirector;
         [SerializeField]
         float outroDuration = 3f;
+        [SerializeField]
+        [Tooltip("リザルトになったら読み込むシーン名（任意・Build Settingsに登録が必要）。空ならこのシーンのまま")]
+        string sceneAfterTimeUp = "";
+
+        [Header("終了演出（沈没）")]
+        [SerializeField]
+        [Tooltip("沈没の終了Timeline（任意）。未設定なら sunkOutroDuration だけ待つ")]
+        PlayableDirector sunkOutroDirector;
+        [SerializeField]
+        float sunkOutroDuration = 3f;
+        [SerializeField]
+        [Tooltip("リザルトになったら読み込むシーン名（任意）。空ならこのシーンのまま")]
+        string sceneAfterSunk = "";
 
         [Header("制御する対象（未設定ならシーンから自動取得）")]
         [SerializeField] EnemySpawner spawner;
@@ -45,6 +59,8 @@ namespace Pirates
         public UnityEvent onIntroStarted;
         public UnityEvent onGameStarted;
         public UnityEvent onGameEnded;
+        public UnityEvent onTimeUp;
+        public UnityEvent onSunk;
         public UnityEvent onResult;
 
         public static GameFlow Current { get; private set; }
@@ -62,11 +78,13 @@ namespace Pirates
         public float Remaining { get; private set; }
         public float TimeLimit => timeLimit;
         public bool Survived { get; private set; }
+        public EndReason Reason { get; private set; }
 
         BoatController boat;
         ShipHealth boatHealth;
         CannonStation[] stations;
         float phaseEndTime;
+        PlayableDirector outro; // 今回の終了演出（理由で切り替わる）
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetStatic() => Current = null;
@@ -129,11 +147,11 @@ namespace Pirates
                 case GamePhase.Playing:
                     Remaining = Mathf.Max(0f, Remaining - Time.deltaTime);
                     TimeChanged?.Invoke(Remaining, timeLimit);
-                    if (Remaining <= 0f) EndGame(true);
+                    if (Remaining <= 0f) EndGame(EndReason.TimeUp);
                     break;
 
                 case GamePhase.Outro:
-                    if (SequenceDone(outroDirector)) ShowResult();
+                    if (SequenceDone(outro)) ShowResult();
                     break;
             }
         }
@@ -148,17 +166,27 @@ namespace Pirates
 
         void OnPlayerDied()
         {
-            if (Phase == GamePhase.Playing) EndGame(false);
+            if (Phase == GamePhase.Playing) EndGame(EndReason.Sunk);
         }
 
-        void EndGame(bool survived)
+        void EndGame(EndReason reason)
         {
-            Survived = survived;
+            Reason = reason;
+            Survived = reason == EndReason.TimeUp;
             Phase = GamePhase.Outro;
             SetPlaying(false);
-            GameEnded?.Invoke(survived);
+
+            // 結果はここで確定して保持する（シーンを跨いでリザルトから読める）
+            TreasureWallet wallet = TreasureWallet.Current;
+            GameResult.Set(new GameResult(reason, wallet != null ? wallet.Total : 0,
+                wallet != null ? wallet.Rank : TreasureRank.B, Remaining));
+
+            GameEnded?.Invoke(Survived);
             onGameEnded?.Invoke();
-            BeginSequence(outroDirector, outroDuration);
+            if (reason == EndReason.TimeUp) onTimeUp?.Invoke(); else onSunk?.Invoke();
+
+            outro = reason == EndReason.TimeUp ? outroDirector : (sunkOutroDirector != null ? sunkOutroDirector : outroDirector);
+            BeginSequence(outro, reason == EndReason.TimeUp ? outroDuration : sunkOutroDuration);
         }
 
         void ShowResult()
@@ -166,6 +194,9 @@ namespace Pirates
             Phase = GamePhase.Result;
             Result?.Invoke();
             onResult?.Invoke();
+
+            string scene = Reason == EndReason.TimeUp ? sceneAfterTimeUp : sceneAfterSunk;
+            if (!string.IsNullOrEmpty(scene)) SceneManager.LoadScene(scene);
         }
 
         // 導入・終了の待ち：Timelineがあれば再生して終了待ち、無ければ秒数待ち
@@ -188,7 +219,7 @@ namespace Pirates
         /// <summary>導入演出の長さ(秒)。Timeline未設定ならintroDuration</summary>
         public float IntroDuration => introDirector != null ? (float)introDirector.duration : introDuration;
         /// <summary>終了演出の長さ(秒)。Timeline未設定ならoutroDuration</summary>
-        public float OutroDuration => outroDirector != null ? (float)outroDirector.duration : outroDuration;
+        public float OutroDuration => outro != null ? (float)outro.duration : (Reason == EndReason.TimeUp ? outroDuration : sunkOutroDuration);
         /// <summary>導入演出の経過秒</summary>
         public float IntroElapsed => introDirector != null ? (float)introDirector.time : Mathf.Max(0f, introDuration - (phaseEndTime - Time.time));
 

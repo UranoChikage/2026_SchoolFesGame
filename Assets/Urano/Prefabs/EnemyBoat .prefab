@@ -17,6 +17,7 @@ GameObject:
   - component: {fileID: -4012689413317643482}
   - component: {fileID: 7543160121532258227}
   - component: {fileID: 7084765912682369995}
+  - component: {fileID: 5892223651680120604}
   m_Layer: 6
   m_Name: 'EnemyBoat '
   m_TagString: Untagged
@@ -212,6 +213,20 @@ MonoBehaviour:
   blocksBeam: 0
   isSea: 0
   defaultSurface: {fileID: 0}
+--- !u!114 &5892223651680120604
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 169567721554701670}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0975a4da9433d2544bc66aacc873739e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Pirates.ShipHitShake
+  animator: {fileID: 283455078455466480}
+  triggerName: Hit
 --- !u!1 &1080207747987200326
 GameObject:
   m_ObjectHideFlags: 0
@@ -1104,6 +1119,7 @@ GameObject:
   - component: {fileID: 3191443435321145879}
   - component: {fileID: 4657601846405257119}
   - component: {fileID: 3910007504657249985}
+  - component: {fileID: 283455078455466480}
   m_Layer: 3
   m_Name: ShipVisual
   m_TagString: Untagged
@@ -1210,6 +1226,28 @@ CapsuleCollider:
   m_Height: 3.87
   m_Direction: 2
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!95 &283455078455466480
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7935579425948744640}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: f7a2f41fc618f47468a6265771bab8d6, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &8810954063353890272
 GameObject:
   m_ObjectHideFlags: 0

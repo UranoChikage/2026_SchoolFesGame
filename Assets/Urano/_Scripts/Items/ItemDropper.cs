@@ -14,6 +14,9 @@ namespace Pirates
         [Tooltip("沈めたときにアイテムが出る確率（仮置き）")]
         float dropChance = 0.15f;
         [SerializeField]
+        [Tooltip("星の数(0〜3)ごとの、出る確率にかける倍率。1=そのまま（掛けたあと1を超えたら必ず出る）")]
+        float[] chanceRateByStars = { 1f, 1.3f, 1.7f, 2.5f };
+        [SerializeField]
         [Tooltip("アイテムの見た目のPrefab（任意）。ItemPickup付き。未設定なら仮の球")]
         ItemPickup pickupPrefab;
         [SerializeField]
@@ -33,7 +36,7 @@ namespace Pirates
 
         void OnDied()
         {
-            if (Random.value > dropChance) return;
+            if (Random.value > dropChance * StarRate) return;
             ItemAsset item = Pick();
             if (item == null) return;
 
@@ -41,6 +44,15 @@ namespace Pirates
             float y = (player != null && player.Water != null ? player.Water.waterY : transform.position.y) + height;
             Vector3 pos = transform.position;
             ItemPickup.Spawn(pickupPrefab, item, new Vector3(pos.x, y, pos.z), lifetime);
+        }
+
+        float StarRate
+        {
+            get
+            {
+                if (chanceRateByStars == null || chanceRateByStars.Length == 0) return 1f;
+                return Mathf.Max(0f, chanceRateByStars[Mathf.Clamp(TreasureWallet.CurrentStars, 0, chanceRateByStars.Length - 1)]);
+            }
         }
 
         ItemAsset Pick()

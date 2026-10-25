@@ -16,7 +16,16 @@ MonoBehaviour:
   kind: 1
   duration: 5
   weight: 1
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 1bc2b59d4f1a3ae4192626c2b58793a4, type: 3}
   color: {r: 0.6704477, g: 1, b: 0, a: 1}
   beamRadius: 3
+  beamWidth: 1
+  beamPrefab: {fileID: 0}
+  beamAreaPrefab: {fileID: 0}
+  beamMuzzleVfx: {fileID: 0}
+  beamHitVfx: {fileID: 0}
+  beamExtendSpeed: 80
+  beamRetractSpeed: 120
+  cameraZoomOut: 6
+  cameraShake: 0.15
   barrierRadius: 6

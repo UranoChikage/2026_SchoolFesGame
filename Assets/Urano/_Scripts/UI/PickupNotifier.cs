@@ -86,17 +86,18 @@ namespace Pirates
             entries.Clear();
         }
 
-        void OnItemAcquired(ItemAsset item)
+        void OnItemAcquired(ItemAsset item, Color playerColor)
         {
-            if (item != null) Push(item.Icon, null);
+            if (item != null) Push(item.Icon, null, playerColor, null);
         }
 
         void OnTreasureAdded(TreasureAsset treasure, int total)
         {
-            if (treasure != null) Push(treasure.Icon, treasure.DisplayModel);
+            if (treasure != null) Push(treasure.Icon, treasure.DisplayModel, Color.white, treasure.NoticeColor);
         }
 
-        void Push(Sprite icon, GameObject model)
+        /// <summary>gradient があれば時間で色が変わる。無ければ color 一色</summary>
+        void Push(Sprite icon, GameObject model, Color color, Gradient gradient)
         {
             if (viewPrefab == null || container == null) return;
             if (icon == null && model == null) return; // 見せるものが無い
@@ -113,7 +114,7 @@ namespace Pirates
 
             PickupNoticeView view = free.Count > 0 ? free.Pop() : Instantiate(viewPrefab, container);
             view.Rect.anchoredPosition = Vector2.zero; // 一番手前の位置から出す
-            view.Show(icon, model, new PickupNoticeView.ModelSettings
+            view.Show(icon, model, color, gradient, new PickupNoticeView.ModelSettings
             {
                 textureSize = modelTextureSize,
                 distance = modelDistance,

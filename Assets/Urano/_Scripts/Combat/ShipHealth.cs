@@ -40,6 +40,16 @@ namespace Pirates
             current = maxHealth;
         }
 
+        /// <summary>HPに関係なく即座に沈める（転覆の自爆など）。無敵(Invulnerable)も無視する。無敵設定の船(最大HP0以下)は沈まない</summary>
+        public void Kill()
+        {
+            if (IsDead || IsIndestructible) return;
+            current = 0f;
+            HealthChanged?.Invoke(current, maxHealth);
+            Debug.Log($"[Sunk] {name} が自爆", this);
+            Died?.Invoke();
+        }
+
         public void TakeDamage(float damage, Vector3 hitPoint)
         {
             if (IsDead || Invulnerable || damage <= 0f) return;

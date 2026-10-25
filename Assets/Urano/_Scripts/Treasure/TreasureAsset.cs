@@ -25,9 +25,14 @@ namespace Pirates
         [Tooltip("ドロップ抽選の重み。大きいほど出やすい")]
         float weight = 1f;
 
+        [SerializeField]
+        [Tooltip("獲得通知の後ろのエフェクトの色。通知が出ている間に左端→右端→左端…と往復して変化する")]
+        Gradient noticeColor = new Gradient();
+
         public string DisplayName => displayName;
         public int Value => value;
         public Sprite Icon => icon;
+        public Gradient NoticeColor => noticeColor;
         public GameObject DisplayModel => displayModel;
         public float Weight => weight;
 

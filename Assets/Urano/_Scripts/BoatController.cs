@@ -59,6 +59,11 @@ namespace Pirates
         float slowBrake = 3f;
 
 
+        [Header("転覆")]
+        [SerializeField]
+        [Tooltip("船体がこの角度(度)以上傾いたら自爆して沈む。カメラは沈没時の演出で引く。0以下なら転覆しない")]
+        float capsizeAngle = 90f;
+
         [Header("沈没（プレイヤー）")]
         [SerializeField]
         [Tooltip("沈没を始めてから船を止めるまでの時間(秒)")]
@@ -138,6 +143,12 @@ namespace Pirates
                 v.y = -sinkSpeed;
                 rb.linearVelocity = v;
                 rb.angularVelocity = transform.forward * (sinkRollSpeed * Mathf.Deg2Rad);
+                return;
+            }
+
+            if (capsizeAngle > 0f && health != null && Vector3.Angle(transform.up, Vector3.up) >= capsizeAngle)
+            {
+                health.Kill(); // Died → OnDied（沈没・爆発）。カメラはIsSunkを見て引く
                 return;
             }
 

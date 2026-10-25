@@ -48,7 +48,8 @@ namespace Pirates
         VfxAsset hitVfxCurrent;
 
         /// <summary>誰かがアイテムを取得した（獲得通知UIが使う）</summary>
-        public static event System.Action<ItemAsset> Acquired;
+        /// <summary>第2引数は取得した砲手の色</summary>
+        public static event System.Action<ItemAsset, Color> Acquired;
 
         public ItemAsset Held => held;
         /// <summary>ビーム使用中。この間この砲手は通常の大砲を撃てない</summary>
@@ -67,7 +68,8 @@ namespace Pirates
             if (item == null || held != null) return false;
             held = item;
             Debug.Log($"[Item] {name} が {item.DisplayName} を取得", this);
-            Acquired?.Invoke(item);
+            var station = GetComponent<CannonStation>();
+            Acquired?.Invoke(item, station != null ? station.PlayerColor : Color.white);
             return true;
         }
 

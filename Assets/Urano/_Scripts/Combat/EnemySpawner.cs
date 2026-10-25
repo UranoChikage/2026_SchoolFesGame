@@ -28,6 +28,14 @@ namespace Pirates
         [Tooltip("出現の間隔(秒)")]
         float spawnInterval = 2.5f;
 
+        [Header("スコア連動（星の数で増える）")]
+        [SerializeField]
+        [Tooltip("星の数(0〜3)ごとの倍率。出現の間隔を割り、同時に出る数の上限に掛ける。1=そのまま")]
+        float[] rateByStars = { 1f, 1.2f, 1.5f, 2f };
+        [SerializeField]
+        [Tooltip("倍率をかけたあとの同時に出る数の絶対上限")]
+        int hardMaxAlive = 25;
+
         [Header("出現位置（プレイヤー中心）")]
         [SerializeField]
         float minRadius = 50f;
@@ -69,7 +77,7 @@ namespace Pirates
             CleanUp(player.transform.position);
 
             if (Time.time < nextSpawnTime || alive.Count >= CurrentMaxAlive) return;
-            nextSpawnTime = Time.time + spawnInterval;
+            nextSpawnTime = Time.time + spawnInterval / StarRate;
 
             if (TryFindSpawnPoint(player, out Vector3 point))
             {
@@ -80,13 +88,28 @@ namespace Pirates
             }
         }
 
+        // いまの星の数に対応する倍率（未設定は1）
+        float StarRate
+        {
+            get
+            {
+                if (rateByStars == null || rateByStars.Length == 0) return 1f;
+                int i = Mathf.Clamp(TreasureWallet.CurrentStars, 0, rateByStars.Length - 1);
+                return Mathf.Max(0.1f, rateByStars[i]);
+            }
+        }
+
         int CurrentMaxAlive
         {
             get
             {
-                if (rampSeconds <= 0f) return finalMaxAlive;
-                float t = Mathf.Clamp01((Time.time - startTime) / rampSeconds);
-                return Mathf.RoundToInt(Mathf.Lerp(initialMaxAlive, finalMaxAlive, t));
+                float baseMax = finalMaxAlive;
+                if (rampSeconds > 0f)
+                {
+                    float t = Mathf.Clamp01((Time.time - startTime) / rampSeconds);
+                    baseMax = Mathf.Lerp(initialMaxAlive, finalMaxAlive, t);
+                }
+                return Mathf.Min(hardMaxAlive, Mathf.RoundToInt(baseMax * StarRate));
             }
         }
 

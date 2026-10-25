@@ -73,6 +73,9 @@ namespace Pirates
         Quaternion barrelRotInStation = Quaternion.identity; // 砲身の初期姿勢（この砲を基準）
         ItemHolder items;
 
+        /// <summary>この砲手の色（カーソル・予測線と同じ）。獲得通知などで使う</summary>
+        public Color PlayerColor => cursorColor;
+
         void Awake()
         {
             shooter = GetComponent<CannonShooter>();

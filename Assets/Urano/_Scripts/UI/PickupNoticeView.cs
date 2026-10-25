@@ -26,8 +26,11 @@ namespace Pirates
         static int stageCount;
 
         [SerializeField]
-        [Tooltip("後ろで動くスプライト（任意）")]
+        [Tooltip("後ろに置く動かないスプライト（任意）")]
         Image backSprite;
+        [SerializeField]
+        [Tooltip("回転・脈動するエフェクト用スプライト（任意）。BackSpriteの手前")]
+        Image effectSprite;
         [SerializeField]
         [Tooltip("アイテム・モデル未設定の宝箱のアイコン")]
         Image iconImage;
@@ -35,11 +38,15 @@ namespace Pirates
         [Tooltip("宝箱モデルを映す RawImage（任意）")]
         RawImage modelImage;
         [SerializeField]
-        [Tooltip("後ろのスプライトの回転速度(度/秒)")]
-        float backSpinSpeed = 40f;
+        [Tooltip("エフェクトスプライトの回転速度(度/秒)")]
+        float effectSpinSpeed = 40f;
         [SerializeField]
         [Range(0f, 0.5f)]
-        float backPulse = 0.08f;
+        float effectPulse = 0.08f;
+        [SerializeField]
+        [Min(0.1f)]
+        [Tooltip("グラデーションが左端から右端まで進む時間(秒)。右端に着いたら折り返して往復する")]
+        float gradientTime = 3f;
 
         public RectTransform Rect => (RectTransform)transform;
 
@@ -52,6 +59,8 @@ namespace Pirates
         Animator curAnimator;
         float openDelay;
         bool opened;
+        Color effectColor;
+        Gradient effectGradient;
 
         void Awake() => group = GetComponent<CanvasGroup>();
 
@@ -61,15 +70,21 @@ namespace Pirates
             if (stage != null) Destroy(stage);
         }
 
-        /// <summary>通知の中身をセットして表示する。modelがあればモデル、無ければアイコン</summary>
-        public void Show(Sprite icon, GameObject model, ModelSettings settings)
+        /// <summary>通知の中身をセットして表示する。modelがあればモデル、無ければアイコン。gradientがあれば時間で色が変わり、無ければcolor一色（エフェクトスプライトの色）</summary>
+        public void Show(Sprite icon, GameObject model, Color color, Gradient gradient, ModelSettings settings)
         {
             gameObject.SetActive(true);
             opened = false;
             openDelay = settings.openDelay;
             SetAlpha(1f);
             Rect.localScale = Vector3.zero;
-            if (backSprite != null) backSprite.rectTransform.localRotation = Quaternion.identity;
+            if (effectSprite != null)
+            {
+                effectSprite.rectTransform.localRotation = Quaternion.identity;
+                SetEffectColor(color);
+            }
+            effectColor = color;
+            effectGradient = gradient;
 
             bool useModel = model != null && modelImage != null;
             if (useModel) ShowModel(model, settings);
@@ -85,11 +100,12 @@ namespace Pirates
         /// <summary>毎フレーム。age は出てからの秒数</summary>
         public void Tick(float age)
         {
-            if (backSprite != null)
+            if (effectSprite != null)
             {
-                RectTransform rt = backSprite.rectTransform;
-                rt.localRotation = Quaternion.Euler(0f, 0f, -age * backSpinSpeed);
-                rt.localScale = Vector3.one * (1f + Mathf.Sin(age * 6f) * backPulse);
+                RectTransform rt = effectSprite.rectTransform;
+                rt.localRotation = Quaternion.Euler(0f, 0f, -age * effectSpinSpeed);
+                rt.localScale = Vector3.one * (1f + Mathf.Sin(age * 6f) * effectPulse);
+                SetEffectColor(effectGradient != null ? effectGradient.Evaluate(Mathf.PingPong(age / gradientTime, 1f)) : effectColor);
             }
 
             if (!opened && curAnimator != null && age >= openDelay)
@@ -98,6 +114,9 @@ namespace Pirates
                 curAnimator.SetTrigger(OpenHash);
             }
         }
+
+        // アルファはCanvasGroupで制御するので、色だけ使う
+        void SetEffectColor(Color c) => effectSprite.color = new Color(c.r, c.g, c.b, 1f);
 
         /// <summary>モデルごと（CanvasGroupにRawImageも含まれる）フェードする</summary>
         public void SetAlpha(float a) => group.alpha = a;
