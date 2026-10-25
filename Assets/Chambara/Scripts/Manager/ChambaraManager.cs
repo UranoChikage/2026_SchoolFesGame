@@ -44,6 +44,7 @@ namespace Chambara
 
         [Header("Model Settings")]
         [SerializeField] string[] playerModelNames;
+        [SerializeField] string[] swordModelNames;
 
         private void Awake()
         {
@@ -63,8 +64,8 @@ namespace Chambara
                 Instantiate(playerPrefab, edgePlayerPos0.position, Quaternion.identity),
                 Instantiate(playerPrefab, edgePlayerPos1.position, Quaternion.identity),
             };
-            players[0].Init(0, playerModelNames[0], sim.players[0], edgePlayerPos0, edgePlayerPos1);
-            players[1].Init(1, playerModelNames[1], sim.players[1], edgePlayerPos1, edgePlayerPos0);
+            players[0].Init(0, playerModelNames[0], swordModelNames[0], sim.players[0], edgePlayerPos0, edgePlayerPos1);
+            players[1].Init(1, playerModelNames[1], swordModelNames[1], sim.players[1], edgePlayerPos1, edgePlayerPos0);
             startTime = Time.time;
             SetGameState(GameState.Ready);
         }

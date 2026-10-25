@@ -520,6 +520,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Bat
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: c587fb58a6b45484695587ef87e20a5e, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1045,8 +1049,11 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   playerModelNames:
-  - Thomas
+  - Alien
   - Jennifer
+  swordModelNames:
+  - Pikopiko
+  - LightSword
 --- !u!4 &1432148089
 Transform:
   m_ObjectHideFlags: 0
@@ -1254,6 +1261,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 551fb747bf54622438bc0fbc1cfc9b78, type: 3}
       propertyPath: m_Name
       value: Hammer
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 551fb747bf54622438bc0fbc1cfc9b78, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4913777613711978600, guid: 551fb747bf54622438bc0fbc1cfc9b78, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
@@ -1609,6 +1620,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 7149b32b06e384c4f943e9e2a93e9eb4, type: 3}
       propertyPath: m_Name
       value: Sword
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 7149b32b06e384c4f943e9e2a93e9eb4, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1183559758090340653, guid: 7149b32b06e384c4f943e9e2a93e9eb4, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'

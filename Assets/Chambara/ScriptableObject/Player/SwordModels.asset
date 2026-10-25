@@ -12,4 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cd9acf28fc4831449b49e7beee7c5240, type: 3}
   m_Name: SwordModels
   m_EditorClassIdentifier: Assembly-CSharp::Chambara.ModelList
-  playerModels: []
+  playerModels:
+  - Name: Sinai
+    Model: {fileID: 4334552838758756038, guid: 8801052ae7bd1e044a8a8f5c6f7e5365, type: 3}
+  - Name: Sword
+    Model: {fileID: 3498392447253433682, guid: e6c079149c9abc747a764b240324ae3f, type: 3}
+  - Name: Bat
+    Model: {fileID: 6728640190832367656, guid: ded0fb387d16dd447bec50921609f64b, type: 3}
+  - Name: Pikopiko
+    Model: {fileID: 7187049107303717366, guid: 2ea1086d63085c0409d68d0de8e9b0fa, type: 3}
+  - Name: LightSword
+    Model: {fileID: 4045842699132302865, guid: c9d5b55eb93dbe04ea2fea0a4f83842d, type: 3}

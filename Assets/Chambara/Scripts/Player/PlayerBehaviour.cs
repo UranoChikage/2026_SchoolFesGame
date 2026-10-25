@@ -26,6 +26,7 @@ namespace Chambara
 
         [Header("モデル切り替え")]
         [SerializeField] ModelList playerModels;
+        [SerializeField] ModelList swordModels;   // 剣は Sword の pivot の子に生成する（刃は+Y方向に伸ばしておく）
 
         public Fighter Data { get; private set; }
         public float AttackTime { get; private set; }   // 振った時刻
@@ -53,7 +54,7 @@ namespace Chambara
 
         static readonly int[] guardDirections = new int[4] { 0, 2, 4, 6 };   // 上右下左の4方向
 
-        public void Init(int playerIndex,string modelName, Fighter data, Transform edge, Transform opponentEdge)
+        public void Init(int playerIndex, string modelName, string swordName, Fighter data, Transform edge, Transform opponentEdge)
         {
             Data = data;
             edgePos = edge.position;
@@ -63,6 +64,7 @@ namespace Chambara
             GenerateModel(modelName);
             rend = GetComponentInChildren<Renderer>();
             sword = GetComponentInChildren<Sword>();
+            GenerateSword(swordName);
             input = GetComponent<IChambaraInputContext>();
             input?.Init(playerIndex);
             BodyRig rig = GetComponent<BodyRig>();
@@ -77,6 +79,18 @@ namespace Chambara
             GameObject modelInstance = Instantiate(modelPrefab, transform);
             modelInstance.transform.localPosition = new Vector3(0f,-0.41f,0f);
             modelInstance.transform.localRotation = Quaternion.Euler(0f, 90f, 0f);
+        }
+
+        private void GenerateSword(string swordName)
+        {
+            if (swordModels == null || sword == null || sword.Pivot == null) return;
+            GameObject swordPrefab = swordModels.GetModel(swordName);
+            if (swordPrefab == null) return;
+            Instantiate(swordPrefab, sword.Pivot, false);
+
+            // 仮の刃は隠す
+            Renderer defaultBlade = sword.GetComponent<Renderer>();
+            if (defaultBlade != null) defaultBlade.enabled = false;
         }
 
         // 入力を読んで状態を更新する

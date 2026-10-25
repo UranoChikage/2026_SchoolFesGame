@@ -16,7 +16,7 @@ namespace Chambara
         [SerializeField] string hairName        = "Hair";
         [SerializeField] string bodyName        = "Body.1";
         [SerializeField, Tooltip("下半身")] string lowerName = "Body.2";
-        [SerializeField] string accessoriesName = "Accessories";
+        [SerializeField, Tooltip("胴と一緒に動く。無いものは飛ばす")] string[] accessoryNames = { "Accessories", "Accessories.2" };
         [SerializeField] string handRName       = "hand.R";
         [SerializeField] string handLName       = "hand.L";
 
@@ -41,6 +41,12 @@ namespace Chambara
         [SerializeField] float hairDamping   = 10f;
         [SerializeField] float hairMaxAngle  = 25f;
 
+        [Header("ツインテールなど（根元を軸に、髪より大きく揺れる。無ければ飛ばす）")]
+        [SerializeField] string[] tailNames  = { "Tail.L", "Tail.R" };
+        [SerializeField] float tailStiffness = 80f;
+        [SerializeField] float tailDamping   = 6f;
+        [SerializeField] float tailMaxAngle  = 40f;
+
         [Header("浮遊")]
         [SerializeField] float breathHeight = 0.02f;
         [SerializeField] float breathSpeed  = 3f;
@@ -56,13 +62,21 @@ namespace Chambara
 
         PlayerBehaviour player;
         Sword sword;
-        Transform floatPivot, chest, neck, hairPivot;
+        Transform floatPivot, chest, neck;
         Vector3 floatRest;   // Player のローカル座標
         Vector3 chestEuler, headEuler;
-        Quaternion hairRot;
-        Vector3 hairVel;
-        bool hairReady;
+        Spring hair;
+        readonly System.Collections.Generic.List<Spring> tails = new();
         Vector3 lastPos;
+
+        // 首の回転にバネで遅れてついていく部位
+        class Spring
+        {
+            public Transform pivot;
+            public Quaternion rot;
+            public Vector3 vel;
+            public bool ready;
+        }
         float lunge, hop, limp;
 
         private void Awake()
@@ -76,8 +90,8 @@ namespace Chambara
             sword = GetComponentInChildren<Sword>();
 
             // 無いパーツは飛ばす。関節の位置は、あるパーツから順に決める
-            Transform head = Find(headName), body = Find(bodyName), lower = Find(lowerName), hair = Find(hairName);
-            Transform root = lower != null ? lower.parent : body != null ? body.parent : head != null ? head.parent : hair != null ? hair.parent : transform;
+            Transform head = Find(headName), body = Find(bodyName), lower = Find(lowerName), hairPart = Find(hairName);
+            Transform root = lower != null ? lower.parent : body != null ? body.parent : head != null ? head.parent : hairPart != null ? hairPart.parent : transform;
 
             Vector3 floatPos = lower != null ? PartBounds(lower).center
                              : body != null ? Bottom(PartBounds(body))
@@ -89,9 +103,23 @@ namespace Chambara
                              : chestPos;
 
             floatPivot = Anchor("Float", root, floatPos, lower);
-            chest = Anchor("Chest", floatPivot, chestPos, body, Find(accessoriesName));
+            chest = Anchor("Chest", floatPivot, chestPos, body);
+            foreach (var accessoryName in accessoryNames)
+            {
+                Transform accessory = Find(accessoryName);
+                if (accessory != null) accessory.SetParent(chest, true);
+            }
             neck = Anchor("Neck", chest, neckPos, head);
-            if (hair != null) hairPivot = Anchor("HairPivot", neck, head != null ? PartBounds(head).center : PartBounds(hair).center, hair);
+            Vector3 headCenter = head != null ? PartBounds(head).center : neckPos;
+            if (hairPart != null) hair = new Spring { pivot = Anchor("HairPivot", neck, head != null ? headCenter : PartBounds(hairPart).center, hairPart) };
+
+            // 根元＝パーツの中で頭の中心に一番近い点（垂れていても横に出ていても合う）
+            foreach (var tailName in tailNames)
+            {
+                Transform tail = Find(tailName);
+                if (tail == null) continue;
+                tails.Add(new Spring { pivot = Anchor(tailName + "_Root", neck, PartBounds(tail).ClosestPoint(headCenter), tail) });
+            }
 
             if (sword != null && sword.Pivot != null)
             {
@@ -135,28 +163,28 @@ namespace Chambara
             headEuler = Vector3.Lerp(headEuler, headTarget, Damp(bodySpeed));
             neck.rotation = chest.rotation * Quaternion.Euler(headEuler);
 
-            UpdateHair(dt);
+            if (hair != null) UpdateSpring(hair, hairStiffness, hairDamping, hairMaxAngle, dt);
+            foreach (var tail in tails) UpdateSpring(tail, tailStiffness, tailDamping, tailMaxAngle, dt);
         }
 
-        void UpdateHair(float dt)
+        void UpdateSpring(Spring s, float stiffness, float damping, float maxAngle, float dt)
         {
-            if (hairPivot == null) return;
             Quaternion target = neck.rotation;
-            if (!hairReady)
+            if (!s.ready)
             {
                 // Init で Player の向きが決まった後から始める
-                hairRot = target;
-                hairReady = true;
+                s.rot = target;
+                s.ready = true;
             }
 
-            (target * Quaternion.Inverse(hairRot)).ToAngleAxis(out float angle, out Vector3 axis);
+            (target * Quaternion.Inverse(s.rot)).ToAngleAxis(out float angle, out Vector3 axis);
             if (angle > 180f) angle -= 360f;
             Vector3 diff = Mathf.Abs(angle) > 0.01f ? axis * (angle * Mathf.Deg2Rad) : Vector3.zero;
-            hairVel += (diff * hairStiffness - hairVel * hairDamping) * dt;
-            if (hairVel.sqrMagnitude > 1e-8f)
-                hairRot = Quaternion.AngleAxis(hairVel.magnitude * Mathf.Rad2Deg * dt, hairVel.normalized) * hairRot;
-            hairRot = Quaternion.RotateTowards(target, hairRot, hairMaxAngle);
-            hairPivot.rotation = hairRot;
+            s.vel += (diff * stiffness - s.vel * damping) * dt;
+            if (s.vel.sqrMagnitude > 1e-8f)
+                s.rot = Quaternion.AngleAxis(s.vel.magnitude * Mathf.Rad2Deg * dt, s.vel.normalized) * s.rot;
+            s.rot = Quaternion.RotateTowards(target, s.rot, maxAngle);
+            s.pivot.rotation = s.rot;
         }
 
         // 握りの子にして、刃の方向に offset だけずらす
