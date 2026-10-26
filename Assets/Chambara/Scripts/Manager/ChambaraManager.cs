@@ -30,6 +30,7 @@ namespace Chambara
         public event Action<GameState> OnGameStateChanged;
         public event Action OnTieClash;        // 相打ちで剣がぶつかった瞬間
         public event Action<int> OnGuarded;    // ガードされた瞬間（引数は攻撃した側）
+        public event Action<int> OnHit;        // 攻撃が当たった瞬間（引数は攻撃した側）
 
         [Header("Slow Motion Settings")]
         [SerializeField] float slowTimeScale = 0.2f;
@@ -42,6 +43,9 @@ namespace Chambara
         public AnimationCurve SlowMotionCurve => slowMotionCurve;
         float defaultFixedDeltaTime;
 
+        [Header("Hit Settings")]
+        [SerializeField] HitStop hitStop;   // 未設定ならシーンから探す。シーンにも無ければヒットストップせずにすぐ吹っ飛ぶ
+
         [Header("Model Settings")]
         [SerializeField] string[] playerModelNames;
         [SerializeField] string[] swordModelNames;
@@ -53,6 +57,9 @@ namespace Chambara
         }
         private void Start()
         {
+            // 設定し忘れてもシーンに置いてあれば使う
+            if (hitStop == null) hitStop = FindAnyObjectByType<HitStop>();
+            if (hitStop == null) Debug.LogWarning("HitStop がシーンにないので、ヒットストップせずに吹っ飛ばします");
             ReadyGame();
         }
 
@@ -129,7 +136,11 @@ namespace Chambara
             }
             int winner = result == ClashResult.Player0 ? 0 : 1;
             impactTime = players[winner].AttackImpactTime;   // 勝った方の剣が届いた瞬間に決着
-            StartCoroutine(SlowMotion(impactTime, () => Finish(both + $"ほぼ同時 {winner + 1}P:勝ち", 1 - winner)));
+            StartCoroutine(SlowMotion(impactTime, () =>
+            {
+                Finish(both + $"ほぼ同時 {winner + 1}P:勝ち", 1 - winner);
+                Hit(winner);
+            }));
         }
 
         // 振っている途中からスローにして、impactTimeに onImpact を呼び、しばらくしたら元の速さに戻す
@@ -199,8 +210,9 @@ namespace Chambara
             return slowMotionCurve.Evaluate(t);
         }
 
-        void SetTimeScale(float scale)
+        public void SetTimeScale(float scale)
         {
+            Debug.Log($"TimeScale: {scale}");
             Time.timeScale = scale;
             Time.fixedDeltaTime = defaultFixedDeltaTime * Mathf.Max(scale, 0.01f); // 物理もスローに合わせて滑らかにする
         }
@@ -224,8 +236,18 @@ namespace Chambara
                     break;
                 case AttackResult.Hit:
                     Finish(log + $"{2 - atk}P:ヒット", 1 - atk);
+                    Hit(atk);
                     break;
             }
+        }
+
+        // 攻撃が当たった瞬間の演出。ヒットストップが終わってから斬られた方を吹っ飛ばす
+        void Hit(int attacker)
+        {
+            OnHit?.Invoke(attacker);
+            PlayerBehaviour loser = players[1 - attacker];
+            if (hitStop != null) hitStop.Play(loser.Knockback);
+            else loser.Knockback();
         }
 
         // loser: 負けたプレイヤー（-1:引き分け）

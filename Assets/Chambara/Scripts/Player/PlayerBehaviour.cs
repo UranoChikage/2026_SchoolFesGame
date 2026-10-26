@@ -134,9 +134,11 @@ namespace Chambara
             stateEnd = Time.time + (clash ? clashStun : parriedStun);
         }
 
-        public void Lose()
+        public void Lose() => Lost = true;
+
+        // 斬られて吹っ飛ぶ。いつ吹っ飛ばすかは ChambaraManager が決める（ヒットストップが終わってから）
+        public void Knockback()
         {
-            Lost = true;
             if (bodyRig != null) bodyRig.PlayKnockback();
         }
         public void Win() => Won = true;
