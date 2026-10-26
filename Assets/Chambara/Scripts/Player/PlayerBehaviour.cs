@@ -67,8 +67,8 @@ namespace Chambara
             GenerateSword(swordName);
             input = GetComponent<IChambaraInputContext>();
             input?.Init(playerIndex);
-            BodyRig rig = GetComponent<BodyRig>();
-            if (rig != null) rig.Init(this);
+            bodyRig = GetComponent<BodyRig>();
+            if (bodyRig != null) bodyRig.Init(this);
         }
 
         private void GenerateModel(string modelName)
@@ -134,7 +134,11 @@ namespace Chambara
             stateEnd = Time.time + (clash ? clashStun : parriedStun);
         }
 
-        public void Lose() => Lost = true;
+        public void Lose()
+        {
+            Lost = true;
+            if (bodyRig != null) bodyRig.PlayKnockback();
+        }
         public void Win() => Won = true;
 
         // 振り下ろしの割合 progress（振りかぶりの後を0、振り切りを1）に剣が来る時刻

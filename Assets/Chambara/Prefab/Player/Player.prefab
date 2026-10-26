@@ -1366,6 +1366,12 @@ MonoBehaviour:
   hairStiffness: 166.3
   hairDamping: 10
   hairMaxAngle: 17.7
+  tailNames:
+  - Tail.L
+  - Tail.R
+  tailStiffness: 80
+  tailDamping: 6
+  tailMaxAngle: 40
   breathHeight: 0.01
   breathSpeed: 5
   hopHeight: 0.12
@@ -1375,6 +1381,11 @@ MonoBehaviour:
   limpHeadDrop: 25
   limpSink: 0.15
   limpSpeed: 4
+  knockbackSpeed: 15
+  knockbackUp: 15
+  knockbackGravity: 10
+  knockbackFlipSpeed: 720
+  knockbackTwistSpeed: 0
 --- !u!1001 &540947795444585637
 PrefabInstance:
   m_ObjectHideFlags: 0

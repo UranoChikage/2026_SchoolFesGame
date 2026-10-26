@@ -60,6 +60,13 @@ namespace Chambara
         [SerializeField] float limpSink     = 0.15f;
         [SerializeField] float limpSpeed    = 4f;
 
+        [Header("やられ（後ろに吹っ飛ぶ。着地せずそのまま落ちていく）")]
+        [SerializeField, Tooltip("後ろへ飛ぶ初速（m/s）")] float knockbackSpeed = 4f;
+        [SerializeField, Tooltip("上へ飛ぶ初速（m/s）")] float knockbackUp = 5f;
+        [SerializeField] float knockbackGravity  = 10f;
+        [SerializeField, Tooltip("後ろ回りの回転速度（度/秒）")] float knockbackFlipSpeed = 720f;
+        [SerializeField, Tooltip("体の縦軸まわりのきりもみ回転速度（度/秒）")] float knockbackTwistSpeed = 1080f;
+
         PlayerBehaviour player;
         Sword sword;
         Transform floatPivot, chest, neck;
@@ -78,6 +85,9 @@ namespace Chambara
             public bool ready;
         }
         float lunge, hop, limp;
+        bool knockedBack;
+        Vector3 knockbackOffset, knockbackVel;   // Player のローカル座標
+        float knockbackFlip, knockbackTwist;
 
         private void Awake()
         {
@@ -148,13 +158,15 @@ namespace Chambara
             float y = Mathf.Sin(Time.time * breathSpeed) * breathHeight * (1f - limp)
                     + Mathf.Abs(Mathf.Sin(Time.time * hopSpeed)) * hopHeight * hop
                     - limpSink * limp;
-            floatPivot.SetPositionAndRotation(transform.TransformPoint(floatRest + new Vector3(0f, y, lunge)), transform.rotation);
+            Vector3 floatPos = transform.TransformPoint(floatRest + new Vector3(0f, y, lunge));
+            floatPivot.SetPositionAndRotation(floatPos, transform.rotation);
+            UpdateKnockback(dt, floatPos);
 
             // 胴：剣の向き（Player基準）に合わせてひねる・傾ける
-            Vector3 b = sword != null && sword.Pivot != null ? transform.InverseTransformDirection(sword.Pivot.up) : Vector3.up;
+            Vector3 b = sword != null && sword.Pivot != null ? floatPivot.InverseTransformDirection(sword.Pivot.up) : Vector3.up;
             Vector3 chestTarget = new Vector3((restBladeY - b.y) * bendAngle + limpBend * limp, b.x * twistAngle, -b.x * tiltAngle);
             chestEuler = Vector3.Lerp(chestEuler, chestTarget, Damp(bodySpeed));
-            chest.rotation = transform.rotation * Quaternion.Euler(chestEuler);
+            chest.rotation = floatPivot.rotation * Quaternion.Euler(chestEuler);
 
             // 頭：胴の回転を打ち消して相手を見る。怯みで上を向き、負けるとうなだれる
             Vector3 headTarget = -chestEuler * headStabilize;
@@ -165,6 +177,40 @@ namespace Chambara
 
             if (hair != null) UpdateSpring(hair, hairStiffness, hairDamping, hairMaxAngle, dt);
             foreach (var tail in tails) UpdateSpring(tail, tailStiffness, tailDamping, tailMaxAngle, dt);
+        }
+
+        /// <summary>
+        /// 倒されたときの演出：後ろへ放物線を描いて吹っ飛び、後ろ回りときりもみをしながらそのまま落ちていく
+        /// </summary>
+        public void PlayKnockback()
+        {
+            knockedBack = true;
+            knockbackOffset = Vector3.zero;
+            knockbackVel = new Vector3(0f, knockbackUp, -knockbackSpeed);
+            knockbackFlip = knockbackTwist = 0f;
+        }
+
+        // floatPos: 吹っ飛びが無いときの体の位置。体と剣（手）をまとめて、そこを中心に動かす・回す
+        void UpdateKnockback(float dt, Vector3 floatPos)
+        {
+            if (!knockedBack) return;
+
+            knockbackVel.y -= knockbackGravity * dt;
+            knockbackOffset += knockbackVel * dt;
+            knockbackFlip  = (knockbackFlip  + knockbackFlipSpeed  * dt) % 360f;
+            knockbackTwist = (knockbackTwist + knockbackTwistSpeed * dt) % 360f;
+
+            Quaternion spin = transform.rotation * Quaternion.Euler(-knockbackFlip, 0f, 0f) * Quaternion.Euler(0f, knockbackTwist, 0f)
+                            * Quaternion.Inverse(transform.rotation);   // ワールドでの回転量
+            Vector3 center = floatPos + transform.TransformVector(knockbackOffset);
+            floatPivot.SetPositionAndRotation(center, spin * transform.rotation);
+
+            // 剣は Sword が毎フレーム Player 基準で置き直すので、ここで体と同じだけ動かす
+            if (sword != null && sword.Pivot != null)
+            {
+                Transform pivot = sword.Pivot;
+                pivot.SetPositionAndRotation(center + spin * (pivot.position - floatPos), spin * pivot.rotation);
+            }
         }
 
         void UpdateSpring(Spring s, float stiffness, float damping, float maxAngle, float dt)
