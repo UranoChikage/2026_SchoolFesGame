@@ -3671,7 +3671,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1683702893
 RectTransform:
   m_ObjectHideFlags: 0
@@ -3709,7 +3709,7 @@ MonoBehaviour:
   secondsPerRevolution: 0
   tickPerSecond: 1
   clockwise: 1
-  warnSeconds: 90
+  warnSeconds: 80
   warnPulse: 0.08
   warnEffect: {fileID: 1974569600}
   warnColor: {r: 1, g: 0, b: 0, a: 0.5019608}
@@ -4320,7 +4320,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1974569599
 RectTransform:
   m_ObjectHideFlags: 0
