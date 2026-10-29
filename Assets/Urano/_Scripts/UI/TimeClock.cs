@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace Pirates
 {
@@ -30,6 +31,10 @@ namespace Pirates
         [Range(0f, 0.3f)]
         float warnPulse = 0.08f;
 
+        [SerializeField]
+        Image warnEffect;
+        [SerializeField]
+        Color warnColor = new Color(1f, 0, 0, 0.2f);
         GameFlow flow;
         Vector3 baseScale;
 
@@ -41,16 +46,25 @@ namespace Pirates
             if (flow == null) return;
 
             // 経過秒（待機中は0、発進後に進む）
-            float elapsed = flow.TimeLimit - flow.Remaining;
-            if (tickPerSecond) elapsed = Mathf.Floor(elapsed);
+            float rawElapsed = flow.TimeLimit - flow.Remaining;
+            float elapsed = tickPerSecond ? Mathf.Floor(rawElapsed) : rawElapsed;
 
             float period = secondsPerRevolution > 0f ? secondsPerRevolution : Mathf.Max(0.01f, flow.TimeLimit);
             float angle = elapsed / period * 360f;
             if (secondHand != null) secondHand.localRotation = Quaternion.Euler(0f, 0f, clockwise ? -angle : angle);
 
             bool warn = warnSeconds > 0f && flow.Phase == GamePhase.Playing && flow.Remaining <= warnSeconds;
-            float pulse = warn ? 1f + Mathf.Abs(Mathf.Sin(Time.time * Mathf.PI)) * warnPulse : 1f;
+            // 秒針が進む瞬間(秒の切り替わり)に最大になり、次の秒までに戻る
+            float beat = 1f - (rawElapsed - Mathf.Floor(rawElapsed));
+            float pulse = warn ? 1f + beat * beat * warnPulse : 1f;
+
             transform.localScale = baseScale * pulse;
+            if (warnEffect != null)
+            {
+                warnEffect.color = warn ? warnColor * pulse : new Color(1f, 1f, 1f, 0f);
+                warnEffect.transform.localScale = baseScale * pulse;
+            }
+
         }
     }
 }
