@@ -30,6 +30,7 @@ namespace Chambara
         public event Action<GameState> OnGameStateChanged;
         public event Action OnTieClash;        // 相打ちで剣がぶつかった瞬間
         public event Action<int> OnGuarded;    // ガードされた瞬間（引数は攻撃した側）
+        public event Action<int> OnHit;        // 攻撃が当たった瞬間（引数は攻撃した側）
 
         [Header("Slow Motion Settings")]
         [SerializeField] float slowTimeScale = 0.2f;
@@ -42,6 +43,13 @@ namespace Chambara
         public AnimationCurve SlowMotionCurve => slowMotionCurve;
         float defaultFixedDeltaTime;
 
+        [Header("Hit Settings")]
+        [SerializeField] HitStop hitStop;   // 未設定ならシーンから探す。シーンにも無ければヒットストップせずにすぐ吹っ飛ぶ
+
+        [Header("Model Settings")]
+        [SerializeField] string[] playerModelNames;
+        [SerializeField] string[] swordModelNames;
+
         private void Awake()
         {
             instance = this;
@@ -49,6 +57,9 @@ namespace Chambara
         }
         private void Start()
         {
+            // 設定し忘れてもシーンに置いてあれば使う
+            if (hitStop == null) hitStop = FindAnyObjectByType<HitStop>();
+            if (hitStop == null) Debug.LogWarning("HitStop がシーンにないので、ヒットストップせずに吹っ飛ばします");
             ReadyGame();
         }
 
@@ -60,8 +71,8 @@ namespace Chambara
                 Instantiate(playerPrefab, edgePlayerPos0.position, Quaternion.identity),
                 Instantiate(playerPrefab, edgePlayerPos1.position, Quaternion.identity),
             };
-            players[0].Init(0, sim.players[0], edgePlayerPos0, edgePlayerPos1);
-            players[1].Init(1, sim.players[1], edgePlayerPos1, edgePlayerPos0);
+            players[0].Init(0, playerModelNames[0], swordModelNames[0], sim.players[0], edgePlayerPos0, edgePlayerPos1);
+            players[1].Init(1, playerModelNames[1], swordModelNames[1], sim.players[1], edgePlayerPos1, edgePlayerPos0);
             startTime = Time.time;
             SetGameState(GameState.Ready);
         }
@@ -109,8 +120,8 @@ namespace Chambara
 
             p0.Resolved = p1.Resolved = true;   // 結果は剣がぶつかった瞬間に出すので、通常の判定はさせない
 
-            // 後から振った方が振り切る時刻（ゲーム内時間）
-            float impactTime = Mathf.Max(p0.AttackTime + p0.AttackStartup, p1.AttackTime + p1.AttackStartup);
+            // 後から振った方の剣がぶつかる時刻（ゲーム内時間）
+            float impactTime = Mathf.Max(p0.ClashImpactTime, p1.ClashImpactTime);
             string both = $"{AttackLog(0)} {AttackLog(1)}=>";
             if (result == ClashResult.Tie)
             {
@@ -124,8 +135,12 @@ namespace Chambara
                 return;
             }
             int winner = result == ClashResult.Player0 ? 0 : 1;
-            impactTime = players[winner].AttackTime + players[winner].AttackStartup;   // 勝った方の剣が届いた瞬間に決着
-            StartCoroutine(SlowMotion(impactTime, () => Finish(both + $"ほぼ同時 {winner + 1}P:勝ち", 1 - winner)));
+            impactTime = players[winner].AttackImpactTime;   // 勝った方の剣が届いた瞬間に決着
+            StartCoroutine(SlowMotion(impactTime, () =>
+            {
+                Finish(both + $"ほぼ同時 {winner + 1}P:勝ち", 1 - winner);
+                Hit(winner);
+            }));
         }
 
         // 振っている途中からスローにして、impactTimeに onImpact を呼び、しばらくしたら元の速さに戻す
@@ -195,8 +210,9 @@ namespace Chambara
             return slowMotionCurve.Evaluate(t);
         }
 
-        void SetTimeScale(float scale)
+        public void SetTimeScale(float scale)
         {
+            Debug.Log($"TimeScale: {scale}");
             Time.timeScale = scale;
             Time.fixedDeltaTime = defaultFixedDeltaTime * Mathf.Max(scale, 0.01f); // 物理もスローに合わせて滑らかにする
         }
@@ -220,15 +236,29 @@ namespace Chambara
                     break;
                 case AttackResult.Hit:
                     Finish(log + $"{2 - atk}P:ヒット", 1 - atk);
+                    Hit(atk);
                     break;
             }
+        }
+
+        // 攻撃が当たった瞬間の演出。ヒットストップが終わってから斬られた方を吹っ飛ばす
+        void Hit(int attacker)
+        {
+            OnHit?.Invoke(attacker);
+            PlayerBehaviour loser = players[1 - attacker];
+            if (hitStop != null) hitStop.Play(loser.Knockback);
+            else loser.Knockback();
         }
 
         // loser: 負けたプレイヤー（-1:引き分け）
         void Finish(string log, int loser)
         {
             Debug.Log(log);
-            if (loser >= 0) players[loser].Lose();
+            if (loser >= 0)
+            {
+                players[loser].Lose();
+                players[1 - loser].Win();
+            }
             SetGameState(GameState.Finished);
         }
 

@@ -5,6 +5,10 @@ namespace Chambara
 {
     public class CameraManager : MonoBehaviour
     {
+        private static CameraManager instance;
+        public static CameraManager Instance => instance;
+
+
         [SerializeField] Camera mainCamera;
 
         [Header("SlowCamera Settings")]
@@ -21,11 +25,23 @@ namespace Chambara
         [Header("Camera Settings")]
         [SerializeField] private Camera playerCamera;
         Camera playerCamera2;
+        private Camera[] playerCameras => new Camera[] { playerCamera, playerCamera2 };
         [SerializeField] private Vector3 cameraOffset = new Vector3(0.5f, 1.8f, -2f);   // プレイヤーから見たカメラの位置（x:右 y:上 z:前）
         [SerializeField] private Vector3 lookOffset   = new Vector3(0f, 1.2f, 2f);      // プレイヤーから見た注視点（前方＝相手の方を見る）
 
+        [Header("Expand Settings")]
+        [SerializeField] private float expandRate = 1.3f;   // 拡大率（1で等倍。FOVを 1/expandRate にする）
+        [SerializeField] private AnimationCurve expandCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);   // 0→1 で等倍→最大拡大
+        float baseFov;
+        Coroutine expandRoutine;
+
 
         GameState currentState = GameState.None;
+
+        private void Awake()
+        {
+            instance = this;
+        }
 
         private void Start()
         {
@@ -64,6 +80,7 @@ namespace Chambara
         private void Initialize()
         {
             playerCamera2 = Instantiate(playerCamera);
+            baseFov = playerCamera.fieldOfView;
 
             playerCamera.rect = new Rect(0f, 0f, 0.5f, 1f);
             playerCamera2.rect = new Rect(0.5f, 0f, 0.5f, 1f);
@@ -141,6 +158,37 @@ namespace Chambara
                 yield return null;
             }
             slowCameraRoutine = null;
+        }
+
+        public void ExpandSmooth(float duration)
+        {
+            if (expandRoutine != null) StopCoroutine(expandRoutine);
+            expandRoutine = StartCoroutine(ExpandSmoothCoroutine(duration));
+        }
+
+        //プレイヤーカメラのFOVを狭めてだんだん拡大し、終わったら元に戻す
+        //（位置はUpdateで毎フレーム上書きされるので、前に出す代わりにFOVで寄る）
+        IEnumerator ExpandSmoothCoroutine(float duration)
+        {
+            bool hasCurve = expandCurve != null && expandCurve.length > 0;   // カーブ未設定時は線形
+
+            // ヒットストップ中はtimeScaleが下がるので実時間で進める
+            for (float t = 0f; t < duration; t += Time.unscaledDeltaTime)
+            {
+                float p = t / duration;
+                float k = hasCurve ? expandCurve.Evaluate(p) : p;
+                SetPlayerCameraFov(baseFov / Mathf.LerpUnclamped(1f, expandRate, k));
+                yield return null;
+            }
+            expandRoutine = null;
+        }
+
+        private void SetPlayerCameraFov(float fov)
+        {
+            foreach (Camera camera in playerCameras)
+            {
+                if (camera != null) camera.fieldOfView = fov;
+            }
         }
     }
 }
