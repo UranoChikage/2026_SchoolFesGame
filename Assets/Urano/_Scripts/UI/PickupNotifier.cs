@@ -8,7 +8,7 @@ namespace Pirates
     /// ・通知には寿命があり、寿命が来るまで出続ける。新しい通知は一番手前(下)に出て、古い通知は上へずれる
     /// ・同時に出せるのは最大 maxCount 個。超えたら一番古いものから消す
     /// ・消えるときはモデルごとフェードアウト
-    /// ・宝箱: 表示用モデル(TreasureAsset.DisplayModel)を映して Open で開く。未設定ならアイコン。アイテム: アイコン
+    /// ・宝箱・アイテムともアイコンを出す。後ろのエフェクトの色は、アイテムなら取った砲手の色、宝箱ならお宝ごとのグラデーション
     /// 通知1件の見た目は PickupNoticeView の Prefab で作って割り当てる。
     /// </summary>
     public class PickupNotifier : MonoBehaviour
@@ -50,19 +50,6 @@ namespace Pirates
         [SerializeField]
         float popTime = 0.25f;
 
-        [Header("モデル表示")]
-        [SerializeField] int modelTextureSize = 512;
-        [SerializeField]
-        [Tooltip("カメラからモデルまでの距離(m)。モデルの大きさに合わせる")]
-        float modelDistance = 4f;
-        [SerializeField] float cameraFov = 30f;
-        [SerializeField]
-        [Tooltip("モデルの向き。カメラが +Z 方向を見るので、正面が手前に来るよう回す")]
-        Vector3 modelEuler = new Vector3(15f, 180f, 0f);
-        [SerializeField]
-        [Tooltip("通知が出てから宝箱が開くまで(秒)")]
-        float openDelay = 0.35f;
-
         // 先頭が一番新しい
         readonly List<Entry> entries = new List<Entry>();
         readonly Stack<PickupNoticeView> free = new Stack<PickupNoticeView>();
@@ -88,19 +75,19 @@ namespace Pirates
 
         void OnItemAcquired(ItemAsset item, Color playerColor)
         {
-            if (item != null) Push(item.Icon, null, playerColor, null);
+            if (item != null) Push(item.Icon, playerColor, null);
         }
 
         void OnTreasureAdded(TreasureAsset treasure, int total)
         {
-            if (treasure != null) Push(treasure.Icon, treasure.DisplayModel, Color.white, treasure.NoticeColor);
+            if (treasure != null) Push(treasure.Icon, Color.white, treasure.NoticeColor);
         }
 
         /// <summary>gradient があれば時間で色が変わる。無ければ color 一色</summary>
-        void Push(Sprite icon, GameObject model, Color color, Gradient gradient)
+        void Push(Sprite icon, Color color, Gradient gradient)
         {
             if (viewPrefab == null || container == null) return;
-            if (icon == null && model == null) return; // 見せるものが無い
+            if (icon == null) return; // 見せるものが無い
 
             // 上限を超えないよう、消えていない通知のうち一番古いものからフェードさせる
             int alive = 0;
@@ -114,14 +101,7 @@ namespace Pirates
 
             PickupNoticeView view = free.Count > 0 ? free.Pop() : Instantiate(viewPrefab, container);
             view.Rect.anchoredPosition = Vector2.zero; // 一番手前の位置から出す
-            view.Show(icon, model, color, gradient, new PickupNoticeView.ModelSettings
-            {
-                textureSize = modelTextureSize,
-                distance = modelDistance,
-                fov = cameraFov,
-                euler = modelEuler,
-                openDelay = openDelay,
-            });
+            view.Show(icon, color, gradient);
             entries.Insert(0, new Entry { view = view });
         }
 

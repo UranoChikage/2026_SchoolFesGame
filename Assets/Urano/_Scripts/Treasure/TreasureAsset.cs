@@ -18,9 +18,6 @@ namespace Pirates
         [Tooltip("沈没位置に出す見た目（任意）")]
         VfxAsset dropVfx;
         [SerializeField]
-        [Tooltip("獲得通知のUIに出す宝箱モデル（任意）。Animatorの Open トリガーで開く。未設定ならアイコンを出す")]
-        GameObject displayModel;
-        [SerializeField]
         [Min(0f)]
         [Tooltip("ドロップ抽選の重み。大きいほど出やすい")]
         float weight = 1f;
@@ -33,7 +30,6 @@ namespace Pirates
         public int Value => value;
         public Sprite Icon => icon;
         public Gradient NoticeColor => noticeColor;
-        public GameObject DisplayModel => displayModel;
         public float Weight => weight;
 
         public void PlayDropVfx(Vector3 pos)
