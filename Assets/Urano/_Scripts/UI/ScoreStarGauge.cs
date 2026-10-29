@@ -5,7 +5,7 @@ namespace Pirates
 {
     /// <summary>
     /// 金額を見せない獲得スコア表示。ゲージが溜まると星が1つ点き、3つ点く（=ランクS）と星がキラキラ光る。
-    /// 星はランクに対応（1=B到達, 2=A到達, 3=S到達）。ゲージは次の星までの進み具合。
+    /// 星はランクに対応（1=B到達, 2=A到達, 3=S到達）。ゲージはSランクまでの全体に対する進み具合（星はその途中の各ランクの位置で点く）。
     /// ゲージは Image Type=Filled (Horizontal) にしておく。
     /// </summary>
     public class ScoreStarGauge : MonoBehaviour
@@ -51,7 +51,7 @@ namespace Pirates
             wallet = TreasureWallet.Current;
             if (wallet != null) wallet.StarsChanged += OnStarsChanged;
             shownStars = wallet != null ? wallet.Stars : 0;
-            shownFill = wallet != null ? wallet.StageProgress : 0f;
+            shownFill = wallet != null ? wallet.TotalProgress : 0f;
             ApplyParticles();
         }
 
@@ -81,9 +81,8 @@ namespace Pirates
 
             bool max = shownStars >= TreasureWallet.MaxStars;
 
-            // 星が増えてゲージが一周したら、空から次の段階を溜め直す
-            float target = wallet.StageProgress;
-            if (target < shownFill - 0.5f) shownFill = 0f;
+            // ゲージは全体(Sランクまで)に対する割合。ゲーム開始で金額が0に戻ったら空へ戻る
+            float target = wallet.TotalProgress;
             shownFill = Mathf.Lerp(shownFill, target, 1f - Mathf.Exp(-gaugeSpeed * Time.deltaTime));
             if (gaugeFill != null) gaugeFill.fillAmount = shownFill;
 

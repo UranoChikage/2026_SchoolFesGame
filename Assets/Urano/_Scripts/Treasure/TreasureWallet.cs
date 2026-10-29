@@ -34,18 +34,12 @@ namespace Pirates
         /// <summary>星の数。0=Bの手前、1=B到達、2=A到達、3=S到達（最大）</summary>
         public int Stars => StarsFor(Total);
 
-        /// <summary>次の星までのゲージ(0〜1)。最大のときは1</summary>
-        public float StageProgress
-        {
-            get
-            {
-                int stars = Stars;
-                if (stars >= MaxStars) return 1f;
-                int from = stars == 0 ? 0 : StarThreshold(stars - 1);
-                int to = StarThreshold(stars);
-                return Mathf.Clamp01((Total - from) / (float)Mathf.Max(1, to - from));
-            }
-        }
+        /// <summary>ゲージ(0〜1)。最高ランク(S)のしきい値に対する合計金額の割合。星はこの途中の各しきい値で点く</summary>
+        public float TotalProgress => Mathf.Clamp01(Total / (float)Mathf.Max(1, thresholdS));
+
+        /// <summary>星n個目(1〜3)が点くゲージの位置(0〜1)。ゲージ上に目印を置くときに使う</summary>
+        public float StarPosition(int starNumber) =>
+            Mathf.Clamp01(StarThreshold(Mathf.Clamp(starNumber, 1, MaxStars) - 1) / (float)Mathf.Max(1, thresholdS));
 
         /// <summary>シーンの星の数。ウォレットが無いシーンでは0（難易度の段階などが参照する）</summary>
         public static int CurrentStars => Current != null ? Current.Stars : 0;
