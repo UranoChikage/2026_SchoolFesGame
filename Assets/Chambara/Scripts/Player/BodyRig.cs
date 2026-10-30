@@ -70,6 +70,7 @@ namespace Chambara
         PlayerBehaviour player;
         Sword sword;
         Transform floatPivot, chest, neck;
+        public Transform Body => floatPivot;   // 体の中心。吹っ飛び中もここが一緒に動く
         Vector3 floatRest;   // Player のローカル座標
         Vector3 chestEuler, headEuler;
         Spring hair;

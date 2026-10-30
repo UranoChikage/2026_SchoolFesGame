@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Chambara
@@ -21,6 +22,8 @@ namespace Chambara
         [SerializeField] private float slowHeight        = 1.2f; // カメラと注視点の高さ
         Coroutine slowCameraRoutine;
 
+        [Header("ClashCamera Settings")]
+        [SerializeField] private ClashCamera clashCamera;   // 吹っ飛ばされた方を追いかける
 
         [Header("Camera Settings")]
         [SerializeField] private Camera playerCamera;
@@ -46,6 +49,10 @@ namespace Chambara
         private void Start()
         {
             ChambaraManager.Instance.OnGameStateChanged += ChangeGameState;
+            ChambaraManager.Instance.OnKnockback += loser => ChangeClashMode(loser.Body);
+
+            // ChambaraManager の Start が先に動いて、登録前に Ready になっていたらここで反映する
+            if (ChambaraManager.Instance.GameState != GameState.None) ChangeGameState(ChambaraManager.Instance.GameState);
         }
         private void ChangeGameState(GameState newState)
         {
@@ -107,6 +114,11 @@ namespace Chambara
             playerCamera.gameObject.SetActive(true);
             playerCamera2.gameObject.SetActive(true);
             slowCamera.gameObject.SetActive(false);
+            if (clashCamera != null)
+            {
+                clashCamera.SetTarget(null);
+                clashCamera.gameObject.SetActive(false);
+            }
         }
 
         private void ChangeSlowMode()
@@ -116,6 +128,19 @@ namespace Chambara
             playerCamera2.gameObject.SetActive(false);
             if (slowCameraRoutine != null) StopCoroutine(slowCameraRoutine);
             slowCameraRoutine = StartCoroutine(ChangeCameraBack());
+        }
+
+        //吹っ飛ばされた方（target）を ClashCamera に追いかけさせる
+        public void ChangeClashMode(Transform target)
+        {
+            if (clashCamera == null) return;
+            if (slowCameraRoutine != null) StopCoroutine(slowCameraRoutine);
+            slowCameraRoutine = null;
+            slowCamera.gameObject.SetActive(false);
+            playerCamera.gameObject.SetActive(false);
+            playerCamera2.gameObject.SetActive(false);
+            clashCamera.gameObject.SetActive(true);
+            clashCamera.SetTarget(target);
         }
 
         //プレイヤーとプレイヤーの間の位置を横から見て、一度引いてからだんだん近づく

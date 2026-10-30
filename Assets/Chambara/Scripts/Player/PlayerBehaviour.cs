@@ -39,6 +39,7 @@ namespace Chambara
         public bool IsHitTiming => Data.state == PlayerState.Attack && !Resolved && Time.time >= AttackImpactTime;
 
         BodyRig bodyRig;
+        public Transform Body => bodyRig != null && bodyRig.Body != null ? bodyRig.Body : transform;   // 体の中心（吹っ飛びの追尾用）
 
         public event Action<PlayerState, int> OnStateChanged;
 
