@@ -213,13 +213,25 @@ namespace Pirates
         {
             if (Event.current.type != EventType.Repaint || !shooter.IsAlive) return;
 
-            float size = cursorSize * (shooter.IsReady ? 1f : 0.6f);
+            // アイテムを持っている間は、そのアイテムのカーソルの大きさ・画像に切り替える
+            ItemAsset item = items != null ? items.CursorItem : null;
+            float baseSize = item != null && item.CursorSize > 0f ? item.CursorSize : cursorSize;
+            Sprite sprite = item != null ? item.CursorSprite : null;
+            float size = baseSize * (shooter.IsReady ? 1f : 0.6f);
             float x = cursor.x;
             float y = Screen.height - cursor.y; // GUIは上原点
 
             Color old = GUI.color;
             GUI.color = cursorColor;
-            if (cursorTexture != null)
+            if (sprite != null)
+            {
+                // スプライトシート上の位置を指定して描く
+                Rect tr = sprite.textureRect;
+                var uv = new Rect(tr.x / sprite.texture.width, tr.y / sprite.texture.height,
+                    tr.width / sprite.texture.width, tr.height / sprite.texture.height);
+                GUI.DrawTextureWithTexCoords(new Rect(x - size * 0.5f, y - size * 0.5f, size, size), sprite.texture, uv);
+            }
+            else if (cursorTexture != null)
             {
                 GUI.DrawTexture(new Rect(x - size * 0.5f, y - size * 0.5f, size, size), cursorTexture);
             }

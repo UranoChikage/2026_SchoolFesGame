@@ -18,6 +18,8 @@ MonoBehaviour:
   weight: 1
   icon: {fileID: 21300000, guid: 40acf9b7c30a6af4fb3463498aeac3be, type: 3}
   color: {r: 0, g: 1, b: 1, a: 1}
+  cursorSprite: {fileID: 21300000, guid: e8615ad6ae3852744a95285835cf8e3b, type: 3}
+  cursorSize: 60
   beamRadius: 5
   beamWidth: 3
   beamPrefab: {fileID: 2201106846867017612, guid: 040a76d095ffba44dba15934c4473147, type: 3}

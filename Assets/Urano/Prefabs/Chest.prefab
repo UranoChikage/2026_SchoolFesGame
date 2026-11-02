@@ -101,6 +101,7 @@ GameObject:
   - component: {fileID: 4558604516219853544}
   - component: {fileID: 4919159606863240096}
   - component: {fileID: 7322215093295875785}
+  - component: {fileID: 6448774187014518991}
   m_Layer: 0
   m_Name: Chest
   m_TagString: Untagged
@@ -136,7 +137,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4c860f1867cce6f45b46c7424fbbe841, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Pirates.TreasurePickup
-  openDuration: 3
+  openDuration: 2
 --- !u!95 &7322215093295875785
 Animator:
   serializedVersion: 7
@@ -159,6 +160,20 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &6448774187014518991
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2096184781659809504}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79e1cb95c5b455947a129950a715942c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Pirates.OutlineHull
+  color: {r: 0.98564017, g: 1, b: 0, a: 1}
+  width: 2
 --- !u!1 &2790876637233196823
 GameObject:
   m_ObjectHideFlags: 0

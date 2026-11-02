@@ -32,6 +32,15 @@ namespace Pirates
         [Tooltip("ドロップ品・効果の仮の色（専用の見た目を作るまでの代用）")]
         Color color = Color.cyan;
 
+        [Header("カーソル（所持中・使用中）")]
+        [SerializeField]
+        [Tooltip("このアイテムを持っている間のカーソル画像（任意）。空なら砲手のカーソルのまま")]
+        Sprite cursorSprite;
+        [SerializeField]
+        [Min(0f)]
+        [Tooltip("このアイテムを持っている間のカーソルの大きさ(px)。0なら砲手のカーソルの大きさのまま")]
+        float cursorSize = 0f;
+
         [Header("ビーム用")]
         [SerializeField]
         [Min(0.1f)]
@@ -85,6 +94,8 @@ namespace Pirates
         public float Weight => weight;
         public Sprite Icon => icon;
         public Color Color => color;
+        public Sprite CursorSprite => cursorSprite;
+        public float CursorSize => cursorSize;
         public float BeamRadius => beamRadius;
         public float BeamWidth => beamWidth;
         public GameObject BeamPrefab => beamPrefab;

@@ -75,16 +75,16 @@ namespace Pirates
 
         void OnItemAcquired(ItemAsset item, Color playerColor)
         {
-            if (item != null) Push(item.Icon, playerColor, null);
+            if (item != null) Push(item.Icon, null, playerColor); // 砲手の色は背景に
         }
 
         void OnTreasureAdded(TreasureAsset treasure, int total)
         {
-            if (treasure != null) Push(treasure.Icon, Color.white, treasure.NoticeColor);
+            if (treasure != null) Push(treasure.Icon, treasure.NoticeColor, null); // お宝の色はエフェクトに（背景は既定色）
         }
 
-        /// <summary>gradient があれば時間で色が変わる。無ければ color 一色</summary>
-        void Push(Sprite icon, Color color, Gradient gradient)
+        /// <summary>effectGradient: エフェクトの色(時間で変化・任意)。backColor: 固定の背景の色</summary>
+        void Push(Sprite icon, Gradient effectGradient, Color? backColor)
         {
             if (viewPrefab == null || container == null) return;
             if (icon == null) return; // 見せるものが無い
@@ -101,7 +101,7 @@ namespace Pirates
 
             PickupNoticeView view = free.Count > 0 ? free.Pop() : Instantiate(viewPrefab, container);
             view.Rect.anchoredPosition = Vector2.zero; // 一番手前の位置から出す
-            view.Show(icon, color, gradient);
+            view.Show(icon, effectGradient, backColor);
             entries.Insert(0, new Entry { view = view });
         }
 

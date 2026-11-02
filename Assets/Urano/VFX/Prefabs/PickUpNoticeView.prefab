@@ -217,6 +217,8 @@ MonoBehaviour:
   backSprite: {fileID: 4991943281440780354}
   effectSprite: {fileID: 9135771493144633554}
   iconImage: {fileID: 4273660922372423710}
+  defaultBackColor: {r: 0, g: 0.54509807, b: 1, a: 1}
+  defaultEffectColor: {r: 1, g: 1, b: 1, a: 1}
   effectSpinSpeed: 40
   effectPulse: 0.08
   gradientTime: 0.5

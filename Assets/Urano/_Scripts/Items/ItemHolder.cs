@@ -52,6 +52,8 @@ namespace Pirates
         public static event System.Action<ItemAsset, Color> Acquired;
 
         public ItemAsset Held => held;
+        /// <summary>カーソルの見た目に使うアイテム。所持中、またはビーム使用中のもの。無ければnull</summary>
+        public ItemAsset CursorItem => held != null ? held : (IsBeamActive ? beam : null);
         /// <summary>ビーム使用中。この間この砲手は通常の大砲を撃てない</summary>
         public bool IsBeamActive => beam != null && Time.time < beamEnd;
 
