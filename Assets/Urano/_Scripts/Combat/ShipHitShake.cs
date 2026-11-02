@@ -13,13 +13,22 @@ namespace Pirates
         [Tooltip("Animatorのトリガー名")]
         string triggerName = "Hit";
 
+        [SerializeField]
+        [Tooltip("揺れのステート名。入っていて存在すれば、トランジションを通さずこのステートを頭から直接再生する（遷移のラグが出ない）。空ならトリガー方式")]
+        string stateName = "ShipShake";
+        [SerializeField]
+        [Tooltip("ステートがあるレイヤー番号")]
+        int layer;
+
         ShipHealth health;
         int triggerHash;
+        int stateHash;
 
         void Awake()
         {
             health = GetComponent<ShipHealth>();
             triggerHash = Animator.StringToHash(triggerName);
+            stateHash = Animator.StringToHash(stateName);
             if (animator == null) animator = GetComponentInChildren<Animator>();
         }
 
@@ -29,6 +38,13 @@ namespace Pirates
         void OnDamaged(DamageInfo info)
         {
             if (animator == null) return;
+            // ステートを直接再生：遷移の判定待ちが無く、被弾と同じフレームから揺れ始める
+            if (!string.IsNullOrEmpty(stateName) && animator.HasState(layer, stateHash))
+            {
+                animator.Play(stateHash, layer, 0f);
+                return;
+            }
+
             animator.ResetTrigger(triggerHash); // 連続被弾でもトリガーが溜まらず、毎回頭から揺れる
             animator.SetTrigger(triggerHash);
         }
