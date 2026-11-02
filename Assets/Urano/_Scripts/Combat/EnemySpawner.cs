@@ -46,6 +46,17 @@ namespace Pirates
         [Tooltip("カメラの前方からこの角度(度)の範囲にだけ出す（左右それぞれ）。90なら前方の半円、180なら全方位。後ろに出ると、追うために舵を切り続けることになる")]
         float spawnHalfAngle = 100f;
         [SerializeField]
+        [Range(0f, 1f)]
+        [Tooltip("出現位置を、カメラに映る範囲（左右の画角の内側）から選ぶ確率。後ろや横ばかりに出て、接敵まで長く感じるのを防ぐ。0なら従来どおり")]
+        float frontBias = 0.7f;
+        [SerializeField]
+        [Tooltip("映る範囲に出すときの最小距離(m)。これ以上遠ければ、画面内でも出してよい（水平線近くの点として現れるので急に出た感じが出にくい）")]
+        float visibleSpawnMinRadius = 65f;
+        [SerializeField]
+        [Min(0f)]
+        [Tooltip("発進してから最初の1隻を出すまでの秒数（以降はSpawn Interval）")]
+        float firstSpawnDelay = 0.5f;
+        [SerializeField]
         [Min(0f)]
         [Tooltip("出現位置は、すでにいる敵からこの距離(m)以上離す。船同士が重なって挙動がおかしくなるのを防ぐ。0なら見ない")]
         float minSpacing = 15f;
@@ -66,7 +77,7 @@ namespace Pirates
         void OnEnable()
         {
             startTime = Time.time;
-            nextSpawnTime = Time.time + spawnInterval;
+            nextSpawnTime = Time.time + firstSpawnDelay;
         }
 
         void Update()
@@ -148,12 +159,22 @@ namespace Pirates
             if (forward.sqrMagnitude < 0.0001f) forward = Vector3.forward;
             forward.Normalize();
 
+            // カメラの水平画角の半分（余白つき）。ここに収まる角度は「映る範囲」
+            float viewHalf = cam != null
+                ? Mathf.Atan(Mathf.Tan(cam.fieldOfView * 0.5f * Mathf.Deg2Rad) * cam.aspect) * Mathf.Rad2Deg * 0.9f
+                : 30f;
+
             for (int i = 0; i < placeAttempts; i++)
             {
-                Vector3 dir = Quaternion.Euler(0f, Random.Range(-spawnHalfAngle, spawnHalfAngle), 0f) * forward;
-                float radius = Random.Range(minRadius, maxRadius);
+                bool inView = Random.value < frontBias;
+                float angle = inView ? Random.Range(-viewHalf, viewHalf) : Random.Range(-spawnHalfAngle, spawnHalfAngle);
+                float radius = inView ? Random.Range(Mathf.Max(minRadius, visibleSpawnMinRadius), Mathf.Max(maxRadius, visibleSpawnMinRadius))
+                                      : Random.Range(minRadius, maxRadius);
+                Vector3 dir = Quaternion.Euler(0f, angle, 0f) * forward;
                 point = new Vector3(center.x + dir.x * radius, y, center.z + dir.z * radius);
-                if (!IsOnScreen(point) && !IsTooClose(point)) return true;
+                // 映る位置は、遠い場合だけ許可する
+                bool okView = !IsOnScreen(point) || (inView && radius >= visibleSpawnMinRadius);
+                if (okView && !IsTooClose(point)) return true;
             }
 
             point = default;
