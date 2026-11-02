@@ -179,7 +179,8 @@ namespace Pirates
             // 結果はここで確定して保持する（シーンを跨いでリザルトから読める）
             TreasureWallet wallet = TreasureWallet.Current;
             GameResult.Set(new GameResult(reason, wallet != null ? wallet.Total : 0,
-                wallet != null ? wallet.Rank : TreasureRank.B, Remaining));
+                wallet != null ? wallet.Rank : TreasureRank.B, Remaining, wallet != null ? wallet.Stars : 0,
+                wallet != null ? wallet.ThresholdA : 3000, wallet != null ? wallet.ThresholdS : 6000));
 
             GameEnded?.Invoke(Survived);
             onGameEnded?.Invoke();

@@ -30,6 +30,8 @@ namespace Pirates
 
         public int Total { get; private set; }
         public TreasureRank Rank => RankFor(Total);
+        public int ThresholdA => thresholdA;
+        public int ThresholdS => thresholdS;
 
         /// <summary>星の数。0=Bの手前、1=B到達、2=A到達、3=S到達（最大）</summary>
         public int Stars => StarsFor(Total);
