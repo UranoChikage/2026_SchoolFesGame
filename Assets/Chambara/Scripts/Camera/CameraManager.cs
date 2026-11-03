@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Chambara
@@ -21,6 +22,10 @@ namespace Chambara
         [SerializeField] private float slowHeight        = 1.2f; // カメラと注視点の高さ
         Coroutine slowCameraRoutine;
 
+        [Header("ClashCamera Settings")]
+        [SerializeField] private ClashCamera clashCamera;   // 吹っ飛ばされた方を追いかける
+        [SerializeField] private float liveKnockbackTime = 1f;   // 最初の吹っ飛びを今のカメラのまま見せる時間（ゲーム内時間・秒）。0ならすぐ切り替える
+        Coroutine clashRoutine;
 
         [Header("Camera Settings")]
         [SerializeField] private Camera playerCamera;
@@ -46,6 +51,10 @@ namespace Chambara
         private void Start()
         {
             ChambaraManager.Instance.OnGameStateChanged += ChangeGameState;
+            ChambaraManager.Instance.OnKnockback += loser => ChangeClashMode(loser.Body, Opponent(loser).transform);
+
+            // ChambaraManager の Start が先に動いて、登録前に Ready になっていたらここで反映する
+            if (ChambaraManager.Instance.GameState != GameState.None) ChangeGameState(ChambaraManager.Instance.GameState);
         }
         private void ChangeGameState(GameState newState)
         {
@@ -107,6 +116,13 @@ namespace Chambara
             playerCamera.gameObject.SetActive(true);
             playerCamera2.gameObject.SetActive(true);
             slowCamera.gameObject.SetActive(false);
+            if (clashRoutine != null) StopCoroutine(clashRoutine);
+            clashRoutine = null;
+            if (clashCamera != null)
+            {
+                clashCamera.SetTarget(null);
+                clashCamera.gameObject.SetActive(false);
+            }
         }
 
         private void ChangeSlowMode()
@@ -116,6 +132,38 @@ namespace Chambara
             playerCamera2.gameObject.SetActive(false);
             if (slowCameraRoutine != null) StopCoroutine(slowCameraRoutine);
             slowCameraRoutine = StartCoroutine(ChangeCameraBack());
+        }
+
+        //吹っ飛ばされた方（target）を ClashCamera に追いかけさせる
+        //最初の吹っ飛びは liveKnockbackTime の間だけ今のカメラのまま見せて、そのあと ClashCamera でやり直して見せる
+        //winner: 見せ終わったら映す勝った方
+        public void ChangeClashMode(Transform target, Transform winner = null)
+        {
+            if (clashCamera == null) return;
+            clashCamera.SetTarget(target, winner);   // 吹っ飛び始めの位置・向きはこの瞬間に覚えさせる
+            if (clashRoutine != null) StopCoroutine(clashRoutine);
+            clashRoutine = StartCoroutine(ChangeClashModeAfterLive());
+        }
+
+        private static PlayerBehaviour Opponent(PlayerBehaviour p)
+        {
+            PlayerBehaviour[] players = ChambaraManager.Instance.Players;
+            return players[0] == p ? players[1] : players[0];
+        }
+
+        IEnumerator ChangeClashModeAfterLive()
+        {
+            bool live = liveKnockbackTime > 0f;
+            if (live) yield return new WaitForSeconds(liveKnockbackTime);   // 吹っ飛びと同じゲーム内時間で数える
+
+            if (slowCameraRoutine != null) StopCoroutine(slowCameraRoutine);
+            slowCameraRoutine = null;
+            slowCamera.gameObject.SetActive(false);
+            playerCamera.gameObject.SetActive(false);
+            playerCamera2.gameObject.SetActive(false);
+            clashCamera.gameObject.SetActive(true);
+            clashCamera.Play(live);   // 今のカメラで一度見せたので、最初のカットからやり直す
+            clashRoutine = null;
         }
 
         //プレイヤーとプレイヤーの間の位置を横から見て、一度引いてからだんだん近づく

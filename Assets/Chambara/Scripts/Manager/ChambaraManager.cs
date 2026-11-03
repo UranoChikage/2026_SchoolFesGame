@@ -31,6 +31,7 @@ namespace Chambara
         public event Action OnTieClash;        // 相打ちで剣がぶつかった瞬間
         public event Action<int> OnGuarded;    // ガードされた瞬間（引数は攻撃した側）
         public event Action<int> OnHit;        // 攻撃が当たった瞬間（引数は攻撃した側）
+        public event Action<PlayerBehaviour> OnKnockback;   // 斬られた方が吹っ飛び始めた瞬間（ヒットストップの後）
 
         [Header("Slow Motion Settings")]
         [SerializeField] float slowTimeScale = 0.2f;
@@ -246,8 +247,14 @@ namespace Chambara
         {
             OnHit?.Invoke(attacker);
             PlayerBehaviour loser = players[1 - attacker];
-            if (hitStop != null) hitStop.Play(loser.Knockback);
-            else loser.Knockback();
+            if (hitStop != null) hitStop.Play(() => Knockback(loser));
+            else Knockback(loser);
+        }
+
+        void Knockback(PlayerBehaviour loser)
+        {
+            loser.Knockback();
+            OnKnockback?.Invoke(loser);
         }
 
         // loser: 負けたプレイヤー（-1:引き分け）

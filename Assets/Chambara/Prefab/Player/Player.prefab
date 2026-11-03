@@ -1381,10 +1381,10 @@ MonoBehaviour:
   limpHeadDrop: 25
   limpSink: 0.15
   limpSpeed: 4
-  knockbackSpeed: 15
-  knockbackUp: 15
+  knockbackSpeed: 40
+  knockbackUp: 22
   knockbackGravity: 10
-  knockbackFlipSpeed: 720
+  knockbackFlipSpeed: 900
   knockbackTwistSpeed: 0
 --- !u!1001 &540947795444585637
 PrefabInstance:
