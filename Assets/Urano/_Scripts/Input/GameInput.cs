@@ -1,14 +1,16 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Common;
 
 namespace Pirates
 {
     /// <summary>
-    /// ゲームの入力は全てここを通す。Switch実機用に差し替えるときは、このファイルだけ直せばよい。
+    /// Piratesの入力は全てここを通す。JoyConの生データは共通の Common.SwitchInput から読む。
     ///
-    /// ■ 差し替えの手順
-    ///   1. 「JoyCon（傾き・ボタン）」の4つのメソッドを、使うSDK／ライブラリの呼び出しに書き換える。
-    ///   2. 「PC（キーボード・マウス）」はデバッグ用にそのまま残してよい（JoyConが無いとき自動で使われる）。
+    /// ■ SDKを差し替えるとき
+    ///   Assets/Common/Input/SwitchInput.cs だけ直せばよい（このファイルは変更不要）。
+    ///   ボタン割り当て（発射=ZR、センター=十字下 など）を変えたいときだけ、このファイルを直す。
+    ///   「PC（キーボード・マウス）」はデバッグ用にそのまま残す（JoyConが無いとき自動で使われる）。
     ///   他のスクリプトは UnityEngine.InputSystem や Joycon を直接触らない。
     ///
     /// ■ 番号の決まり
@@ -17,38 +19,23 @@ namespace Pirates
     public static class GameInput
     {
         // ======================================================================
-        // JoyCon（傾き・ボタン）  ← Switch実機ではここを書き換える
+        // JoyCon（傾き・ボタン）  ← 共通のSwitchInputから読む。割り当てだけここで決める
         // ======================================================================
 
         /// <summary>そのコントローラーが繋がっているか</summary>
-        public static bool IsJoyconConnected(int joyconIndex)
-        {
-            var manager = JoyconManager.Instance;
-            return manager != null && manager.j != null && manager.j.Count > joyconIndex;
-        }
+        public static bool IsJoyconConnected(int joyconIndex) => SwitchInput.IsConnected(joyconIndex);
 
         /// <summary>
         /// 加速度（重力ベクトル）。傾きの計算に使う。単位は問わない（角度は比率で出す）。
         /// 繋がっていなければ Vector3.zero。
         /// </summary>
-        public static Vector3 GetJoyconAccel(int joyconIndex)
-        {
-            return IsJoyconConnected(joyconIndex) ? JoyconManager.Instance.j[joyconIndex].GetAccel() : Vector3.zero;
-        }
+        public static Vector3 GetJoyconAccel(int joyconIndex) => SwitchInput.GetAccel(joyconIndex);
 
         /// <summary>発射ボタンを押した瞬間（砲手用。JoyConでは R/ZR 側のボタン）</summary>
-        public static bool JoyconFirePressed(int joyconIndex)
-        {
-            return IsJoyconConnected(joyconIndex)
-                && JoyconManager.Instance.j[joyconIndex].GetButtonDown(Joycon.Button.SHOULDER_2);
-        }
+        public static bool JoyconFirePressed(int joyconIndex) => SwitchInput.ButtonDown(joyconIndex, SwitchButton.Shoulder2);
 
         /// <summary>舵輪を「真っ直ぐ」に戻すボタンを押した瞬間（舵取り用。JoyConでは十字キー下）</summary>
-        public static bool JoyconCenterPressed(int joyconIndex)
-        {
-            return IsJoyconConnected(joyconIndex)
-                && JoyconManager.Instance.j[joyconIndex].GetButtonDown(Joycon.Button.DPAD_DOWN);
-        }
+        public static bool JoyconCenterPressed(int joyconIndex) => SwitchInput.ButtonDown(joyconIndex, SwitchButton.DpadDown);
 
         // ======================================================================
         // PC（キーボード・マウス）  ← デバッグ用。JoyConが無いときに使われる
