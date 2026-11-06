@@ -1877,11 +1877,11 @@ MonoBehaviour:
     m_RotationOrder: 4
   hitStop: {fileID: 0}
   playerModelNames:
-  - Alien
-  - Jennifer
+  - Machiko
+  - Johnson
   swordModelNames:
+  - Bat
   - Pikopiko
-  - LightSword
 --- !u!4 &1432148089
 Transform:
   m_ObjectHideFlags: 0

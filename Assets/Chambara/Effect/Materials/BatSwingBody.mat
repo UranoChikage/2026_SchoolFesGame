@@ -1,0 +1,51 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: BatSwingBody
+  m_Shader: {fileID: 4800000, guid: 1e889d922e1d4e2ca3cbb37597fefd87, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs: []
+    m_Ints: []
+    m_Floats:
+    - _ColorBlend: 0.367
+    - _HeadFade: 0.02
+    - _HighlightAdd: 0.242
+    - _HighlightThreshold: 0.85
+    - _Intensity: 1
+    - _LineBreak: 2.03
+    - _LineCount: 30
+    - _LineCut: 0.39
+    - _LineSpeed: 0.91
+    - _MidEnd: 0.09
+    - _MinSpeed: 0.1
+    - _RimThreshold: 0.675
+    - _ShadeMul: 0.503
+    - _ShadeThreshold: 0.5
+    - _StartLength: 0.04
+    - _TailFadeStart: 0.25
+    m_Colors:
+    - _EndColor: {r: 0.70710677, g: 0.31819803, b: 0.07071068, a: 1}
+    - _LightDir: {r: 0.3, g: 1, b: -0.5, a: 0}
+    - _MidColor: {r: 0.70977503, g: 0.5014099, b: 0.20221893, a: 1}
+    - _RimColor: {r: 0.3, g: 0.1, b: 0.04, a: 1}
+    - _StartColor: {r: 0.85827255, g: 0.6521271, b: 0.14088622, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1

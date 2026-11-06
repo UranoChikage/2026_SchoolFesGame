@@ -1,0 +1,60 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: BatSwingLines
+  m_Shader: {fileID: 4800000, guid: 1dccf76ca9844dbb9ac71abbca69c62d, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: 3000
+  stringTagMap:
+    RenderType: Transparent
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs: []
+    m_Ints: []
+    m_Floats:
+    - _Alpha: 0.5
+    - _AlphaTailFade: 0.7
+    - _ColorBlend: 0.1
+    - _CoreSize: 0.4
+    - _DstBlend: 10
+    - _EdgeSoftness: 0.12
+    - _EdgeWidth: 0
+    - _HeadFade: 0.05
+    - _Intensity: 1
+    - _JagAmount: 0
+    - _JagScale: 6
+    - _JagSpeed: 3
+    - _LineBase: 0.35
+    - _LineBreak: 2.5
+    - _LineCount: 14
+    - _LineCut: 0.3
+    - _LineSpeed: 1.5
+    - _MidPosition: 0.75
+    - _MinSpeed: 0
+    - _SrcBlend: 5
+    - _TailFadeStart: 0.4
+    - _TailShift: 1
+    - _TailShrink: 0.3
+    - _ZOffset: -2
+    - _ZWrite: 0
+    m_Colors:
+    - _CoreColor: {r: 1.8, g: 1.8, b: 1.8, a: 1}
+    - _EdgeColor: {r: 0.35, g: 0.12, b: 0.05, a: 1}
+    - _MidColor: {r: 1.5, g: 1.5, b: 1.4, a: 1}
+    - _OuterColor: {r: 1.2, g: 0.8, b: 0.5, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1
