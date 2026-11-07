@@ -423,10 +423,11 @@ MonoBehaviour:
     distance: 2
     height: 0
     lookOffset: {x: 0, y: 0.66, z: 0}
-    duration: 2
+    duration: 1
   loops: 1
   follow: 0
   followSpeed: 8
+  clashEffect: {fileID: 2609174785499083556, guid: 825d773f297d46a4da9002ac577bcf12, type: 3}
   winnerOffset: {x: 0.39, y: 1.32, z: 2.45}
   winnerLook: {x: 0, y: 0.8, z: 0}
   winnerMoveTime: 0.3

@@ -36,6 +36,8 @@ namespace Chambara
         [SerializeField] private bool follow = false;       // 向きで体を追いかけるか（false ならカットごとの lookOffset の方を向いたまま）
         [SerializeField] private float followSpeed = 8f;    // 向きを追いかける速さ（大きいほどぴったり付いていく）
 
+        [SerializeField] private ParticleSystem clashEffect;   // 吹っ飛んだ後の「キラーン」
+
         [Header("Winner")]
         [SerializeField] private Vector3 winnerOffset = new Vector3(0.8f, 1.4f, 2.2f);   // 勝った方から見たカメラの位置（x:右 y:上 z:前）
         [SerializeField] private Vector3 winnerLook   = new Vector3(0f, 1.1f, 0f);       // 勝った方から見た注視点
@@ -122,6 +124,14 @@ namespace Chambara
                     yield return new WaitForSeconds(shots[i].duration);   // 吹っ飛びと同じゲーム内時間で数える
                 }
             }
+
+            if(clashEffect != null)
+            {
+                Transform root = target.root;
+                Instantiate(clashEffect, target.position, Quaternion.identity);
+                root.gameObject.SetActive(false);
+            }
+            yield return new WaitForSeconds(2f);   // ヒットストップ・スローの時間を待つ（ゲーム内時間で数える）
 
             if (winner != null) yield return MoveToWinner();
             replayRoutine = null;   // 最後の位置のまま止める

@@ -68,6 +68,12 @@ namespace Chambara
         private void Awake()
         {
             if (sword == null) sword = GetComponentInParent<Sword>();
+            if (sword == null)
+            {
+                Destroy(gameObject);
+                Debug.Log("SwordTrailMesh needs Sword in parent");
+                return;
+            }
 
             mesh = new Mesh { name = "SwordTrail" };
             mesh.MarkDynamic();
