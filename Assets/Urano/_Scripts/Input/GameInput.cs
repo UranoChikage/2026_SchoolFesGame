@@ -29,13 +29,13 @@ namespace Pirates
         /// 加速度（重力ベクトル）。傾きの計算に使う。単位は問わない（角度は比率で出す）。
         /// 繋がっていなければ Vector3.zero。
         /// </summary>
-        public static Vector3 GetJoyconAccel(int joyconIndex) => SwitchInput.GetAccel(joyconIndex);
+        public static Vector3 GetJoyconAccel(int joyconIndex) => SwitchInput.Acceleration(joyconIndex);
 
         /// <summary>発射ボタンを押した瞬間（砲手用。JoyConでは R/ZR 側のボタン）</summary>
-        public static bool JoyconFirePressed(int joyconIndex) => SwitchInput.ButtonDown(joyconIndex, SwitchButton.Shoulder2);
+        public static bool JoyconFirePressed(int joyconIndex) => SwitchInput.ButtonDown(joyconIndex, SwitchButton.Confirm);
 
         /// <summary>舵輪を「真っ直ぐ」に戻すボタンを押した瞬間（舵取り用。JoyConでは十字キー下）</summary>
-        public static bool JoyconCenterPressed(int joyconIndex) => SwitchInput.ButtonDown(joyconIndex, SwitchButton.DpadDown);
+        public static bool JoyconCenterPressed(int joyconIndex) => SwitchInput.ButtonDown(joyconIndex, SwitchButton.Down);
 
         // ======================================================================
         // PC（キーボード・マウス）  ← デバッグ用。JoyConが無いときに使われる
