@@ -8,6 +8,12 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Urano/Scenes/SampleScene.unity
     guid: 99c9720ab356a0642a771bea13969a05
+  - enabled: 1
+    path: Assets/Chambara/Scene/ChambaraSelect.unity
+    guid: 17f8748c752428f45be945a05a6029da
+  - enabled: 1
+    path: Assets/Chambara/Scene/Chambara.unity
+    guid: f21245de6a227fd4c9f84bc85ed8379c
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   m_UseUCBPForAssetBundles: 0

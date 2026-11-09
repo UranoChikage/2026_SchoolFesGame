@@ -72,8 +72,11 @@ namespace Chambara
                 Instantiate(playerPrefab, edgePlayerPos0.position, Quaternion.identity),
                 Instantiate(playerPrefab, edgePlayerPos1.position, Quaternion.identity),
             };
-            players[0].Init(0, playerModelNames[0], swordModelNames[0], sim.players[0], edgePlayerPos0, edgePlayerPos1);
-            players[1].Init(1, playerModelNames[1], swordModelNames[1], sim.players[1], edgePlayerPos1, edgePlayerPos0);
+            // キャラ選択画面から来たときはその選択を使う（このシーンから直接始めたときはインスペクターの設定）
+            string[] models = ChambaraSelection.HasValue ? ChambaraSelection.PlayerModelNames : playerModelNames;
+            string[] swords = ChambaraSelection.HasValue ? ChambaraSelection.SwordModelNames : swordModelNames;
+            players[0].Init(0, models[0], swords[0], sim.players[0], edgePlayerPos0, edgePlayerPos1);
+            players[1].Init(1, models[1], swords[1], sim.players[1], edgePlayerPos1, edgePlayerPos0);
             startTime = Time.time;
             SetGameState(GameState.Ready);
         }
