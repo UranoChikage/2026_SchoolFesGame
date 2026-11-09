@@ -50,6 +50,7 @@ namespace Chambara
         public event Action<PlayerState, int> OnStateChanged;
 
         IChambaraInputContext input;
+        ISwordTracking tracking;
         Sword sword;
         Renderer rend;
         Vector3 edgePos, opponentEdgePos;
@@ -78,8 +79,10 @@ namespace Chambara
             rend = GetComponentInChildren<Renderer>();
             sword = GetComponentInChildren<Sword>();
             GenerateSword(swordName);
-            input = GetComponent<IChambaraInputContext>();
+            // Joy-Con があればそちらを使う（Joy-Conが使えないときは JoyconInputContext が DebugInputContext に任せる）
+            input = TryGetComponent(out JoyconInputContext joycon) ? (IChambaraInputContext)joycon : GetComponent<IChambaraInputContext>();
             input?.Init(playerIndex);
+            tracking = input as ISwordTracking;
             bodyRig = GetComponent<BodyRig>();
             if (bodyRig != null) bodyRig.Init(this);
         }
@@ -166,6 +169,13 @@ namespace Chambara
         }
 
         public void Lose() => Lost = true;
+
+        /// <summary>入力元が剣の向きを出しているとき、その回転（プレイヤー基準）を返す</summary>
+        public bool TryGetTrackedSword(out Quaternion rotation)
+        {
+            rotation = Quaternion.identity;
+            return tracking != null && tracking.TryGetSwordRotation(out rotation);
+        }
 
         // 斬られて吹っ飛ぶ。いつ吹っ飛ばすかは ChambaraManager が決める（ヒットストップが終わってから）
         public void Knockback()

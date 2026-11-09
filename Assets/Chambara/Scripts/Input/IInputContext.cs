@@ -1,3 +1,5 @@
+using UnityEngine;
+
 namespace Chambara
 {
     public struct PlayerInput
@@ -22,5 +24,14 @@ namespace Chambara
         /// 今の入力を返す。振り入力は読んだら消費される
         /// </summary>
         PlayerInput Read();
+    }
+
+    /// <summary>
+    /// 剣の向きをそのまま動かせる入力元（Joy-Conなど）。アイドル・移動中の剣に反映する
+    /// </summary>
+    public interface ISwordTracking
+    {
+        /// <summary>剣（pivot）のプレイヤー基準の回転。取れないときは false</summary>
+        bool TryGetSwordRotation(out Quaternion rotation);
     }
 }
