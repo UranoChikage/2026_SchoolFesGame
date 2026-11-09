@@ -63,10 +63,11 @@ namespace Chambara
         [SerializeField] private ScoreUi scoreUi;
         public void UpdateScore()
         {
-            if(scoreUi != null && bodyRig != null)
+            var manager = ChambaraManager.Instance;
+            if(scoreUi != null && bodyRig != null && manager != null && manager.LastRoundWinner >= 0)
             {
-                //1Pが1ポイント取って1-0の場合の例
-                scoreUi.UpdateScore(1,0,1);
+                //1本取った方を 1P=1 / 2P=2 で渡す
+                scoreUi.UpdateScore(manager.Scores[0], manager.Scores[1], manager.LastRoundWinner + 1);
             }
         }
 
@@ -140,6 +141,9 @@ namespace Chambara
             yield return new WaitForSeconds(0.5f);
             UpdateScore();
             //ここまで
+
+            // スコアを見せ終わったので、次のラウンドへ進むか勝敗を出すかは ChambaraManager に任せる
+            if (ChambaraManager.Instance != null) ChambaraManager.Instance.OnRoundResultShown();
         }
 
         // 最後のカットの位置・向きから、勝った方を映す位置・向きへ滑らかに移る

@@ -35,6 +35,23 @@ namespace Chambara
         private void Start()
         {
             parent.SetActive(false);
+            ChambaraManager.Instance.OnGameStateChanged += OnGameStateChanged;
+        }
+
+        private void OnDestroy()
+        {
+            if (ChambaraManager.Instance != null) ChambaraManager.Instance.OnGameStateChanged -= OnGameStateChanged;
+        }
+
+        // 次のラウンドが始まったら隠す
+        private void OnGameStateChanged(GameState state)
+        {
+            if (state == GameState.Ready) Hide();
+        }
+
+        public void Hide()
+        {
+            parent.SetActive(false);
         }
 
         //winner is 1 for player 1 and 2 for player 2

@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace Chambara
 {
@@ -51,6 +52,17 @@ namespace Chambara
         [SerializeField] string[] playerModelNames;
         [SerializeField] string[] swordModelNames;
 
+        [Header("Match Settings")]
+        [SerializeField] int winScore = 2;                 // 何本先取で勝ちか
+        [SerializeField] Key nextRoundKey = Key.Space;     // 1本取った後、このキーで次のラウンドへ
+        [SerializeField] float winnerResultDelay = 1.5f;   // 決着のスコア表示から WinnerResult を呼ぶまで（実時間・秒）
+        [SerializeField] WinnerResult winnerResult;        // 未設定ならシーンから探す
+
+        readonly int[] scores = new int[2];
+        public int[] Scores => scores;                     // 取った本数（[0]:1P [1]:2P）
+        public int LastRoundWinner { get; private set; } = -1;   // 直前のラウンドで1本取った方（-1:引き分け）
+        bool waitingNextRound;                             // 次のラウンドへ進むボタン待ち
+
         private void Awake()
         {
             instance = this;
@@ -61,11 +73,14 @@ namespace Chambara
             // 設定し忘れてもシーンに置いてあれば使う
             if (hitStop == null) hitStop = FindAnyObjectByType<HitStop>();
             if (hitStop == null) Debug.LogWarning("HitStop がシーンにないので、ヒットストップせずに吹っ飛ばします");
+            if (winnerResult == null) winnerResult = FindAnyObjectByType<WinnerResult>();
             ReadyGame();
         }
 
         public void ReadyGame()
         {
+            waitingNextRound = false;
+            LastRoundWinner = -1;
             sim = new ChambaraSimulator(rule);
             players = new[]
             {
@@ -104,6 +119,44 @@ namespace Chambara
                 foreach (var p in players) p.Render();
             }
 
+            if (waitingNextRound && Keyboard.current != null && Keyboard.current[nextRoundKey].wasPressedThisFrame)
+            {
+                NextRound();
+            }
+        }
+
+        // ラウンドの結果（スコア）を見せ終わったときに呼ぶ（ClashCamera から）
+        // どちらかが winScore 本取っていれば WinnerResult、まだならボタンで次のラウンドへ
+        public void OnRoundResultShown()
+        {
+            if (gameState != GameState.Finished || waitingNextRound) return;
+            if (LastRoundWinner >= 0 && scores[LastRoundWinner] >= winScore)
+            {
+                StartCoroutine(ShowWinnerResult(LastRoundWinner));
+                return;
+            }
+            Debug.Log($"{scores[0]} - {scores[1]}　{nextRoundKey} で次のラウンドへ");
+            waitingNextRound = true;
+        }
+
+        IEnumerator ShowWinnerResult(int winner)
+        {
+            yield return new WaitForSecondsRealtime(winnerResultDelay);
+            if (winnerResult != null) winnerResult.Play(winner, scores[0], scores[1]);
+            else Debug.LogWarning("WinnerResult がシーンにありません");
+        }
+
+        // プレイヤーを作り直して、次のラウンドを Ready から始める（UIボタンや Joy-Con からも呼べる）
+        public void NextRound()
+        {
+            if (!waitingNextRound) return;
+            StopAllCoroutines();
+            SetTimeScale(1f);
+            foreach (var p in players)
+            {
+                if (p != null) Destroy(p.gameObject);
+            }
+            ReadyGame();
         }
 
         private void OnValidate()
@@ -273,8 +326,17 @@ namespace Chambara
             {
                 players[loser].Lose();
                 players[1 - loser].Win();
+                LastRoundWinner = 1 - loser;
+                scores[LastRoundWinner]++;
             }
             SetGameState(GameState.Finished);
+
+            // 引き分けは吹っ飛び演出もスコア表示もないので、ポイントなしですぐやり直し待ちにする
+            if (loser < 0)
+            {
+                Debug.Log($"ポイントなし　{nextRoundKey} でやり直し");
+                waitingNextRound = true;
+            }
         }
 
         // 方向はテンキー表記（8=上, 9=右上, 6=右 … 7=左上）。各プレイヤー視点
