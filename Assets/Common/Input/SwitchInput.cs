@@ -29,7 +29,7 @@ namespace Common
     ///   index は「繋がっているコントローラーの順番」(0始まり)。
     ///   どのindexを誰が使うかは各ゲームが決める（Pirates: 0=舵取り, 1〜3=砲手）。
     /// </summary>
-    public class SwitchInput : MonoBehaviour
+    public class SwitchInput
     {
         #region シングルトン
 
