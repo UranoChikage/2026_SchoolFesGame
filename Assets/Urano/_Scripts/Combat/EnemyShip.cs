@@ -61,6 +61,11 @@ namespace Pirates
         [SerializeField]
         float angularDamping = 2f;
 
+        [Header("転覆")]
+        [SerializeField]
+        [Tooltip("船体がこの角度(度)以上傾いたら自爆して沈む。0以下なら転覆しない")]
+        float capsizeAngle = 90f;
+
         [Header("沈没")]
         [SerializeField]
         [Tooltip("沈没を始めてから消えるまでの時間(秒)")]
@@ -308,6 +313,14 @@ namespace Pirates
                 Sink();
                 return;
             }
+
+            // 傾きすぎ（±90度など）で転覆。Died → OnDied で通常の沈没・爆発になる
+            if (capsizeAngle > 0f && Vector3.Angle(transform.up, Vector3.up) >= capsizeAngle)
+            {
+                health.Kill();
+                return;
+            }
+
             if (target == null)
             {
                 if (PlayerTarget.Current == null) return;
