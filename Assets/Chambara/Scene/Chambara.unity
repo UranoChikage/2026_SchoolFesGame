@@ -423,10 +423,11 @@ MonoBehaviour:
     distance: 2
     height: 0
     lookOffset: {x: 0, y: 0.66, z: 0}
-    duration: 2
+    duration: 1
   loops: 1
   follow: 0
   followSpeed: 8
+  clashEffect: {fileID: 2609174785499083556, guid: 825d773f297d46a4da9002ac577bcf12, type: 3}
   winnerOffset: {x: 0.39, y: 1.32, z: 2.45}
   winnerLook: {x: 0, y: 0.8, z: 0}
   winnerMoveTime: 0.3
@@ -1478,6 +1479,50 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &958807561
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 958807563}
+  - component: {fileID: 958807562}
+  m_Layer: 0
+  m_Name: Winner
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &958807562
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 958807561}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7bd660a862ef6f34c99487a5b2bd9705, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Chambara.WinnerResult
+--- !u!4 &958807563
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 958807561}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1007668135
 GameObject:
   m_ObjectHideFlags: 0
@@ -1837,11 +1882,11 @@ MonoBehaviour:
   playerPrefab: {fileID: 2389350721131182169, guid: 1d8ea5266b020eb4d9727c51322bbdd9, type: 3}
   edgePlayerPos0: {fileID: 587212979}
   edgePlayerPos1: {fileID: 1929933712}
-  matchTime: 60
+  matchTime: 1000
   rule:
     directions: 8
-    moveSpeed: 0.1
-    slowDistance: 0.5
+    stepDistance: 0.2
+    backStepDistance: 0.2
     stopDistance: 0.15
     attackRange: 0.25
     closeCallTime: 0.1
@@ -1882,6 +1927,10 @@ MonoBehaviour:
   swordModelNames:
   - Bat
   - Pikopiko
+  winScore: 2
+  nextRoundKey: 1
+  winnerResultDelay: 1.5
+  winnerResult: {fileID: 958807562}
 --- !u!4 &1432148089
 Transform:
   m_ObjectHideFlags: 0
@@ -8174,3 +8223,4 @@ SceneRoots:
   - {fileID: 1007668137}
   - {fileID: 243873519}
   - {fileID: 1610186558}
+  - {fileID: 958807563}

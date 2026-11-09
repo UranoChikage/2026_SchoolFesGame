@@ -88,14 +88,21 @@ namespace Chambara
 
         private void Initialize()
         {
-            playerCamera2 = Instantiate(playerCamera);
-            baseFov = playerCamera.fieldOfView;
+            // 2ラウンド目以降も Ready になるので、2P用カメラは最初の1回だけ作る
+            if (playerCamera2 == null)
+            {
+                playerCamera2 = Instantiate(playerCamera);
+                baseFov = playerCamera.fieldOfView;
+            }
+            if (expandRoutine != null) StopCoroutine(expandRoutine);
+            expandRoutine = null;
+            SetPlayerCameraFov(baseFov);
 
             playerCamera.rect = new Rect(0f, 0f, 0.5f, 1f);
             playerCamera2.rect = new Rect(0.5f, 0f, 0.5f, 1f);
 
-            playerCamera.gameObject.SetActive(true);
-            playerCamera2.gameObject.SetActive(true);
+            // 前のラウンドのスローカメラ・吹っ飛びカメラを止めてプレイヤーカメラに戻す
+            ChangePlayingMode();
 
             mainCamera.gameObject.SetActive(false);
         }

@@ -7,6 +7,7 @@ namespace Chambara
     /// キーボードでのデバッグ入力
     /// 方向キーを押す → その方向に振る / ガードキー + 方向キーを押し続ける → その方向に構える
     /// 1P: QWE/A D/ZXC + 左Shift　2P: テンキー789/4 6/123 + テンキー0
+    /// 前進/後退　1P: R / F　2P: ↑ / ↓
     /// </summary>
     public class DebugInputContext : MonoBehaviour, IChambaraInputContext
     {
@@ -17,16 +18,19 @@ namespace Chambara
             new[] { Key.Numpad8, Key.Numpad9, Key.Numpad6, Key.Numpad3, Key.Numpad2, Key.Numpad1, Key.Numpad4, Key.Numpad7 },
         };
         static readonly Key[] GuardKeys = { Key.LeftShift, Key.Numpad0 };
+        static readonly Key[] FrontKeys = { Key.R, Key.UpArrow };
+        static readonly Key[] BackKeys  = { Key.F, Key.DownArrow };
 
         int playerIndex;
         int pose = -1;
         int pendingSwing = -1;
+        bool front, back;
         
         public void Init(int playerIndex) => this.playerIndex = playerIndex;
 
         public PlayerInput Read()
         {
-            var input = new PlayerInput { pose = pose, swing = pendingSwing };
+            var input = new PlayerInput { pose = pose, swing = pendingSwing, isFront = front, isBack = back };
             pendingSwing = -1;
             return input;
         }
@@ -38,6 +42,8 @@ namespace Chambara
 
             Key[] keys = DirKeys[playerIndex];
             bool guard = kb[GuardKeys[playerIndex]].isPressed;
+            front = kb[FrontKeys[playerIndex]].isPressed;
+            back  = kb[BackKeys[playerIndex]].isPressed;
             pose = -1;
             for (int i = 0; i < keys.Length; i++)
             {

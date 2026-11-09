@@ -36,6 +36,8 @@ namespace Chambara
         [SerializeField] private bool follow = false;       // 向きで体を追いかけるか（false ならカットごとの lookOffset の方を向いたまま）
         [SerializeField] private float followSpeed = 8f;    // 向きを追いかける速さ（大きいほどぴったり付いていく）
 
+        [SerializeField] private ParticleSystem clashEffect;   // 吹っ飛んだ後の「キラーン」
+
         [Header("Winner")]
         [SerializeField] private Vector3 winnerOffset = new Vector3(0.8f, 1.4f, 2.2f);   // 勝った方から見たカメラの位置（x:右 y:上 z:前）
         [SerializeField] private Vector3 winnerLook   = new Vector3(0f, 1.1f, 0f);       // 勝った方から見た注視点
@@ -61,10 +63,11 @@ namespace Chambara
         [SerializeField] private ScoreUi scoreUi;
         public void UpdateScore()
         {
-            if(scoreUi != null && bodyRig != null)
+            var manager = ChambaraManager.Instance;
+            if(scoreUi != null && bodyRig != null && manager != null && manager.LastRoundWinner >= 0)
             {
-                //1Pが1ポイント取って1-0の場合の例
-                scoreUi.UpdateScore(1,0,1);
+                //1本取った方を 1P=1 / 2P=2 で渡す
+                scoreUi.UpdateScore(manager.Scores[0], manager.Scores[1], manager.LastRoundWinner + 1);
             }
         }
 
@@ -123,6 +126,14 @@ namespace Chambara
                 }
             }
 
+            if(clashEffect != null)
+            {
+                Transform root = target.root;
+                Instantiate(clashEffect, target.position, Quaternion.identity);
+                root.gameObject.SetActive(false);
+            }
+            yield return new WaitForSeconds(2f);   // ヒットストップ・スローの時間を待つ（ゲーム内時間で数える）
+
             if (winner != null) yield return MoveToWinner();
             replayRoutine = null;   // 最後の位置のまま止める
 
@@ -130,6 +141,9 @@ namespace Chambara
             yield return new WaitForSeconds(0.5f);
             UpdateScore();
             //ここまで
+
+            // スコアを見せ終わったので、次のラウンドへ進むか勝敗を出すかは ChambaraManager に任せる
+            if (ChambaraManager.Instance != null) ChambaraManager.Instance.OnRoundResultShown();
         }
 
         // 最後のカットの位置・向きから、勝った方を映す位置・向きへ滑らかに移る

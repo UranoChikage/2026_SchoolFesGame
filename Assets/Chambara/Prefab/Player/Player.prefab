@@ -1217,6 +1217,7 @@ GameObject:
   - component: {fileID: 7682702347716846164}
   - component: {fileID: 2389350721131182169}
   - component: {fileID: 5320780338969236651}
+  - component: {fileID: 4719265830147758213}
   - component: {fileID: 7170576937681483606}
   m_Layer: 6
   m_Name: Player
@@ -1340,6 +1341,8 @@ MonoBehaviour:
   attackRecovery: 0.33
   parriedStun: 0.8
   clashStun: 0.5
+  stepTime: 0.25
+  jumpHeight: 0.3
   attackImpact: 0.5
   clashImpact: 0.5
   leanAngle: 25
@@ -1360,6 +1363,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 682be09bdeb70eb459a33827621164db, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Chambara.DebugInputContext
+--- !u!114 &4719265830147758213
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8364186468782269292}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ece57dc4597846c0b746c191f64eaa4d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Chambara.JoyconInputContext
 --- !u!114 &7170576937681483606
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1402,9 +1417,8 @@ MonoBehaviour:
   tailMaxAngle: 40
   breathHeight: 0.01
   breathSpeed: 5
-  hopHeight: 0.12
-  hopSpeed: 12
-  hopMinSpeed: 0.05
+  hopHeight: 0.1
+  hopSpeed: 11
   limpBend: 30
   limpHeadDrop: 25
   limpSink: 0.15

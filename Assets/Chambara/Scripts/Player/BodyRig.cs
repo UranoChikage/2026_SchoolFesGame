@@ -50,9 +50,8 @@ namespace Chambara
         [Header("浮遊")]
         [SerializeField] float breathHeight = 0.02f;
         [SerializeField] float breathSpeed  = 3f;
-        [SerializeField, Tooltip("移動中・勝利時に跳ねる高さ")] float hopHeight = 0.12f;
+        [SerializeField, Tooltip("アイドル中・勝利時に跳ねる高さ")] float hopHeight = 0.12f;
         [SerializeField] float hopSpeed     = 12f;
-        [SerializeField, Tooltip("この速さ（m/s）以上で動いていたら跳ねる")] float hopMinSpeed = 0.05f;
 
         [Header("負け（力が抜ける）")]
         [SerializeField] float limpBend     = 30f;
@@ -75,7 +74,6 @@ namespace Chambara
         Vector3 chestEuler, headEuler;
         Spring hair;
         readonly System.Collections.Generic.List<Spring> tails = new();
-        Vector3 lastPos;
 
         // 首の回転にバネで遅れてついていく部位
         class Spring
@@ -139,7 +137,6 @@ namespace Chambara
             }
 
             floatRest = transform.InverseTransformPoint(floatPivot.position);
-            lastPos = transform.position;
         }
 
         private void LateUpdate()
@@ -149,15 +146,15 @@ namespace Chambara
 
             PlayerState state = player.Data != null ? player.Data.state : PlayerState.Idle;
 
-            float speed = Vector3.ProjectOnPlane(transform.position - lastPos, Vector3.up).magnitude / dt;
-            lastPos = transform.position;
+            bool idle = state == PlayerState.Idle && !player.IsStepping && !player.Lost;
             limp  = Mathf.Lerp(limp, player.Lost ? 1f : 0f, Damp(limpSpeed));
             lunge = Mathf.Lerp(lunge, state == PlayerState.Attack ? attackLunge : 0f, Damp(bodySpeed));
-            hop   = Mathf.Lerp(hop, player.Won || (speed > hopMinSpeed && !player.Lost) ? 1f : 0f, Damp(bodySpeed));
+            hop   = Mathf.Lerp(hop, player.Won || idle ? 1f : 0f, Damp(bodySpeed));
 
             // 体全体：呼吸・跳ね・攻撃の踏み込み・脱力で沈む
             float y = Mathf.Sin(Time.time * breathSpeed) * breathHeight * (1f - limp)
                     + Mathf.Abs(Mathf.Sin(Time.time * hopSpeed)) * hopHeight * hop
+                    + player.StepJump
                     - limpSink * limp;
             Vector3 floatPos = transform.TransformPoint(floatRest + new Vector3(0f, y, lunge));
             floatPivot.SetPositionAndRotation(floatPos, transform.rotation);

@@ -36,6 +36,7 @@ namespace Chambara
         [SerializeField] float lostDrop  = 0.3f;   // 握りを下げる距離
 
         [SerializeField] float returnSpeed = 15f;   // 構えの切り替えの速さ
+        [SerializeField] float trackingSpeed = 40f; // Joy-Conの向きに追従する速さ（アイドル・移動中）
 
         [Header("エディタでの確認用（再生していないときだけ反映）")]
         [SerializeField] PlayerState previewState = PlayerState.Idle;
@@ -124,12 +125,20 @@ namespace Chambara
             {
                 SetSwinging(false);
                 Pose(player.Data.state, player.Data.dir, out var p, out var r);
+                float speed = returnSpeed;
+                // アイドル・移動中は Joy-Con の向きをそのまま使う（フルトラッキング）
+                if (player.Data.state == PlayerState.Idle && !player.Lost && player.TryGetTrackedSword(out var tracked))
+                {
+                    r = tracked;
+                    p = gripPosition;
+                    speed = trackingSpeed;
+                }
                 if (player.Lost)
                 {
                     r = Blade(directions / 2, lostAngle);
                     p = gripPosition + Vector3.down * lostDrop;
                 }
-                float k = 1f - Mathf.Exp(-returnSpeed * Time.deltaTime);
+                float k = 1f - Mathf.Exp(-speed * Time.deltaTime);
                 pos = Vector3.Lerp(pos, p, k);
                 rot = Quaternion.Slerp(rot, r, k);
             }

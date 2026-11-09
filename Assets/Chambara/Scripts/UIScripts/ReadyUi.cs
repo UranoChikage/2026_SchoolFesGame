@@ -15,11 +15,13 @@ namespace Chambara
 
         private void OnGameStateChanged(GameState state)
         {
-            if (state == GameState.Ready)
-            {
-                AnimationStart();
-                ChambaraManager.Instance.OnGameStateChanged -= OnGameStateChanged;
-            }
+            // ラウンドごとに Ready になるので、毎回流す
+            if (state == GameState.Ready) AnimationStart();
+        }
+
+        private void OnDestroy()
+        {
+            if (ChambaraManager.Instance != null) ChambaraManager.Instance.OnGameStateChanged -= OnGameStateChanged;
         }
 
         void AnimationStart()
@@ -31,6 +33,11 @@ namespace Chambara
         public void Go()
         {
             ChambaraManager.Instance.StartGame();
+        }
+
+        public void End()
+        {
+            canvasGroup.alpha = 0f;
         }
     }
 }
