@@ -15,6 +15,10 @@ namespace Chambara
         [SerializeField] float parriedStun    = 0.8f;   // ガードされたときの怯み
         [SerializeField] float clashStun      = 0.5f;   // 相殺したときの怯み
 
+        [Header("移動（1歩の距離は ChambaraRule で設定）")]
+        [SerializeField] float stepTime   = 0.25f;  // 1歩にかかる時間（秒）。この間は他の行動を受け付けない
+        [SerializeField] float jumpHeight = 0.3f;   // 1歩で跳ぶ高さ
+
         [Header("効果が出るタイミング（0:振り始め 1:振り終わり）")]
         [SerializeField, Range(0f, 1f)] float attackImpact = 1f;   // 攻撃が当たる・ガードされる
         [SerializeField, Range(0f, 1f)] float clashImpact  = 1f;   // 相殺で剣がぶつかる
@@ -37,6 +41,7 @@ namespace Chambara
         public float AttackImpactTime => SwingTime(attackImpact);   // 攻撃の効果が出る時刻
         public float ClashImpactTime  => SwingTime(clashImpact);    // 相殺の効果が出る時刻
         public bool IsHitTiming => Data.state == PlayerState.Attack && !Resolved && Time.time >= AttackImpactTime;
+        public bool IsStepping { get; private set; }     // 1歩の移動中
 
         BodyRig bodyRig;
         public Transform Body => bodyRig != null && bodyRig.Body != null ? bodyRig.Body : transform;   // 体の中心（吹っ飛びの追尾用）
@@ -52,12 +57,18 @@ namespace Chambara
         int pose = -1;
         float poseHold;
         float lean;
+        ChambaraSimulator sim;
+        int playerIndex;
+        float stepStart, stepFrom;
+        bool prevFront, prevBack;   // 押し直し判定用（前回読んだときに押されていたか）
 
         static readonly int[] guardDirections = new int[4] { 0, 2, 4, 6 };   // 上右下左の4方向
 
-        public void Init(int playerIndex, string modelName, string swordName, Fighter data, Transform edge, Transform opponentEdge)
+        public void Init(int playerIndex, string modelName, string swordName, ChambaraSimulator sim, Transform edge, Transform opponentEdge)
         {
-            Data = data;
+            this.sim = sim;
+            this.playerIndex = playerIndex;
+            Data = sim.players[playerIndex];
             edgePos = edge.position;
             opponentEdgePos = opponentEdge.position;
             transform.LookAt(opponentEdge);
@@ -102,14 +113,32 @@ namespace Chambara
                 if (Time.time < stateEnd) return;
                 SetState(PlayerState.Idle, -1);
             }
+            if (IsStepping) return;   // 移動中は他の行動を受け付けない
 
             PlayerInput in_ = input != null ? input.Read() : PlayerInput.None;
+            bool frontPressed = in_.isFront && !prevFront;   // 押しっぱなしでは続けて進まない
+            bool backPressed  = in_.isBack  && !prevBack;
+            prevFront = in_.isFront;
+            prevBack  = in_.isBack;
+
             if (in_.swing >= 0)
             {
                 SetState(PlayerState.Attack, in_.swing);
                 AttackTime = Time.time;
                 stateEnd = AttackTime + attackStartup + attackRecovery;
                 Resolved = false;
+                return;
+            }
+
+            // 前後同時押しはどちらにも進まない
+            if (frontPressed != backPressed && sim.TryStep(playerIndex, frontPressed))
+            {
+                IsStepping = true;
+                stepStart = Time.time;
+                stepFrom = Data.position;
+                pose = -1;
+                poseHold = 0f;   // 歩くと構えの溜めはやり直し
+                SetState(PlayerState.Idle, -1);
                 return;
             }
 
@@ -159,14 +188,27 @@ namespace Chambara
             OnStateChanged?.Invoke(state, dir);
         }
 
-        public void Render(float distance)
+        // 1歩の移動を進め、跳ねている高さを返す
+        float UpdateStep()
         {
+            if (!IsStepping) return 0f;
+            float t = stepTime > 0f ? Mathf.Clamp01((Time.time - stepStart) / stepTime) : 1f;
+            Data.position = Mathf.Lerp(stepFrom, Data.targetPosition, t);
+            if (t >= 1f) IsStepping = false;
+            return jumpHeight * 4f * t * (1f - t);   // 放物線で跳ぶ
+        }
+
+        public void Render()
+        {
+            float jump = UpdateStep();
+
             bool stunned = Data.state == PlayerState.Stun;
             lean = Mathf.Lerp(lean, stunned ? 1f : 0f, 1f - Mathf.Exp(-leanSpeed * Time.deltaTime));
             transform.rotation = baseRotation * Quaternion.Euler(-leanAngle * lean, 0f, 0f);
 
-            // 距離1で自分の端、距離0で中央。のけぞり中は後ろに下がる
-            transform.position = Vector3.Lerp(edgePos, opponentEdgePos, (1f - distance) / 2f)
+            // position 0で自分の端、1で相手の端。のけぞり中は後ろに下がる
+            transform.position = Vector3.Lerp(edgePos, opponentEdgePos, Data.position)
+                               + Vector3.up * jump
                                - baseRotation * Vector3.forward * (leanBack * lean);
 
             // 仮表示：負け=黒 怯み=黄 攻撃=赤 ガード=青 通常=白

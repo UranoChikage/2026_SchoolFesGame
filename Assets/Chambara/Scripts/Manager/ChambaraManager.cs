@@ -75,8 +75,8 @@ namespace Chambara
             // キャラ選択画面から来たときはその選択を使う（このシーンから直接始めたときはインスペクターの設定）
             string[] models = ChambaraSelection.HasValue ? ChambaraSelection.PlayerModelNames : playerModelNames;
             string[] swords = ChambaraSelection.HasValue ? ChambaraSelection.SwordModelNames : swordModelNames;
-            players[0].Init(0, models[0], swords[0], sim.players[0], edgePlayerPos0, edgePlayerPos1);
-            players[1].Init(1, models[1], swords[1], sim.players[1], edgePlayerPos1, edgePlayerPos0);
+            players[0].Init(0, models[0], swords[0], sim, edgePlayerPos0, edgePlayerPos1);
+            players[1].Init(1, models[1], swords[1], sim, edgePlayerPos1, edgePlayerPos0);
             startTime = Time.time;
             SetGameState(GameState.Ready);
         }
@@ -90,7 +90,6 @@ namespace Chambara
         {
             if (gameState is GameState.Playing)
             {
-                sim.Advance(Time.deltaTime);
                 foreach (var p in players) p.UpdateState(Time.deltaTime);
                 CheckClash();
                 for (int i = 0; i < 2; i++)
@@ -102,9 +101,15 @@ namespace Chambara
 
             if (gameState != GameState.Ready && gameState != GameState.None)
             {
-                foreach (var p in players) p.Render(sim.Distance);
+                foreach (var p in players) p.Render();
             }
 
+        }
+
+        private void OnValidate()
+        {
+            if (rule.stepDistance <= rule.attackRange)
+                Debug.LogWarning($"stepDistance({rule.stepDistance}) は attackRange({rule.attackRange}) より大きくしてください");
         }
 
         public void SetGameState(GameState gameState)

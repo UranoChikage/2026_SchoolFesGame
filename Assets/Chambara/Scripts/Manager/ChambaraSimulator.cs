@@ -11,6 +11,8 @@ namespace Chambara
     {
         public PlayerState state;
         public int dir = -1;   // 攻撃方向 or ガード方向（上=0から時計回り）
+        public float position;         // 自分の端から進んだ距離（0=自分の端）
+        public float targetPosition;   // 1歩の行き先（止まっているときは position と同じ）
     }
 
     /// <summary>
@@ -18,11 +20,13 @@ namespace Chambara
     /// </summary>
     public class ChambaraSimulator
     {
-        public float Distance = 1f;   // 2人の間の距離（両端=1）
         public readonly Fighter[] players = { new Fighter(), new Fighter() };
         readonly ChambaraRule r;
 
         public ChambaraSimulator(ChambaraRule rule) => r = rule;
+
+        // 2人の間の距離（両端=1）
+        public float Distance => 1f - players[0].position - players[1].position;
 
         // 攻撃が成功したかどうか
         public AttackResult Attack(int atk, int dir)
@@ -45,11 +49,24 @@ namespace Chambara
             return time0 < time1 ? ClashResult.Player0 : ClashResult.Player1;
         }
 
-        // 常に前進する。slowDistanceから減速し、stopDistanceで止まる
-        public void Advance(float deltaTime)
+        // 1歩踏み出す。行き先を targetPosition に入れ、進めないときは false
+        // 2人が同時に動いても重ならないよう、相手も行き先の位置で判定する
+        public bool TryStep(int player, bool forward)
         {
-            float t = Math.Clamp((Distance - r.stopDistance) / (r.slowDistance - r.stopDistance), 0f, 1f);
-            Distance = Math.Max(r.stopDistance, Distance - 2f * r.moveSpeed * t * deltaTime);
+            Fighter me = players[player], op = players[1 - player];
+            float target;
+            if (forward)
+            {
+                target = me.targetPosition + r.stepDistance;
+                if (1f - target - op.targetPosition < r.stopDistance - 1e-5f) return false;   // 近すぎるので進めない
+            }
+            else
+            {
+                target = Math.Max(0f, me.targetPosition - r.backStepDistance);
+                if (target >= me.targetPosition) return false;   // もう自分の端にいる
+            }
+            me.targetPosition = target;
+            return true;
         }
 
         int Mirror(int dir) => (r.directions - dir) % r.directions;   // 向かい合っているので左右を反転
