@@ -13,7 +13,7 @@ namespace Chambara
     ///   ガード … ガードボタン(Confirm = ZR/ZL)を押しながら、刃を正面と垂直に構える
     ///            刃が水平 → 上 / 刃先が下向き → 下 / 刃先が上向きで右に傾ける → 右 / 左に傾ける → 左
     ///   前進・後退 … スティック上下（上=前進 下=後退）
-    ///   正面の合わせ直し … 剣を calibrationAngle の構えにして合わせ直しボタン(Cancel)。最初に向きが取れたときは自動で合わせる
+    ///   正面の合わせ直し … ZR/ZL の端を正面（画面）に向けて合わせ直しボタン(Cancel)。押すと剣先が正面を向く。最初に向きが取れたときは自動で合わせる
     ///
     /// Joy-Conの向きが取れないとき（PCのキーボード・マウスなど）は、同じオブジェクトの DebugInputContext に任せる
     /// </summary>
@@ -27,7 +27,7 @@ namespace Chambara
 
         [Header("正面の合わせ直し")]
         [SerializeField] SwitchButton recenterButton = SwitchButton.Cancel;
-        [SerializeField, Tooltip("合わせ直すときに構える剣の角度（真上=0、正面=90）")] float calibrationAngle = 0f;
+        [SerializeField, Tooltip("合わせ直すときに構える剣の角度（真上=0、正面=90）")] float calibrationAngle = 90f;   // Cancel を押すと剣先が正面を向く
 
         [Header("攻撃")]
         [SerializeField, Tooltip("重力を除いた加速度（G）がこれを超えたら振ったとみなす")] float swingThreshold = 2f;
