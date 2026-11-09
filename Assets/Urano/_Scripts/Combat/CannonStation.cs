@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.Serialization;
+using Common;
 
 namespace Pirates
 {
@@ -31,8 +32,20 @@ namespace Pirates
 
         [Header("JoyCon（ジャイロでカーソルを動かす）")]
         [SerializeField]
-        [Tooltip("1度の回転あたりのカーソル移動量(px)。Title の Select と同じ動かし方")]
+        [Tooltip("1度の回転あたりのカーソル移動量(px)の初期値。砲手全員で共有（最初に起動した砲の値が使われる）。Title の Select の感度とは別")]
         float sensitivity = 15f;
+        [SerializeField]
+        [Tooltip("スティック左右で調整できる下限")]
+        float sensitivityMin = 2f;
+        [SerializeField]
+        [Tooltip("スティック左右で調整できる上限")]
+        float sensitivityMax = 60f;
+        [SerializeField]
+        [Tooltip("スティックを倒しきったときの1秒あたりの変化量")]
+        float sensitivityStep = 20f;
+        [SerializeField]
+        [Tooltip("スティックのこれ以下の傾きは無視する")]
+        float stickDeadZone = 0.3f;
         [SerializeField]
         [Tooltip("ローカル操作を許容する角度の広さ。1.41で±45度、2で±60度")]
         float yawRelaxFactor = 2f;
@@ -52,14 +65,24 @@ namespace Pirates
         // PC代替操作で現在操作している砲手番号（全砲で共有）
         static int activeStationNumber = 1;
 
+        // 砲手全員で共有するジャイロ感度（負＝未初期化。最初に起動した砲のInspector値で初期化する）
+        static float sharedSensitivity = -1f;
+
+        /// <summary>砲手全員で共有するジャイロ感度(px/度)。Titleの感度とは別</summary>
+        public static float SharedSensitivity => sharedSensitivity;
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        static void ResetStatic() => activeStationNumber = 1;
+        static void ResetStatic()
+        {
+            activeStationNumber = 1;
+            sharedSensitivity = -1f;
+        }
 
         CannonShooter shooter;
         AimController aim;
         TrajectoryLine trajectory;
         Vector2 cursor;
-        readonly Common.GyroPointer pointer = new Common.GyroPointer();
+        readonly GyroPointer pointer = new GyroPointer();
         string status = "";
         Quaternion barrelRotInStation = Quaternion.identity; // 砲身の初期姿勢（この砲を基準）
         ItemHolder items;
@@ -72,6 +95,7 @@ namespace Pirates
             shooter = GetComponent<CannonShooter>();
             items = ItemHolder.For(shooter);
             aim = GetComponent<AimController>();
+            if (sharedSensitivity < 0f) sharedSensitivity = Mathf.Clamp(sensitivity, sensitivityMin, sensitivityMax);
             trajectory = GetComponent<TrajectoryLine>(); // 付いていれば予測線を出す（任意）
             if (trajectory != null) trajectory.SetColor(cursorColor);
             if (barrel != null) barrelRotInStation = Quaternion.Inverse(transform.rotation) * barrel.rotation;
@@ -156,8 +180,21 @@ namespace Pirates
                 pointer.Reset();
             }
 
-            cursor += pointer.Rate(joyconIndex, yawRelaxFactor, gravityBlend) * sensitivity * Time.deltaTime;
+            AdjustSensitivity();
+            cursor += pointer.Rate(joyconIndex, yawRelaxFactor, gravityBlend) * sharedSensitivity * Time.deltaTime;
             return GameInput.JoyconFirePressed(joyconIndex);
+        }
+
+        // スティック左右で感度を調整する（全員共通の値。誰のスティックでも動かせる）
+        void AdjustSensitivity()
+        {
+            float x = SwitchInput.I.Stick(joyconIndex).x;
+            if (Mathf.Abs(x) < stickDeadZone) return;
+
+            float amount = (Mathf.Abs(x) - stickDeadZone) / (1f - stickDeadZone);
+            sharedSensitivity = Mathf.Clamp(
+                sharedSensitivity + Mathf.Sign(x) * amount * sensitivityStep * Time.deltaTime,
+                sensitivityMin, sensitivityMax);
         }
 
         bool UpdateMouse()
