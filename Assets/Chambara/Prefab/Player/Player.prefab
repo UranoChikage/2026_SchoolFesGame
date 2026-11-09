@@ -1340,6 +1340,11 @@ MonoBehaviour:
   attackRecovery: 0.33
   parriedStun: 0.8
   clashStun: 0.5
+  stepTime: 0.25
+  jumpHeight: 0.3
+  idleBounceHeight: 0.08
+  idleBounceRate: 2.5
+  idleBlendSpeed: 15
   attackImpact: 0.5
   clashImpact: 0.5
   leanAngle: 25

@@ -19,6 +19,11 @@ namespace Chambara
         [SerializeField] float stepTime   = 0.25f;  // 1歩にかかる時間（秒）。この間は他の行動を受け付けない
         [SerializeField] float jumpHeight = 0.3f;   // 1歩で跳ぶ高さ
 
+        [Header("アイドル中の跳ね")]
+        [SerializeField] float idleBounceHeight = 0.05f;   // 跳ねる高さ
+        [SerializeField] float idleBounceRate   = 2.5f;    // 1秒に跳ねる回数
+        [SerializeField] float idleBlendSpeed   = 10f;     // 他の行動との切り替わりの速さ
+
         [Header("効果が出るタイミング（0:振り始め 1:振り終わり）")]
         [SerializeField, Range(0f, 1f)] float attackImpact = 1f;   // 攻撃が当たる・ガードされる
         [SerializeField, Range(0f, 1f)] float clashImpact  = 1f;   // 相殺で剣がぶつかる
@@ -60,6 +65,7 @@ namespace Chambara
         ChambaraSimulator sim;
         int playerIndex;
         float stepStart, stepFrom;
+        float idleWeight, idlePhase;
         bool prevFront, prevBack;   // 押し直し判定用（前回読んだときに押されていたか）
 
         static readonly int[] guardDirections = new int[4] { 0, 2, 4, 6 };   // 上右下左の4方向
@@ -69,6 +75,7 @@ namespace Chambara
             this.sim = sim;
             this.playerIndex = playerIndex;
             Data = sim.players[playerIndex];
+            idlePhase = playerIndex * 0.5f;   // 2人の跳ねるタイミングをずらす
             edgePos = edge.position;
             opponentEdgePos = opponentEdge.position;
             transform.LookAt(opponentEdge);
@@ -198,9 +205,18 @@ namespace Chambara
             return jumpHeight * 4f * t * (1f - t);   // 放物線で跳ぶ
         }
 
+        // アイドル中の跳ねる高さ。他の行動に移るときはなめらかに止める
+        float UpdateIdleBounce()
+        {
+            bool idle = Data.state == PlayerState.Idle && !IsStepping && !Lost;
+            idleWeight = Mathf.Lerp(idleWeight, idle ? 1f : 0f, 1f - Mathf.Exp(-idleBlendSpeed * Time.deltaTime));
+            idlePhase += idleBounceRate * Time.deltaTime;
+            return idleBounceHeight * idleWeight * Mathf.Abs(Mathf.Sin(idlePhase * Mathf.PI));   // 地面で折り返して跳ねる
+        }
+
         public void Render()
         {
-            float jump = UpdateStep();
+            float jump = UpdateStep() + UpdateIdleBounce();
 
             bool stunned = Data.state == PlayerState.Stun;
             lean = Mathf.Lerp(lean, stunned ? 1f : 0f, 1f - Mathf.Exp(-leanSpeed * Time.deltaTime));
