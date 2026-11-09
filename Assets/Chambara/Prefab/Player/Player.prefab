@@ -1342,9 +1342,6 @@ MonoBehaviour:
   clashStun: 0.5
   stepTime: 0.25
   jumpHeight: 0.3
-  idleBounceHeight: 0.08
-  idleBounceRate: 2.5
-  idleBlendSpeed: 15
   attackImpact: 0.5
   clashImpact: 0.5
   leanAngle: 25
@@ -1407,9 +1404,8 @@ MonoBehaviour:
   tailMaxAngle: 40
   breathHeight: 0.01
   breathSpeed: 5
-  hopHeight: 0.12
-  hopSpeed: 12
-  hopMinSpeed: 0.05
+  hopHeight: 0.1
+  hopSpeed: 11
   limpBend: 30
   limpHeadDrop: 25
   limpSink: 0.15
