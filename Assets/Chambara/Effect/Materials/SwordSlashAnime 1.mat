@@ -1,0 +1,59 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: SwordSlashAnime 1
+  m_Shader: {fileID: 4800000, guid: 1dccf76ca9844dbb9ac71abbca69c62d, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs: []
+    m_Ints: []
+    m_Floats:
+    - _Alpha: 1
+    - _AlphaTailFade: 0
+    - _ColorBlend: 0.05
+    - _CoreSize: 0.09
+    - _DstBlend: 0
+    - _EdgeSoftness: 0
+    - _EdgeWidth: 0.123
+    - _HeadFade: 0.02
+    - _Intensity: 1
+    - _JagAmount: 0.08
+    - _JagScale: 6
+    - _JagSpeed: 3
+    - _LineBase: 0.086
+    - _LineBreak: 7.99
+    - _LineCount: 7
+    - _LineCut: 0.463
+    - _LineSpeed: 1
+    - _MidPosition: 0.25
+    - _MinSpeed: 0.1
+    - _SrcBlend: 1
+    - _TailFadeStart: 0.3
+    - _TailShift: 1
+    - _TailShrink: 0.45
+    - _ZOffset: 0
+    - _ZWrite: 1
+    m_Colors:
+    - _CoreColor: {r: 1.1849452, g: 1.1435181, b: 1.0440933, a: 1}
+    - _EdgeColor: {r: 0.14716971, g: 0.049901783, b: 0.019715188, a: 1}
+    - _MidColor: {r: 0.6226415, g: 0.5267578, b: 0.33246705, a: 1}
+    - _OuterColor: {r: 0.554717, g: 0.2533407, b: 0.06175147, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1

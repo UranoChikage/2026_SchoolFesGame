@@ -5,6 +5,9 @@ namespace Chambara
         public int pose;   // 今の構え方向（-1:なし）
         public int swing;  // 振った方向（-1:振っていない）
 
+        public bool isFront;
+        public bool isBack;
+
         public static readonly PlayerInput None = new PlayerInput { pose = -1, swing = -1 };
     }
 
