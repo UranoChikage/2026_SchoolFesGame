@@ -22,8 +22,13 @@ namespace Pirates
         // JoyCon（傾き・ボタン）  ← 共通のSwitchInputから読む。割り当てだけここで決める
         // ======================================================================
 
-        /// <summary>そのコントローラーが繋がっているか</summary>
-        public static bool IsJoyconConnected(int joyconIndex) => SwitchInput.I.IsConnected(joyconIndex);
+        /// <summary>
+        /// そのコントローラーが使えるか。繋がっていて、かつ加速度の値が来ている場合だけ true。
+        /// 繋がっていても値が全く来ない（反応がない）ときは false になり、呼び出し側はマウス／キーボードに切り替わる。
+        /// </summary>
+        public static bool IsJoyconConnected(int joyconIndex)
+            => SwitchInput.I.IsConnected(joyconIndex)
+            && SwitchInput.I.Acceleration(joyconIndex).sqrMagnitude > 1e-6f;
 
         /// <summary>
         /// 加速度（重力ベクトル）。傾きの計算に使う。単位は問わない（角度は比率で出す）。
@@ -34,8 +39,16 @@ namespace Pirates
         /// <summary>発射ボタンを押した瞬間（砲手用。JoyConでは SL/SR 側のボタン）</summary>
         public static bool JoyconFirePressed(int joyconIndex) => SwitchInput.I.ButtonDown(joyconIndex, SwitchButton.Confirm);
 
-        /// <summary>舵輪を「真っ直ぐ」に戻すボタンを押した瞬間（舵取り用。スティック下倒し）</summary>
-        public static bool JoyconCenterPressed(int joyconIndex) => SwitchInput.I.ButtonDown(joyconIndex, SwitchButton.Down);
+        /// <summary>
+        /// 舵輪を「真っ直ぐ」に戻すボタンを押した瞬間（舵取り用）。
+        /// 下（十字キー／スティック下倒し）か Cancel（R）のどちらでも効く。実機でどちらかが割り当てられていなくても戻せるように。
+        /// </summary>
+        public static bool JoyconCenterPressed(int joyconIndex)
+            => SwitchInput.I.ButtonDown(joyconIndex, SwitchButton.Down)
+            || SwitchInput.I.ButtonDown(joyconIndex, SwitchButton.Cancel);
+
+        /// <summary>カーソルを画面中央に戻すボタンを押した瞬間（砲手用。Title の Select と同じ Cancel＝R）</summary>
+        public static bool JoyconRecenterPressed(int joyconIndex) => SwitchInput.I.ButtonDown(joyconIndex, SwitchButton.Cancel);
 
         // ======================================================================
         // PC（キーボード・マウス）  ← デバッグ用。JoyConが無いときに使われる
