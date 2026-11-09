@@ -8,7 +8,8 @@ namespace Chambara
     ///
     /// ■ 操作
     ///   構え（アイドル・移動中） … Joy-Conの向きをそのまま剣に反映する（フルトラッキング）
-    ///   攻撃 … 素早く振る。角速度がしきい値を超えた瞬間に、回した向きから8方向を決める
+    ///   攻撃 … 素早く振る。加速度（重力を除いた分）がしきい値を超えた瞬間に振ったとみなし、
+    ///          方向はその瞬間の角速度（回した向き）から8方向で決める
     ///   ガード … ガードボタン(Confirm = ZR/ZL)を押しながら、刃を正面と垂直に構える
     ///            刃が水平 → 上 / 刃先が下向き → 下 / 刃先が上向きで右に傾ける → 右 / 左に傾ける → 左
     ///   前進・後退 … スティック上下（上=前進 下=後退）
@@ -29,8 +30,10 @@ namespace Chambara
         [SerializeField, Tooltip("合わせ直すときに構える剣の角度（真上=0、正面=90）")] float calibrationAngle = 0f;
 
         [Header("攻撃")]
-        [SerializeField, Tooltip("この角速度（度/秒）を超えたら振ったとみなす")] float swingThreshold = 400f;
-        [SerializeField, Range(0.1f, 1f), Tooltip("角速度がしきい値のこの割合まで下がったら次の振りを受け付ける")] float swingRearm = 0.5f;
+        [SerializeField, Tooltip("重力を除いた加速度（G）がこれを超えたら振ったとみなす")] float swingThreshold = 2f;
+        [SerializeField, Range(0.1f, 1f), Tooltip("加速度がしきい値のこの割合まで下がったら次の振りを受け付ける")] float swingRearm = 0.5f;
+        [SerializeField, Tooltip("振った方向を決めるのに必要な最低の角速度（度/秒）。これ未満なら突いただけとみなし振らない")] float swingMinAngularSpeed = 90f;
+        [SerializeField, Tooltip("重力の向きを推定し直す速さ。加速度の大きさが1G付近（ほぼ静止）のときだけ寄せる")] float gravityFollow = 5f;
         [SerializeField, Tooltip("振った入力を覚えておく時間（秒）。硬直中に振っても後から出ないようにする")] float swingBuffer = 0.1f;
 
         [Header("ガード")]
@@ -58,10 +61,19 @@ namespace Chambara
         bool tracking;            // 今フレーム向きが取れたか
 
         bool swingArmed = true;
+        bool hasGravity;
+        Vector3 gravity;          // Joy-Conの姿勢の座標（SDKの基準）での重力による加速度
         int pendingSwing = -1;
         float pendingSwingTime;
         int pose = -1;
         bool front, back;
+
+        // デバッグ表示用
+        public int PlayerIndex => playerIndex;
+        public bool IsUsingJoycon => tracking;           // false ならキーボード（DebugInputContext）
+        public PlayerInput LastInput { get; private set; } = PlayerInput.None;   // 最後に Read で返した入力
+        public int LastSwing { get; private set; } = -1;  // 最後に振った方向（-1:まだ振っていない）
+        public float LastSwingTime { get; private set; }
 
         public void Init(int playerIndex)
         {
@@ -75,11 +87,21 @@ namespace Chambara
 
         public PlayerInput Read()
         {
-            if (!tracking) return fallback != null ? fallback.Read() : PlayerInput.None;
-
-            int swing = pendingSwing >= 0 && Time.time - pendingSwingTime <= swingBuffer ? pendingSwing : -1;
-            pendingSwing = -1;
-            return new PlayerInput { pose = pose, swing = swing, isFront = front, isBack = back };
+            PlayerInput result;
+            if (!tracking) result = fallback != null ? fallback.Read() : PlayerInput.None;
+            else
+            {
+                int swing = pendingSwing >= 0 && Time.time - pendingSwingTime <= swingBuffer ? pendingSwing : -1;
+                pendingSwing = -1;
+                result = new PlayerInput { pose = pose, swing = swing, isFront = front, isBack = back };
+            }
+            LastInput = result;
+            if (result.swing >= 0)
+            {
+                LastSwing = result.swing;
+                LastSwingTime = Time.time;
+            }
+            return result;
         }
 
         public bool TryGetSwordRotation(out Quaternion rotation)
@@ -96,6 +118,7 @@ namespace Chambara
             if (!tracking)
             {
                 calibrated = false;   // 繋ぎ直したら合わせ直す
+                hasGravity = false;
                 return;
             }
 
@@ -113,7 +136,7 @@ namespace Chambara
             UpdateMove(input);
             bool guarding = input.Button(playerIndex, guardButton);
             pose = guarding ? GuardDirection(swordRotation * Vector3.up) : -1;
-            UpdateSwing(input, controllerInPlayer, guarding);
+            UpdateSwing(input, controller, controllerInPlayer, guarding);
         }
 
         void UpdateMove(SwitchInput input)
@@ -133,21 +156,39 @@ namespace Chambara
             // }
         }
 
-        // 角速度がしきい値を超えた瞬間に1回だけ振る
-        void UpdateSwing(SwitchInput input, Quaternion controllerInPlayer, bool guarding)
+        // 重力を除いた加速度がしきい値を超えた瞬間に1回だけ振る
+        void UpdateSwing(SwitchInput input, Quaternion controller, Quaternion controllerInPlayer, bool guarding)
         {
-            Vector3 w = controllerInPlayer * input.AngularVelocity(playerIndex);   // プレイヤー基準の角速度（度/秒）
-            float speed = w.magnitude;
-            if (speed <= swingThreshold * swingRearm) swingArmed = true;
-            if (guarding || !swingArmed || speed < swingThreshold) return;
+            float accel = LinearAcceleration(input, controller);
+            if (accel <= swingThreshold * swingRearm) swingArmed = true;
+            if (guarding || !swingArmed || accel < swingThreshold) return;
 
-            // 正面の軸まわり（ひねり）は無視し、回転軸と垂直な向きを振った方向にする
+            // 方向は角速度から。正面の軸まわり（ひねり）は無視し、回転軸と垂直な向きを振った方向にする
             // 例: 右の軸まわり（振り下ろし）→ 下、上の軸まわり → 右
+            Vector3 w = controllerInPlayer * input.AngularVelocity(playerIndex);   // プレイヤー基準の角速度（度/秒）
             Vector3 d = Vector3.Cross(w, Vector3.forward);
-            if (new Vector2(d.x, d.y).sqrMagnitude < 1e-6f) return;   // ひねっただけ
+            if (new Vector2(d.x, d.y).magnitude < swingMinAngularSpeed) return;   // 回していない（突いた・ひねっただけ）
             swingArmed = false;
             pendingSwing = AngleToDirection(Mathf.Atan2(d.x, d.y) * Mathf.Rad2Deg, Directions);
             pendingSwingTime = Time.time;
+        }
+
+        // 重力を除いた加速度の大きさ（G）
+        // 加速度はJoy-Conの座標なので姿勢で回して向きをそろえ、ほぼ静止しているときの値を重力として引く
+        float LinearAcceleration(SwitchInput input, Quaternion controller)
+        {
+            Vector3 a = controller * input.Acceleration(playerIndex);
+            if (a.sqrMagnitude < 1e-6f) return 0f;   // 値が来ていない
+            if (!hasGravity)
+            {
+                gravity = a;
+                hasGravity = true;
+            }
+            else if (Mathf.Abs(a.magnitude - 1f) < 0.1f)
+            {
+                gravity = Vector3.Lerp(gravity, a, 1f - Mathf.Exp(-gravityFollow * Time.deltaTime));
+            }
+            return (a - gravity).magnitude;
         }
 
         // 刃の向き（プレイヤー基準）からガード方向（上=0 右=2 下=4 左=6）。構えになっていなければ -1
