@@ -5,7 +5,7 @@ namespace Pirates
 {
     /// <summary>
     /// 1人の砲手ぶんの照準と発射。砲は見た目だけで、画面上のカーソルが指す位置へ砲弾を飛ばす（Wiiのポインタ風）。
-    /// カーソルの動かし方：JoyConの傾き／（JoyCon無し）マウスまたはキーボード。
+    /// カーソルの動かし方：JoyConのジャイロ（Title の Select と同じ。Cancelで中央に戻す）／（JoyCon無し）マウスまたはキーボード。
     /// 1画面を全員で共有するので、砲手ごとに色付きのカーソルを画面に描く。
     /// </summary>
     [RequireComponent(typeof(CannonShooter))]
@@ -29,23 +29,16 @@ namespace Pirates
         [Tooltip("砲身の見た目（任意）。狙う位置へ向ける")]
         Transform barrel;
 
-        [Header("JoyCon（傾きでカーソルを動かす）")]
+        [Header("JoyCon（ジャイロでカーソルを動かす）")]
         [SerializeField]
-        [Tooltip("中立姿勢で重力がかかっている軸")]
-        JoyConRudder.Axis downAxis = JoyConRudder.Axis.Z;
+        [Tooltip("1度の回転あたりのカーソル移動量(px)。Title の Select と同じ動かし方")]
+        float sensitivity = 15f;
         [SerializeField]
-        [Tooltip("左右に傾けたとき変化する軸（カーソルのX）")]
-        JoyConRudder.Axis xAxis = JoyConRudder.Axis.Y;
+        [Tooltip("ローカル操作を許容する角度の広さ。1.41で±45度、2で±60度")]
+        float yawRelaxFactor = 2f;
         [SerializeField]
-        [Tooltip("前後に傾けたとき変化する軸（カーソルのY）")]
-        JoyConRudder.Axis yAxis = JoyConRudder.Axis.X;
-        [SerializeField]
-        bool invertX = false;
-        [SerializeField]
-        bool invertY = false;
-        [SerializeField]
-        [Tooltip("この角度(度)傾けると、カーソルが画面端に届く。Option(+)で今の持ち方が中央になる")]
-        float tiltRange = 30f;
+        [Tooltip("重力推定の追従速度。小さいほど安定するが遅れる")]
+        float gravityBlend = 0.02f;
 
         [Header("カーソル表示")]
         [SerializeField]
@@ -55,9 +48,6 @@ namespace Pirates
         Texture2D cursorTexture;
         [SerializeField]
         float cursorSize = 40f;
-        [SerializeField]
-        [Tooltip("JoyConの傾きに対するカーソルの追従の速さ")]
-        float smoothing = 12f;
 
         // PC代替操作で現在操作している砲手番号（全砲で共有）
         static int activeStationNumber = 1;
@@ -69,7 +59,7 @@ namespace Pirates
         AimController aim;
         TrajectoryLine trajectory;
         Vector2 cursor;
-        Vector2 tiltOffset; // 照準リセット時の傾き（度）。これを引いた値を照準に使う
+        readonly Common.GyroPointer pointer = new Common.GyroPointer();
         string status = "";
         Quaternion barrelRotInStation = Quaternion.identity; // 砲身の初期姿勢（この砲を基準）
         ItemHolder items;
@@ -157,23 +147,16 @@ namespace Pirates
             if (GameInput.StationSelectPressed(stationNumber)) activeStationNumber = stationNumber;
         }
 
+        // Title の Select と同じ：角速度を積算して動かす。リセット（Cancel）でカーソルを画面中央に戻す
         bool UpdateJoycon()
         {
-            Vector3 accel = GameInput.GetJoyconAccel(joyconIndex);
-            float down = Pick(accel, downAxis);
+            if (GameInput.JoyconRecenterPressed(joyconIndex))
+            {
+                cursor = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
+                pointer.Reset();
+            }
 
-            // 重力ベクトルの傾き角（JoyConRudderと同じ考え方）
-            float tiltX = Mathf.Atan2(Pick(accel, xAxis), -down) * Mathf.Rad2Deg * (invertX ? -1f : 1f);
-            float tiltY = Mathf.Atan2(Pick(accel, yAxis), -down) * Mathf.Rad2Deg * (invertY ? -1f : 1f);
-
-            // 照準リセット：今の持ち方を中央（傾き0）にする
-            if (GameInput.JoyconRecenterPressed(joyconIndex)) tiltOffset = new Vector2(tiltX, tiltY);
-
-            Vector2 target = new Vector2(
-                (Mathf.Clamp((tiltX - tiltOffset.x) / tiltRange, -1f, 1f) * 0.5f + 0.5f) * Screen.width,
-                (Mathf.Clamp((tiltY - tiltOffset.y) / tiltRange, -1f, 1f) * 0.5f + 0.5f) * Screen.height);
-
-            cursor = Vector2.Lerp(cursor, target, 1f - Mathf.Exp(-smoothing * Time.deltaTime));
+            cursor += pointer.Rate(joyconIndex, yawRelaxFactor, gravityBlend) * sensitivity * Time.deltaTime;
             return GameInput.JoyconFirePressed(joyconIndex);
         }
 
@@ -203,8 +186,6 @@ namespace Pirates
             float yaw = Vector3.SignedAngle(baseForward, to, Vector3.up);
             barrel.rotation = Quaternion.AngleAxis(yaw, Vector3.up) * baseRot;
         }
-
-        static float Pick(Vector3 v, JoyConRudder.Axis a) => a == JoyConRudder.Axis.X ? v.x : a == JoyConRudder.Axis.Y ? v.y : v.z;
 
         string ItemLabel()
         {

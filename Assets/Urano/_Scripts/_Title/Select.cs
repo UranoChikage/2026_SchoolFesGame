@@ -102,8 +102,7 @@ namespace Title
             public Vector2 position;
             public Vector2 velocity;
             public int hovered = -1;
-            public Vector3 gravity = Vector3.down;
-            public bool hasGravity;
+            public readonly GyroPointer pointer = new GyroPointer();
             public Vector3 baseScale = Vector3.one;  // プレハブ本来のスケール
             public float scaleOffset;                // 元のスケールからのずれ
             public float scaleVelocity;              // SmoothDamp用
@@ -205,7 +204,7 @@ namespace Title
                     if (!active)
                     {
                         cursors[i].hovered = -1;
-                        cursors[i].hasGravity = false;   // 繋ぎ直したら重力を取り直す
+                        cursors[i].pointer.Reset();   // 繋ぎ直したら重力を取り直す
                     }
                 }
             }
@@ -233,65 +232,15 @@ namespace Title
 
         #region ジャイロ → カーソル位置（プレイヤー空間）
 
-        /// <summary>
-        /// 角速度をカーソルの移動量として積算する。
-        /// ヨーの「向き」はワールドヨー（重力との内積）、「大きさ」はローカルのヨー+ロールの
-        /// 合成長を使う。これにより持ち方に関係なく、回した量がそのまま画面に出る。
-        /// ピッチはローカルのまま使う。
-        ///
-        /// ■ 軸の対応（Unity座標系。NnBackend.ToVector3 で変換済み）
-        ///     gyro.x = ピッチ（前後に倒す）
-        ///     gyro.y = ヨー（上下軸まわり）
-        ///     gyro.z = ロール（ドライバーを回す向き。縦持ちではこれが横移動になる）
-        /// </summary>
+        /// <summary>角速度をカーソルの移動量として積算する（動かし方は共通の GyroPointer）</summary>
         void Move(int index, Cursor c)
         {
-            Vector3 gyro = SwitchInput.I.AngularVelocity(index);   // 度/秒
-            UpdateGravity(index, c, gyro);
-
-            Vector3 g = c.gravity;
-
-            // ヨーとロールだけの内積。ピッチが横移動に混ざるのを防ぐ
-            float worldYaw = gyro.y * g.y + gyro.z * g.z;
-
-            // 大きさはローカルのヨー+ロールの合成長、向きはワールドヨーの符号。
-            // relax factor を超えて軸から外れた入力は、反転する前に 0 へ絞られる
-            float magnitude = new Vector2(gyro.y, gyro.z).magnitude;
-            float yaw = Mathf.Sign(worldYaw)
-                      * Mathf.Min(Mathf.Abs(worldYaw) * yawRelaxFactor, magnitude);
-
-            float pitch = gyro.x;   // ローカルピッチ
-
-            c.position += new Vector2(-yaw, pitch) * sensitivity * Time.deltaTime;
+            Vector2 rate = c.pointer.Rate(index, yawRelaxFactor, gravityBlend);
+            c.position += rate * sensitivity * Time.deltaTime;
             c.position = Clamp(c.position);
 
             c.rect.anchoredPosition =
                 Vector2.SmoothDamp(c.rect.anchoredPosition, c.position, ref c.velocity, smoothing);
-        }
-
-        /// <summary>
-        /// 加速度と角速度から重力方向を推定する（相補フィルタ）。
-        /// 加速度計は手振れや直線加速度も拾うので、角速度で回しながらゆっくり寄せる。
-        /// </summary>
-        void UpdateGravity(int index, Cursor c, Vector3 gyro)
-        {
-            Vector3 accel = SwitchInput.I.Acceleration(index);
-            if (accel.sqrMagnitude < 1e-6f) return;   // 値が来ていない
-
-            if (!c.hasGravity)
-            {
-                c.gravity = (-accel).normalized;
-                c.hasGravity = true;
-                return;
-            }
-
-            // 角速度ぶんだけ重力ベクトルを逆回転させる
-            float angle = gyro.magnitude * Time.deltaTime;
-            if (angle > 0.0001f)
-                c.gravity = Quaternion.AngleAxis(angle, -gyro.normalized) * c.gravity;
-
-            // 加速度の向きへ少しずつ寄せる
-            c.gravity = Vector3.Slerp(c.gravity, (-accel).normalized, gravityBlend).normalized;
         }
 
         /// <summary>カーソルを画面中央に戻す</summary>
@@ -306,7 +255,7 @@ namespace Title
         {
             for (int i = 0; i < spawned; i++)
             {
-                cursors[i].hasGravity = false;
+                cursors[i].pointer.Reset();
                 cursors[i].position = Vector2.zero;
                 cursors[i].velocity = Vector2.zero;
                 cursors[i].hovered = -1;

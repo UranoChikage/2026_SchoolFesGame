@@ -47,8 +47,8 @@ namespace Pirates
             => SwitchInput.I.ButtonDown(joyconIndex, SwitchButton.Down)
             || SwitchInput.I.ButtonDown(joyconIndex, SwitchButton.Cancel);
 
-        /// <summary>照準を「今の持ち方で中央」に合わせ直すボタンを押した瞬間（砲手用。Option＝+）</summary>
-        public static bool JoyconRecenterPressed(int joyconIndex) => SwitchInput.I.ButtonDown(joyconIndex, SwitchButton.Option);
+        /// <summary>カーソルを画面中央に戻すボタンを押した瞬間（砲手用。Title の Select と同じ Cancel＝R）</summary>
+        public static bool JoyconRecenterPressed(int joyconIndex) => SwitchInput.I.ButtonDown(joyconIndex, SwitchButton.Cancel);
 
         // ======================================================================
         // PC（キーボード・マウス）  ← デバッグ用。JoyConが無いときに使われる

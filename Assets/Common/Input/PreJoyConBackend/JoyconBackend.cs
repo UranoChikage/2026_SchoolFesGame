@@ -14,9 +14,9 @@ using Common;
 ///   Stick … Q/E で左右、S/W で上下
 ///
 /// ■ 1番 = マウス（Piratesでは砲手）
-///   加速度 … 画面上のマウス位置を「傾き」に変換して返す（画面端 = ±TiltRange 度）。
-///            Cannon.prefab の CannonStation（下=Z, 横=Y, 前後=X, tiltRange=40）に合わせてある。
-///   角速度 … マウスの移動量（Titleのカーソル用）
+///   角速度 … マウスの移動量（Select・砲手のカーソルは GyroPointer でこれを積算して動く）
+///   加速度 … 常に真下の重力（0,0,-1）。GyroPointer が横移動の向きを決めるのに使う
+///   Cancel（右クリック）でカーソルが画面中央に戻る
 ///   Confirm=左クリック / Cancel=右クリック / Option=中ボタン
 ///
 /// ■ 2番以降は接続なし扱い
@@ -37,9 +37,6 @@ public class JoyconBackend : ISwitchInputBackend
     const float WheelSpeed = 180f;       // 度/秒
     const float WheelCenterSpeed = 240f; // 離したときに中央へ戻る速さ（度/秒）
     const float WheelLock = 540f;        // JoyConRudder.wheelLockDeg と同じにする
-
-    // 画面端に対応する傾き（度）。CannonStation.tiltRange と同じにする
-    const float TiltRange = 40f;
 
     // マウス1ピクセル移動 → カーソル1ピクセル移動になる換算（Select の sensitivity 既定値 15 に合わせる）
     const float PixelsPerDegree = 15f;
@@ -95,22 +92,8 @@ public class JoyconBackend : ISwitchInputBackend
             return new Vector3(-Mathf.Cos(r), 0f, -Mathf.Sin(r));
         }
 
-        if (index == MouseIndex)
-        {
-            // 画面位置(-1〜1) → 傾き。atan2(横, -下) が傾き角になるので、下=-1 として tan を横/前後に入れる
-            var mouse = Mouse.current;
-            Vector2 n = Vector2.zero;
-            if (mouse != null && Screen.width > 0 && Screen.height > 0)
-            {
-                Vector2 p = mouse.position.ReadValue();
-                n.x = Mathf.Clamp(p.x / Screen.width * 2f - 1f, -1f, 1f);
-                n.y = Mathf.Clamp(p.y / Screen.height * 2f - 1f, -1f, 1f);
-            }
-            return new Vector3(
-                Mathf.Tan(n.y * TiltRange * Mathf.Deg2Rad),   // 前後 → カーソルY
-                Mathf.Tan(n.x * TiltRange * Mathf.Deg2Rad),   // 左右 → カーソルX
-                -1f);
-        }
+        // マウス：固定の重力。動きは AngularVelocity（移動量）で伝える
+        if (index == MouseIndex) return new Vector3(0f, 0f, -1f);
 
         return Vector3.zero;
     }
