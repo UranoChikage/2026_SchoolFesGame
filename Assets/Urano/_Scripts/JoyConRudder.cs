@@ -1,20 +1,14 @@
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 namespace Pirates
 {
     public class JoyConRudder : MonoBehaviour
     {
-        private List<Joycon> joycons;
-
         [Header("デバッグ表示（読み取り専用）")]
-        public float[] stick;
-        public Vector3 gyro;
         public Vector3 accel;
 
         [Header("PCデバッグ")]
-        [Tooltip("ONでJoyConがあってもキーボード(A/D・←/→で舵輪を回す、Spaceでセンター)で操作。JoyConが無い場合は自動でキーボードになる")]
+        [Tooltip("通常はOFFのまま。JoyConが無い／繋がっていても反応がないときは自動でキーボード(A/D・←/→で舵輪を回す、Spaceでセンター)になる。ONにすると常にキーボード")]
         public bool forceKeyboard = false;
 
         [Header("JoyCon設定")]
@@ -36,6 +30,10 @@ namespace Pirates
         public float wheelLockDeg = 540f;
         [Tooltip("キーボード操作時の舵輪の回転速度（度/秒）。実物同様、離してもその角度のまま")]
         public float keyboardWheelSpeed = 180f;
+        [Tooltip("キーボード操作で、キーを離したら舵輪が中央へ戻る。曲がり続けにくく扱いやすい（JoyCon操作には影響しない）")]
+        public bool keyboardAutoCenter = true;
+        [Tooltip("中央へ戻る速さ（度/秒）")]
+        public float keyboardCenterSpeed = 240f;
         [Tooltip("舵輪の見た目（任意）。ローカルZ軸まわりに回す")]
         public Transform wheelVisual;
 
@@ -59,7 +57,7 @@ namespace Pirates
         public float RudderNormalized => rudderNormalized;
         public bool IsConnected => UsingKeyboard || JoyconAvailable;
 
-        bool JoyconAvailable => joycons != null && joycons.Count > jc_ind;
+        bool JoyconAvailable => GameInput.IsJoyconConnected(jc_ind);
         bool UsingKeyboard => forceKeyboard || !JoyconAvailable;
 
         private float smoothed;
@@ -69,9 +67,7 @@ namespace Pirates
 
         void Start()
         {
-            gyro = Vector3.zero;
             accel = Vector3.zero;
-            joycons = JoyconManager.Instance != null ? JoyconManager.Instance.j : null;
         }
 
         void Update()
@@ -79,16 +75,20 @@ namespace Pirates
             if (UsingKeyboard)
             {
                 hasPrevTilt = false;
-                wheelAngle += KeyboardDir() * keyboardWheelSpeed * Time.deltaTime;
-                if (Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame) wheelAngle = 0f; // センター戻し
+                float dir = GameInput.KeyboardSteerDir();
+                if (dir != 0f)
+                {
+                    wheelAngle += dir * keyboardWheelSpeed * Time.deltaTime;
+                }
+                else if (keyboardAutoCenter)
+                {
+                    wheelAngle = Mathf.MoveTowards(wheelAngle, 0f, keyboardCenterSpeed * Time.deltaTime);
+                }
+                if (GameInput.KeyboardCenterPressed()) wheelAngle = 0f; // センター戻し
             }
             else
             {
-                Joycon j = joycons[jc_ind];
-
-                gyro = j.GetGyro();
-                accel = j.GetAccel();
-                stick = j.GetStick();
+                accel = GameInput.GetJoyconAccel(jc_ind);
 
                 float down = Pick(accel, downAxis);
                 float steer = Pick(accel, steerAxis);
@@ -102,7 +102,7 @@ namespace Pirates
                 hasPrevTilt = true;
 
                 // 十字キー下で現在の舵輪位置を「真っ直ぐ」に再設定
-                if (j.GetButtonDown(Joycon.Button.DPAD_DOWN)) wheelAngle = 0f;
+                if (GameInput.JoyconCenterPressed(jc_ind)) wheelAngle = 0f;
             }
 
             wheelAngle = Mathf.Clamp(wheelAngle, -wheelLockDeg, wheelLockDeg);
@@ -114,17 +114,6 @@ namespace Pirates
             rudderNormalized = maxRudderDeg > 0 ? Mathf.Clamp(rudderAngle / maxRudderDeg, -1f, 1f) : 0f;
 
             if (wheelVisual != null) wheelVisual.localRotation = Quaternion.Euler(0f, 0f, -wheelAngle);
-        }
-
-        // A/← で左回し、D/→ で右回し
-        static float KeyboardDir()
-        {
-            var kb = Keyboard.current;
-            if (kb == null) return 0f;
-            float dir = 0f;
-            if (kb.aKey.isPressed || kb.leftArrowKey.isPressed) dir -= 1f;
-            if (kb.dKey.isPressed || kb.rightArrowKey.isPressed) dir += 1f;
-            return dir;
         }
 
         static float Pick(Vector3 v, Axis a) => a == Axis.X ? v.x : a == Axis.Y ? v.y : v.z;

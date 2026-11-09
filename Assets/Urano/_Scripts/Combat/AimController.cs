@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 namespace Pirates
 {
@@ -91,13 +90,12 @@ namespace Pirates
                 return true;
             }
 
-            var mouse = Mouse.current;
-            if (mouse == null)
+            if (!GameInput.TryGetMousePosition(out Vector2 pos))
             {
                 ray = default;
                 return false;
             }
-            ray = cam.ScreenPointToRay(mouse.position.ReadValue());
+            ray = cam.ScreenPointToRay(pos);
             return true;
         }
     }

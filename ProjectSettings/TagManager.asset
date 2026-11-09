@@ -11,10 +11,10 @@ TagManager:
   - Boat
   - Water
   - UI
-  - Player
-  - 
-  - 
-  - 
+  - Enemy
+  - CannonBall
+  - EnemyVisual
+  - Rudder
   - 
   - 
   - 

@@ -25,7 +25,7 @@ Transform:
   m_GameObject: {fileID: 3148682643203180271}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.072, z: 0}
+  m_LocalPosition: {x: 0, y: 2.23, z: 0.055}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -43,6 +43,7 @@ GameObject:
   - component: {fileID: 7720109929013838106}
   - component: {fileID: 3975321433207722274}
   - component: {fileID: 8628198920000537608}
+  - component: {fileID: 7378329920550427385}
   m_Layer: 3
   m_Name: Cannon
   m_TagString: Untagged
@@ -82,14 +83,14 @@ MonoBehaviour:
   owner: {fileID: 0}
   water: {fileID: 0}
   projectilePrefab: {fileID: 8299707208915026063, guid: 689b16d8b2446a143b29cbfa390f4406, type: 3}
-  explosionPrefab: {fileID: 0}
+  explosionVfx: {fileID: 11400000, guid: 83d71a82294302243b32d783648538a0, type: 2}
   fallbackBallSize: 0.5
   mode: 0
   projectileSpeed: 40
   launchAngle: 22
   highArc: 0
   explosionRadius: 4
-  damage: 10
+  damage: 100
   hitMask:
     serializedVersion: 2
     m_Bits: 55
@@ -108,7 +109,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Pirates.CannonStation
   joyconIndex: 1
-  forceMouse: 1
+  forceMouse: 0
   stationNumber: 1
   barrel: {fileID: 6001071320214336055}
   downAxis: 2
@@ -117,8 +118,8 @@ MonoBehaviour:
   invertX: 0
   invertY: 0
   tiltRange: 40
-  fireButton: 12
   cursorColor: {r: 1, g: 0, b: 0, a: 1}
+  cursorTexture: {fileID: 2800000, guid: c08d336c37d42fb47bd4ac752e2f3689, type: 3}
   cursorSize: 40
   smoothing: 10
 --- !u!114 &8628198920000537608
@@ -137,8 +138,26 @@ MonoBehaviour:
   maxDistance: 1000
   layerMask:
     serializedVersion: 2
-    m_Bits: 55
+    m_Bits: 119
   water: {fileID: 0}
+--- !u!114 &7378329920550427385
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4227882559362864241}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e0f94d2bac3ca047bdfc952c37d4168, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Pirates.TrajectoryLine
+  material: {fileID: 2100000, guid: 4a3724e57efca0842a8c736cc6342e15, type: 2}
+  color: {r: 0, g: 1, b: 0.10700154, a: 0.85}
+  width: 0.2
+  timeStep: 0.05
+  maxPoints: 120
+  cooldownAlpha: 0.3
 --- !u!1 &8079932088230854283
 GameObject:
   m_ObjectHideFlags: 0
@@ -150,7 +169,6 @@ GameObject:
   - component: {fileID: 6001071320214336055}
   - component: {fileID: 7210092242252938589}
   - component: {fileID: 190933908710340169}
-  - component: {fileID: 4860628216052647290}
   m_Layer: 3
   m_Name: Cylinder
   m_TagString: Untagged
@@ -171,6 +189,7 @@ Transform:
   m_LocalScale: {x: 0.1, y: 0.1, z: 0.1}
   m_ConstrainProportionsScale: 1
   m_Children:
+  - {fileID: 6888646402059697269}
   - {fileID: 1934554057861437534}
   m_Father: {fileID: 4914910214310885304}
   m_LocalEulerAnglesHint: {x: 65.021, y: 0, z: 0}
@@ -189,7 +208,7 @@ MeshRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8079932088230854283}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
@@ -231,26 +250,81 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!136 &4860628216052647290
-CapsuleCollider:
+--- !u!1001 &6346656108533717918
+PrefabInstance:
   m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8079932088230854283}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 0.5000001
-  m_Height: 2
-  m_Direction: 1
-  m_Center: {x: 0.000000059604645, y: 0, z: -0.00000008940697}
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 6001071320214336055}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: c2e02d9ca6ed54d459987bc92c0038c0, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 2.34
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c2e02d9ca6ed54d459987bc92c0038c0, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 2.34
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c2e02d9ca6ed54d459987bc92c0038c0, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 2.34
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c2e02d9ca6ed54d459987bc92c0038c0, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c2e02d9ca6ed54d459987bc92c0038c0, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.114
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c2e02d9ca6ed54d459987bc92c0038c0, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.484
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c2e02d9ca6ed54d459987bc92c0038c0, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.5962982
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c2e02d9ca6ed54d459987bc92c0038c0, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0.3800375
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c2e02d9ca6ed54d459987bc92c0038c0, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0.5962982
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c2e02d9ca6ed54d459987bc92c0038c0, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0.3800375
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c2e02d9ca6ed54d459987bc92c0038c0, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c2e02d9ca6ed54d459987bc92c0038c0, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 90
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c2e02d9ca6ed54d459987bc92c0038c0, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: -65.021
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c2e02d9ca6ed54d459987bc92c0038c0, type: 3}
+      propertyPath: m_ConstrainProportionsScale
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: c2e02d9ca6ed54d459987bc92c0038c0, type: 3}
+      propertyPath: m_Name
+      value: Cannon
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: c2e02d9ca6ed54d459987bc92c0038c0, type: 3}
+--- !u!4 &6888646402059697269 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: c2e02d9ca6ed54d459987bc92c0038c0, type: 3}
+  m_PrefabInstance: {fileID: 6346656108533717918}
+  m_PrefabAsset: {fileID: 0}

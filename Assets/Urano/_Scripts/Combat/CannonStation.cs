@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
 using UnityEngine.Serialization;
 
 namespace Pirates
@@ -18,7 +17,7 @@ namespace Pirates
         [Tooltip("使用するJoyConのインデックス（舵取りの1Pが0なら、砲手は1,2,3）")]
         int joyconIndex = 1;
         [SerializeField]
-        [Tooltip("ONでJoyConがあってもマウスで操作（PCデバッグ）。JoyConが無いときは自動でマウスになる")]
+        [Tooltip("通常はOFFのまま。JoyConが無い／繋がっていても反応がないときは自動でマウスになる。ONにするとJoyConがあっても常にマウス（PCデバッグ用）")]
         [FormerlySerializedAs("forceKeyboard")]
         bool forceMouse = false;
         [SerializeField]
@@ -47,12 +46,13 @@ namespace Pirates
         [SerializeField]
         [Tooltip("この角度(度)傾けると、カーソルが画面端に届く")]
         float tiltRange = 30f;
-        [SerializeField]
-        Joycon.Button fireButton = Joycon.Button.SHOULDER_2;
 
         [Header("カーソル表示")]
         [SerializeField]
         Color cursorColor = Color.red;
+        [SerializeField]
+        [Tooltip("カーソルの画像（任意）。未設定なら十字を描く。VFX/Textures/Crosshair.png など")]
+        Texture2D cursorTexture;
         [SerializeField]
         float cursorSize = 40f;
         [SerializeField]
@@ -67,14 +67,22 @@ namespace Pirates
 
         CannonShooter shooter;
         AimController aim;
+        TrajectoryLine trajectory;
         Vector2 cursor;
         string status = "";
         Quaternion barrelRotInStation = Quaternion.identity; // 砲身の初期姿勢（この砲を基準）
+        ItemHolder items;
+
+        /// <summary>この砲手の色（カーソル・予測線と同じ）。獲得通知などで使う</summary>
+        public Color PlayerColor => cursorColor;
 
         void Awake()
         {
             shooter = GetComponent<CannonShooter>();
+            items = ItemHolder.For(shooter);
             aim = GetComponent<AimController>();
+            trajectory = GetComponent<TrajectoryLine>(); // 付いていれば予測線を出す（任意）
+            if (trajectory != null) trajectory.SetColor(cursorColor);
             if (barrel != null) barrelRotInStation = Quaternion.Inverse(transform.rotation) * barrel.rotation;
         }
 
@@ -89,13 +97,13 @@ namespace Pirates
         {
             SelectByNumberKey();
 
-            Joycon jc = forceMouse ? null : FindJoycon();
+            bool joycon = !forceMouse && GameInput.IsJoyconConnected(joyconIndex);
             bool fire;
 
-            if (jc != null)
+            if (joycon)
             {
                 status = "JOYCON";
-                fire = UpdateJoycon(jc);
+                fire = UpdateJoycon();
             }
             else if (activeStationNumber != stationNumber)
             {
@@ -114,37 +122,43 @@ namespace Pirates
             aim.SetScreenPosition(cursor);
             aim.Refresh();
 
+            items.Tick(aim.AimPoint, aim.HasAim);
+
             if (aim.HasAim)
             {
                 UpdateBarrel(aim.AimPoint);
-                if (fire) shooter.TryFireAt(aim.AimPoint);
+                // アイテム所持中は発射ボタンで常にアイテムを使う。ビーム使用中はこの砲は撃てない
+                if (fire && !items.TryUse() && !items.IsBeamActive) shooter.TryFireAt(aim.AimPoint);
+            }
+
+            // ビーム使用中はこの砲は撃てないので、予測線は出さない
+            UpdateTrajectory(status != "waiting" && shooter.IsAlive && !items.IsBeamActive);
+        }
+
+        // 予測線：選ばれている砲だけ、カーソルが指す位置へ撃った弾道を表示する
+        void UpdateTrajectory(bool active)
+        {
+            if (trajectory == null) return;
+
+            if (active && aim.HasAim && shooter.TryGetLaunchVelocity(aim.AimPoint, out Vector3 velocity))
+            {
+                trajectory.Show(shooter.MuzzlePosition, velocity, aim.AimPoint.y, shooter.IsReady);
+            }
+            else
+            {
+                trajectory.Hide();
             }
         }
 
         // 数字キー（上段／テンキー）で操作する砲手を切り替える
         void SelectByNumberKey()
         {
-            var kb = Keyboard.current;
-            if (kb == null || stationNumber < 1 || stationNumber > 9) return;
-
-            Key digit = Key.Digit1 + (stationNumber - 1);
-            Key numpad = Key.Numpad1 + (stationNumber - 1);
-            if (kb[digit].wasPressedThisFrame || kb[numpad].wasPressedThisFrame)
-            {
-                activeStationNumber = stationNumber;
-            }
+            if (GameInput.StationSelectPressed(stationNumber)) activeStationNumber = stationNumber;
         }
 
-        Joycon FindJoycon()
+        bool UpdateJoycon()
         {
-            var manager = JoyconManager.Instance;
-            if (manager == null || manager.j == null || manager.j.Count <= joyconIndex) return null;
-            return manager.j[joyconIndex];
-        }
-
-        bool UpdateJoycon(Joycon jc)
-        {
-            Vector3 accel = jc.GetAccel();
+            Vector3 accel = GameInput.GetJoyconAccel(joyconIndex);
             float down = Pick(accel, downAxis);
 
             // 重力ベクトルの傾き角（JoyConRudderと同じ考え方）
@@ -156,15 +170,14 @@ namespace Pirates
                 (Mathf.Clamp(tiltY / tiltRange, -1f, 1f) * 0.5f + 0.5f) * Screen.height);
 
             cursor = Vector2.Lerp(cursor, target, 1f - Mathf.Exp(-smoothing * Time.deltaTime));
-            return jc.GetButtonDown(fireButton);
+            return GameInput.JoyconFirePressed(joyconIndex);
         }
 
         bool UpdateMouse()
         {
-            var mouse = Mouse.current;
-            if (mouse == null) return false;
-            cursor = mouse.position.ReadValue();
-            return mouse.leftButton.wasPressedThisFrame;
+            if (!GameInput.TryGetMousePosition(out Vector2 pos)) return false;
+            cursor = pos;
+            return GameInput.MouseFirePressed();
         }
 
         // 砲身を狙う位置へ水平方向（Y軸回転のみ）に向ける（見た目だけ）。
@@ -189,22 +202,47 @@ namespace Pirates
 
         static float Pick(Vector3 v, JoyConRudder.Axis a) => a == JoyConRudder.Axis.X ? v.x : a == JoyConRudder.Axis.Y ? v.y : v.z;
 
+        string ItemLabel()
+        {
+            if (items.IsBeamActive) return " [BEAM]";
+            return items.Held != null ? $" [{items.Held.DisplayName}]" : "";
+        }
+
         // 砲手ごとの色付きカーソル（クールタイム中は小さく）
         void OnGUI()
         {
-            if (Event.current.type != EventType.Repaint) return;
+            if (Event.current.type != EventType.Repaint || !shooter.IsAlive) return;
 
-            float size = cursorSize * (shooter.IsReady ? 1f : 0.6f);
+            // アイテムを持っている間は、そのアイテムのカーソルの大きさ・画像に切り替える
+            ItemAsset item = items != null ? items.CursorItem : null;
+            float baseSize = item != null && item.CursorSize > 0f ? item.CursorSize : cursorSize;
+            Sprite sprite = item != null ? item.CursorSprite : null;
+            float size = baseSize * (shooter.IsReady ? 1f : 0.6f);
             float x = cursor.x;
             float y = Screen.height - cursor.y; // GUIは上原点
 
             Color old = GUI.color;
             GUI.color = cursorColor;
-            GUI.DrawTexture(new Rect(x - size * 0.5f, y - 2f, size, 4f), Texture2D.whiteTexture);
-            GUI.DrawTexture(new Rect(x - 2f, y - size * 0.5f, 4f, size), Texture2D.whiteTexture);
+            if (sprite != null)
+            {
+                // スプライトシート上の位置を指定して描く
+                Rect tr = sprite.textureRect;
+                var uv = new Rect(tr.x / sprite.texture.width, tr.y / sprite.texture.height,
+                    tr.width / sprite.texture.width, tr.height / sprite.texture.height);
+                GUI.DrawTextureWithTexCoords(new Rect(x - size * 0.5f, y - size * 0.5f, size, size), sprite.texture, uv);
+            }
+            else if (cursorTexture != null)
+            {
+                GUI.DrawTexture(new Rect(x - size * 0.5f, y - size * 0.5f, size, size), cursorTexture);
+            }
+            else
+            {
+                GUI.DrawTexture(new Rect(x - size * 0.5f, y - 2f, size, 4f), Texture2D.whiteTexture);
+                GUI.DrawTexture(new Rect(x - 2f, y - size * 0.5f, 4f, size), Texture2D.whiteTexture);
+            }
             // 番号と状態（デバッグ表示）。aim:NG は照準がどこにも当たっていない（Water未設定など）
             GUI.Label(new Rect(x + size * 0.5f + 4f, y - 12f, 200f, 24f),
-                $"{stationNumber} {status} aim:{(aim.HasAim ? "OK" : "NG")}");
+                $"{stationNumber} {status} aim:{(aim.HasAim ? "OK" : "NG")}{ItemLabel()}");
             GUI.color = old;
         }
     }

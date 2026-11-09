@@ -1,0 +1,17 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0f6836001dffd5549baf172ee46a0da7, type: 3}
+  m_Name: BeamHit
+  m_EditorClassIdentifier: Assembly-CSharp::Pirates.VfxAsset
+  prefab: {fileID: 2201106846867017612, guid: f155d83a880954b4fa478b9676a9f504, type: 3}
+  lifetime: 0.5
+  memo: "\u30D3\u30FC\u30E0\u306E\u5F53\u305F\u3063\u305F\u5834\u6240\u306B\u51FA\u3059"

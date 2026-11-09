@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 namespace Pirates
 {
@@ -24,8 +23,7 @@ namespace Pirates
 
         void Update()
         {
-            var mouse = Mouse.current;
-            if (aim == null || mouse == null || !mouse.leftButton.wasPressedThisFrame) return;
+            if (aim == null || !GameInput.MouseFirePressed()) return;
 
             aim.Refresh();
             if (!aim.HasAim) return;
