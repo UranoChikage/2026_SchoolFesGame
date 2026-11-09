@@ -39,8 +39,16 @@ namespace Pirates
         /// <summary>発射ボタンを押した瞬間（砲手用。JoyConでは SL/SR 側のボタン）</summary>
         public static bool JoyconFirePressed(int joyconIndex) => SwitchInput.I.ButtonDown(joyconIndex, SwitchButton.Confirm);
 
-        /// <summary>舵輪を「真っ直ぐ」に戻すボタンを押した瞬間（舵取り用。スティック下倒し）</summary>
-        public static bool JoyconCenterPressed(int joyconIndex) => SwitchInput.I.ButtonDown(joyconIndex, SwitchButton.Down);
+        /// <summary>
+        /// 舵輪を「真っ直ぐ」に戻すボタンを押した瞬間（舵取り用）。
+        /// 下（十字キー／スティック下倒し）か Cancel（R）のどちらでも効く。実機でどちらかが割り当てられていなくても戻せるように。
+        /// </summary>
+        public static bool JoyconCenterPressed(int joyconIndex)
+            => SwitchInput.I.ButtonDown(joyconIndex, SwitchButton.Down)
+            || SwitchInput.I.ButtonDown(joyconIndex, SwitchButton.Cancel);
+
+        /// <summary>照準を「今の持ち方で中央」に合わせ直すボタンを押した瞬間（砲手用。Option＝+）</summary>
+        public static bool JoyconRecenterPressed(int joyconIndex) => SwitchInput.I.ButtonDown(joyconIndex, SwitchButton.Option);
 
         // ======================================================================
         // PC（キーボード・マウス）  ← デバッグ用。JoyConが無いときに使われる

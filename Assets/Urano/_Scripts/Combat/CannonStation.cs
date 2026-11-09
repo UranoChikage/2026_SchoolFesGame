@@ -44,7 +44,7 @@ namespace Pirates
         [SerializeField]
         bool invertY = false;
         [SerializeField]
-        [Tooltip("この角度(度)傾けると、カーソルが画面端に届く")]
+        [Tooltip("この角度(度)傾けると、カーソルが画面端に届く。Option(+)で今の持ち方が中央になる")]
         float tiltRange = 30f;
 
         [Header("カーソル表示")]
@@ -69,6 +69,7 @@ namespace Pirates
         AimController aim;
         TrajectoryLine trajectory;
         Vector2 cursor;
+        Vector2 tiltOffset; // 照準リセット時の傾き（度）。これを引いた値を照準に使う
         string status = "";
         Quaternion barrelRotInStation = Quaternion.identity; // 砲身の初期姿勢（この砲を基準）
         ItemHolder items;
@@ -165,9 +166,12 @@ namespace Pirates
             float tiltX = Mathf.Atan2(Pick(accel, xAxis), -down) * Mathf.Rad2Deg * (invertX ? -1f : 1f);
             float tiltY = Mathf.Atan2(Pick(accel, yAxis), -down) * Mathf.Rad2Deg * (invertY ? -1f : 1f);
 
+            // 照準リセット：今の持ち方を中央（傾き0）にする
+            if (GameInput.JoyconRecenterPressed(joyconIndex)) tiltOffset = new Vector2(tiltX, tiltY);
+
             Vector2 target = new Vector2(
-                (Mathf.Clamp(tiltX / tiltRange, -1f, 1f) * 0.5f + 0.5f) * Screen.width,
-                (Mathf.Clamp(tiltY / tiltRange, -1f, 1f) * 0.5f + 0.5f) * Screen.height);
+                (Mathf.Clamp((tiltX - tiltOffset.x) / tiltRange, -1f, 1f) * 0.5f + 0.5f) * Screen.width,
+                (Mathf.Clamp((tiltY - tiltOffset.y) / tiltRange, -1f, 1f) * 0.5f + 0.5f) * Screen.height);
 
             cursor = Vector2.Lerp(cursor, target, 1f - Mathf.Exp(-smoothing * Time.deltaTime));
             return GameInput.JoyconFirePressed(joyconIndex);
