@@ -2556,7 +2556,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 3975321433207722274, guid: a718f2cb670cd414496c079c07dbe548, type: 3}
       propertyPath: forceMouse
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3975321433207722274, guid: a718f2cb670cd414496c079c07dbe548, type: 3}
       propertyPath: joyconIndex

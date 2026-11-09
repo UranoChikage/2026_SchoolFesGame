@@ -22,8 +22,13 @@ namespace Pirates
         // JoyCon（傾き・ボタン）  ← 共通のSwitchInputから読む。割り当てだけここで決める
         // ======================================================================
 
-        /// <summary>そのコントローラーが繋がっているか</summary>
-        public static bool IsJoyconConnected(int joyconIndex) => SwitchInput.I.IsConnected(joyconIndex);
+        /// <summary>
+        /// そのコントローラーが使えるか。繋がっていて、かつ加速度の値が来ている場合だけ true。
+        /// 繋がっていても値が全く来ない（反応がない）ときは false になり、呼び出し側はマウス／キーボードに切り替わる。
+        /// </summary>
+        public static bool IsJoyconConnected(int joyconIndex)
+            => SwitchInput.I.IsConnected(joyconIndex)
+            && SwitchInput.I.Acceleration(joyconIndex).sqrMagnitude > 1e-6f;
 
         /// <summary>
         /// 加速度（重力ベクトル）。傾きの計算に使う。単位は問わない（角度は比率で出す）。

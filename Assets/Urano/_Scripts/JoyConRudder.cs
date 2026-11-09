@@ -8,7 +8,7 @@ namespace Pirates
         public Vector3 accel;
 
         [Header("PCデバッグ")]
-        [Tooltip("ONでJoyConがあってもキーボード(A/D・←/→で舵輪を回す、Spaceでセンター)で操作。JoyConが無い場合は自動でキーボードになる")]
+        [Tooltip("通常はOFFのまま。JoyConが無い／繋がっていても反応がないときは自動でキーボード(A/D・←/→で舵輪を回す、Spaceでセンター)になる。ONにすると常にキーボード")]
         public bool forceKeyboard = false;
 
         [Header("JoyCon設定")]

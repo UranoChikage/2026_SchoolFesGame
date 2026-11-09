@@ -17,7 +17,7 @@ namespace Pirates
         [Tooltip("使用するJoyConのインデックス（舵取りの1Pが0なら、砲手は1,2,3）")]
         int joyconIndex = 1;
         [SerializeField]
-        [Tooltip("ONでJoyConがあってもマウスで操作（PCデバッグ）。JoyConが無いときは自動でマウスになる")]
+        [Tooltip("通常はOFFのまま。JoyConが無い／繋がっていても反応がないときは自動でマウスになる。ONにするとJoyConがあっても常にマウス（PCデバッグ用）")]
         [FormerlySerializedAs("forceKeyboard")]
         bool forceMouse = false;
         [SerializeField]
