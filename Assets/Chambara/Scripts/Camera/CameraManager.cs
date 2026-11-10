@@ -79,9 +79,10 @@ namespace Chambara
         {
             if(currentState is GameState.Playing or GameState.Ready)
             {
-                SetPlayerCameraPos(ChambaraManager.Instance.Players[0].transform, playerCamera);
+                SetPlayerCameraPos(ChambaraManager.Instance.Players[0].transform, playerCamera,cameraOffset);
 
-                SetPlayerCameraPos(ChambaraManager.Instance.Players[1].transform, playerCamera2);
+                Vector3 cameraOffset2 = new Vector3(-cameraOffset.x, cameraOffset.y, cameraOffset.z);   // 2Pは左右反転
+                SetPlayerCameraPos(ChambaraManager.Instance.Players[1].transform, playerCamera2,cameraOffset2);
             }
 
         }
@@ -107,7 +108,7 @@ namespace Chambara
             mainCamera.gameObject.SetActive(false);
         }
 
-        private void SetPlayerCameraPos(Transform p,Camera camera)
+        private void SetPlayerCameraPos(Transform p,Camera camera,Vector3 cameraOffset)
         {
             // プレイヤーの向きに合わせて肩越しに置く。怯みののけぞり（前後の傾き）にはカメラを追従させない
             Vector3 forward = Vector3.ProjectOnPlane(p.forward, Vector3.up);
