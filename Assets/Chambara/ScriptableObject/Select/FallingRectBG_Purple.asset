@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 22fb4d1919e744ca8f285815053f5c9f, type: 3}
+  m_Name: FallingRectBG_Purple
+  m_EditorClassIdentifier: Assembly-CSharp::Chambara.FallingRectBackgroundSettings
+  count: 60
+  speedMultiplier: 1
+  deformAmount: 1
+  widthRange: {x: 6, y: 70}
+  heightRange: {x: 30, y: 170}
+  speedRange: {x: 40, y: 160}
+  alphaRange: {x: 0.15, y: 0.7}
+  spawnAboveMargin: 200
+  backgroundColor: {r: 0.07843, g: 0.07059, b: 0.16863, a: 1}
+  colors:
+  - {r: 0.49804, g: 0.46667, b: 0.86667, a: 1}
+  - {r: 0.68627, g: 0.66275, b: 0.92549, a: 1}
+  - {r: 0.32549, g: 0.29020, b: 0.71765, a: 1}
+  - {r: 0.83137, g: 0.32549, b: 0.49412, a: 1}
+  - {r: 0.36471, g: 0.79216, b: 0.64706, a: 1}
+  useUnscaledTime: 1
+  maxDeltaTime: 0.05
