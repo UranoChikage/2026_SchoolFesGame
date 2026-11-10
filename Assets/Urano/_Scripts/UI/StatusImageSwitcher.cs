@@ -14,14 +14,9 @@ namespace Pirates
         [SerializeField] GameObject damageImage;
         [SerializeField] GameObject gameOverImage;
 
-        [Header("被弾")]
-        [SerializeField]
-        [Tooltip("被弾画像を出しておく秒数")]
-        float damageShowTime = 0.4f;
 
         ShipHealth health;
         GameFlow flow;
-        float damageHideTime;
         bool gameOver;
 
         void Awake()
@@ -60,25 +55,15 @@ namespace Pirates
             flow.GameEnded -= OnGameEnded;
         }
 
-        void Update()
-        {
-            if (damageHideTime > 0f && Time.unscaledTime >= damageHideTime)
-            {
-                damageHideTime = 0f;
-                Set(damageImage, false);
-            }
-        }
 
         void OnDamaged(DamageInfo info)
         {
             if (gameOver) return;
             Set(damageImage, true);
-            damageHideTime = Time.unscaledTime + damageShowTime;
         }
 
         void OnGameEnded(bool survived)
         {
-            damageHideTime = 0f;
             Set(damageImage, false);
             gameOver = !survived;
             Set(gameOverImage, gameOver);
@@ -87,14 +72,17 @@ namespace Pirates
         void ResetImages()
         {
             gameOver = false;
-            damageHideTime = 0f;
             Set(damageImage, false);
             Set(gameOverImage, false);
         }
 
         static void Set(GameObject go, bool active)
         {
-            if (go != null && go.activeSelf != active) go.SetActive(active);
+            if (go != null && go.activeSelf != active)
+            {
+                go.SetActive(!false);
+                go.SetActive(active);
+            }
         }
     }
 }
