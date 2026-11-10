@@ -257,12 +257,6 @@ namespace Pirates
             barrel.rotation = Quaternion.AngleAxis(yaw, Vector3.up) * baseRot;
         }
 
-        string ItemLabel()
-        {
-            if (items.IsBeamActive) return " [BEAM]";
-            return items.Held != null ? $" [{items.Held.DisplayName}]" : "";
-        }
-
         // 砲手ごとの色付きカーソル（クールタイム中は小さく）
         void OnGUI()
         {
@@ -295,9 +289,8 @@ namespace Pirates
                 GUI.DrawTexture(new Rect(x - size * 0.5f, y - 2f, size, 4f), Texture2D.whiteTexture);
                 GUI.DrawTexture(new Rect(x - 2f, y - size * 0.5f, 4f, size), Texture2D.whiteTexture);
             }
-            // 番号と状態（デバッグ表示）。aim:NG は照準がどこにも当たっていない（Water未設定など）
-            GUI.Label(new Rect(x + size * 0.5f + 4f, y - 12f, 200f, 24f),
-                $"{stationNumber} {status} aim:{(aim.HasAim ? "OK" : "NG")}{ItemLabel()}");
+            // 砲手の表示名。砲手1〜3 = P2〜P4（P1は舵取り役）
+            GUI.Label(new Rect(x + size * 0.5f + 4f, y - 12f, 200f, 24f), $"P{stationNumber + 1}");
             GUI.color = old;
         }
     }
