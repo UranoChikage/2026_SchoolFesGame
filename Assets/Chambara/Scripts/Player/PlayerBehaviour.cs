@@ -15,6 +15,13 @@ namespace Chambara
         [SerializeField] float parriedStun    = 0.8f;   // ガードされたときの怯み
         [SerializeField] float clashStun      = 0.5f;   // 相殺したときの怯み
 
+        [Header("突き（前へ出る距離・届く距離は ChambaraRule で設定）")]
+        [SerializeField] float thrustStartup     = 0.15f;  // 突いてから判定まで（この間に前へ出る）
+        [SerializeField] float thrustRecovery    = 0.4f;   // 判定後の硬直
+        [SerializeField] float thrustGuardedStun = 1.2f;   // 突きをガードされたときの操作不能時間
+        [SerializeField] float thrustHitStun     = 1.0f;   // 突きを受けたときの操作不能時間（のけぞる）
+        [SerializeField] float thrustPushTime    = 0.2f;   // 突きが当たった後、受けた側が下がる・当てた側が詰め寄るのにかかる時間
+
         [Header("移動（1歩の距離は ChambaraRule で設定）")]
         [SerializeField] float stepTime   = 0.25f;  // 1歩にかかる時間（秒）。この間は他の行動を受け付けない
         [SerializeField] float jumpHeight = 0.3f;   // 1歩で跳ぶ高さ
@@ -35,13 +42,16 @@ namespace Chambara
         public Fighter Data { get; private set; }
         public float AttackTime { get; private set; }   // 振った時刻
         public float AttackStartup => attackStartup;
+        public float ThrustStartup => thrustStartup;
+        public bool IsAttacking => Data.state == PlayerState.Attack || Data.state == PlayerState.Thrust;   // 斬り・突きの最中
         public bool Resolved;                            // この攻撃の判定が済んだか
         public bool Lost { get; private set; }           // 負けた（試合終了後も黒く表示する）
         public bool Won { get; private set; }            // 勝った
-        public float AttackImpactTime => SwingTime(attackImpact);   // 攻撃の効果が出る時刻
-        public float ClashImpactTime  => SwingTime(clashImpact);    // 相殺の効果が出る時刻
-        public bool IsHitTiming => Data.state == PlayerState.Attack && !Resolved && Time.time >= AttackImpactTime;
-        public bool IsStepping { get; private set; }     // 1歩の移動中
+        public float AttackImpactTime => Data.state == PlayerState.Thrust ? ThrustImpactTime : SwingTime(attackImpact);   // 攻撃の効果が出る時刻
+        public float ClashImpactTime  => Data.state == PlayerState.Thrust ? ThrustImpactTime : SwingTime(clashImpact);    // 相殺の効果が出る時刻
+        float ThrustImpactTime => AttackTime + thrustStartup;   // 突きは前へ出終わった瞬間に効果が出る
+        public bool IsHitTiming => IsAttacking && !Resolved && Time.time >= AttackImpactTime;
+        public bool IsStepping { get; private set; }     // 移動中（1歩・突きで前へ出る・突きで押される・詰め寄る）
         public float StepJump { get; private set; }      // 1歩で跳んでいる高さ（BodyRigが体だけを持ち上げる。カメラが揺れないようtransformは動かさない）
 
         BodyRig bodyRig;
@@ -61,7 +71,7 @@ namespace Chambara
         float lean;
         ChambaraSimulator sim;
         int playerIndex;
-        float stepStart, stepFrom;
+        float stepStart, stepFrom, stepDuration, stepHeight;
         bool prevFront, prevBack;   // 押し直し判定用（前回読んだときに押されていたか）
 
         static readonly int[] guardDirections = new int[4] { 0, 2, 4, 6 };   // 上右下左の4方向
@@ -112,7 +122,7 @@ namespace Chambara
         // 入力を読んで状態を更新する
         public void UpdateState(float deltaTime)
         {
-            if (Data.state == PlayerState.Attack || Data.state == PlayerState.Stun)
+            if (IsAttacking || Data.state == PlayerState.Stun)
             {
                 if (Time.time < stateEnd) return;
                 SetState(PlayerState.Idle, -1);
@@ -134,12 +144,22 @@ namespace Chambara
                 return;
             }
 
+            if (in_.thrust)
+            {
+                SetState(PlayerState.Thrust, -1);
+                AttackTime = Time.time;
+                stateEnd = AttackTime + thrustStartup + thrustRecovery;
+                Resolved = false;
+                pose = -1;
+                sim.ThrustAdvance(playerIndex);
+                MoveToTarget(thrustStartup, 0f);   // 判定の瞬間にちょうど前へ出終わる
+                return;
+            }
+
             // 前後同時押しはどちらにも進まない
             if (frontPressed != backPressed && sim.TryStep(playerIndex, frontPressed))
             {
-                IsStepping = true;
-                stepStart = Time.time;
-                stepFrom = Data.position;
+                MoveToTarget(stepTime, jumpHeight);
                 pose = -1;
                 poseHold = 0f;   // 歩くと構えの溜めはやり直し
                 SetState(PlayerState.Idle, -1);
@@ -162,10 +182,36 @@ namespace Chambara
             SetState(PlayerState.Idle, -1);
         }
 
-        public void Stun(bool clash)
+        public void Stun(bool clash) => Stun(clash ? clashStun : parriedStun);
+
+        // 一定時間操作不能にする
+        public void Stun(float duration)
         {
             SetState(PlayerState.Stun, -1);
-            stateEnd = Time.time + (clash ? clashStun : parriedStun);
+            stateEnd = Time.time + duration;
+        }
+
+        // 突きをガードされた
+        public void ThrustGuarded() => Stun(thrustGuardedStun);
+
+        // 突きを受けた：のけぞって操作不能になり、行き先（sim が決めた targetPosition）まで押し下げられる
+        public void ThrustHitTaken()
+        {
+            Stun(thrustHitStun);
+            MoveToTarget(thrustPushTime, 0f);
+        }
+
+        // 突きを当てた：相手の目の前（sim が決めた targetPosition）まで詰め寄る
+        public void ThrustClose() => MoveToTarget(thrustPushTime, 0f);
+
+        // 今の位置から Data.targetPosition まで duration 秒かけて動く（height: 途中で跳ねる高さ）
+        void MoveToTarget(float duration, float height)
+        {
+            IsStepping = true;
+            stepStart = Time.time;
+            stepFrom = Data.position;
+            stepDuration = duration;
+            stepHeight = height;
         }
 
         public void Lose() => Lost = true;
@@ -193,20 +239,20 @@ namespace Chambara
 
         void SetState(PlayerState state, int dir)
         {
-            if (state == PlayerState.Attack || state == PlayerState.Stun) poseHold = 0f;   // 振る・怯むと構えの溜めはやり直し
+            if (state == PlayerState.Attack || state == PlayerState.Thrust || state == PlayerState.Stun) poseHold = 0f;   // 振る・突く・怯むと構えの溜めはやり直し
             Data.state = state;
             Data.dir = dir;
             OnStateChanged?.Invoke(state, dir);
         }
 
-        // 1歩の移動を進め、跳ねている高さを返す
+        // 移動を進め、跳ねている高さを返す
         float UpdateStep()
         {
             if (!IsStepping) return 0f;
-            float t = stepTime > 0f ? Mathf.Clamp01((Time.time - stepStart) / stepTime) : 1f;
+            float t = stepDuration > 0f ? Mathf.Clamp01((Time.time - stepStart) / stepDuration) : 1f;
             Data.position = Mathf.Lerp(stepFrom, Data.targetPosition, t);
             if (t >= 1f) IsStepping = false;
-            return jumpHeight * 4f * t * (1f - t);   // 放物線で跳ぶ
+            return stepHeight * 4f * t * (1f - t);   // 放物線で跳ぶ
         }
 
         public void Render()
@@ -221,12 +267,13 @@ namespace Chambara
             transform.position = Vector3.Lerp(edgePos, opponentEdgePos, Data.position)
                                - baseRotation * Vector3.forward * (leanBack * lean);
 
-            // 仮表示：負け=黒 怯み=黄 攻撃=赤 ガード=青 通常=白
+            // 仮表示：負け=黒 怯み=黄 攻撃=赤 突き=マゼンタ ガード=青 通常=白
             if (rend == null) return;
             rend.material.color = Lost ? Color.black : Data.state switch
             {
                 PlayerState.Stun   => Color.yellow,
                 PlayerState.Attack => Color.red,
+                PlayerState.Thrust => Color.magenta,
                 PlayerState.Guard  => Color.blue,
                 _                  => Color.white,
             };

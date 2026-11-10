@@ -31,7 +31,8 @@ namespace Chambara
         public event Action<GameState> OnGameStateChanged;
         public event Action OnTieClash;        // 相打ちで剣がぶつかった瞬間
         public event Action<int> OnGuarded;    // ガードされた瞬間（引数は攻撃した側）
-        public event Action<int> OnHit;        // 攻撃が当たった瞬間（引数は攻撃した側）
+        public event Action<int> OnHit;        // 攻撃が当たった瞬間（引数は攻撃した側）。1本取ったときだけ
+        public event Action<int> OnThrustHit;  // 突きが当たって相手がのけぞった瞬間（引数は攻撃した側）。1本にならないとき
         public event Action<PlayerBehaviour> OnKnockback;   // 斬られた方が吹っ飛び始めた瞬間（ヒットストップの後）
 
         [Header("Slow Motion Settings")]
@@ -171,13 +172,14 @@ namespace Chambara
             OnGameStateChanged?.Invoke(gameState);
         }
 
-        // 2人とも振っていて、まだ判定が済んでいない場合
+        // 2人とも攻撃（斬り・突き）していて、まだ判定が済んでいない場合
         void CheckClash()
         {
             PlayerBehaviour p0 = players[0], p1 = players[1];
-            if (p0.Data.state != PlayerState.Attack || p1.Data.state != PlayerState.Attack || p0.Resolved || p1.Resolved) return;
+            if (!p0.IsAttacking || !p1.IsAttacking || p0.Resolved || p1.Resolved) return;
 
-            ClashResult result = sim.Clash(p0.AttackTime, p1.AttackTime);
+            float range = Mathf.Max(sim.Reach(p0.Data.state), sim.Reach(p1.Data.state));
+            ClashResult result = sim.Clash(p0.AttackTime, p1.AttackTime, range);
             if (result == ClashResult.None) return;
 
             p0.Resolved = p1.Resolved = true;   // 結果は剣がぶつかった瞬間に出すので、通常の判定はさせない
@@ -198,8 +200,14 @@ namespace Chambara
             }
             int winner = result == ClashResult.Player0 ? 0 : 1;
             impactTime = players[winner].AttackImpactTime;   // 勝った方の剣が届いた瞬間に決着
+            bool thrust = players[winner].Data.state == PlayerState.Thrust;
             StartCoroutine(SlowMotion(impactTime, () =>
             {
+                if (thrust)
+                {
+                    ThrustHit(winner, both + $"ほぼ同時 {winner + 1}P:");   // 突きが勝ったときは突きのヒットと同じ
+                    return;
+                }
                 Finish(both + $"ほぼ同時 {winner + 1}P:勝ち", 1 - winner);
                 Hit(winner);
             }));
@@ -286,6 +294,11 @@ namespace Chambara
             p.Resolved = true;
 
             string log = $"{AttackLog(atk)}=>";
+            if (p.Data.state == PlayerState.Thrust)
+            {
+                CheckThrust(atk, log);
+                return;
+            }
             switch (sim.Attack(atk, p.Data.dir))
             {
                 case AttackResult.Whiff:
@@ -301,6 +314,40 @@ namespace Chambara
                     Hit(atk);
                     break;
             }
+        }
+
+        void CheckThrust(int atk, string log)
+        {
+            switch (sim.Thrust(atk))
+            {
+                case AttackResult.Whiff:
+                    Debug.Log(log + "空振り");
+                    break;
+                case AttackResult.Guarded:
+                    Debug.Log(log + $"{2 - atk}P:ガード");
+                    OnGuarded?.Invoke(atk);
+                    players[atk].ThrustGuarded();
+                    break;
+                case AttackResult.Hit:
+                    ThrustHit(atk, log + $"{2 - atk}P:");
+                    break;
+            }
+        }
+
+        // 突きが当たった：受けた側をのけぞらせて1歩分下げ、当てた側を詰め寄らせる
+        // 受けた側が一番後ろにいたら吹っ飛ばして1本
+        void ThrustHit(int atk, string log)
+        {
+            if (sim.ThrustPush(atk))
+            {
+                Finish(log + "突きで吹っ飛び", 1 - atk);
+                Hit(atk);
+                return;
+            }
+            Debug.Log(log + "突きヒット");
+            players[1 - atk].ThrustHitTaken();
+            players[atk].ThrustClose();
+            OnThrustHit?.Invoke(atk);
         }
 
         // 攻撃が当たった瞬間の演出。ヒットストップが終わってから斬られた方を吹っ飛ばす
@@ -343,6 +390,7 @@ namespace Chambara
         static readonly int[] Numpad = { 8, 9, 6, 3, 2, 1, 4, 7 };
         string AttackLog(int player)
         {
+            if (players[player].Data.state == PlayerState.Thrust) return $"{player + 1}P:突き";
             int dir = players[player].Data.dir;
             return $"{player + 1}P:{(rule.directions == 8 ? Numpad[dir] : dir)}攻撃";
         }

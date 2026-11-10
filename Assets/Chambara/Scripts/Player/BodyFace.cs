@@ -76,6 +76,7 @@ namespace Chambara
             {
                 PlayerState.Stun   => Face.Troubled,
                 PlayerState.Attack => Face.Angry,
+                PlayerState.Thrust => Face.Angry,
                 PlayerState.Guard  => Face.Serious,
                 _                  => Face.Normal,
             };

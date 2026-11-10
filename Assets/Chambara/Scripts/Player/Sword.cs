@@ -27,6 +27,11 @@ namespace Chambara
         [SerializeField] float straightTilt = 10f;   // 縦・横に振るときだけ斜めにずらす角度（時計回り）
         [SerializeField, Range(0f, 0.9f)] float windupRatio = 0.3f;   // 判定までの時間のうち振りかぶりに使う割合
 
+        [Header("突き（刃先を正面に向けて握りを前へ出す）")]
+        [SerializeField] float thrustPull  = 0.15f;   // 突く前に引く距離
+        [SerializeField] float thrustReach = 0.35f;   // 突き切ったときに前へ出す距離
+        [SerializeField, Range(0f, 0.9f)] float thrustPullRatio = 0.4f;   // 判定までの時間のうち引くのに使う割合
+
         [Header("ガード（刃を構える方向に対して垂直に寝かせる）")]
         [SerializeField] Vector2 guardOffset = new Vector2(-0.2f, 0.3f);   // x:横 y:構える方向 にずらす
         [SerializeField] float guardTilt = 20f;                             // 刃先を前に傾ける角度
@@ -120,6 +125,20 @@ namespace Chambara
                         if (s >= 1f) SetSwinging(false);
                     }
                 }
+            }
+            else if (player.Data.state == PlayerState.Thrust && !player.Lost)
+            {
+                // 少し引いてから、判定のタイミングでちょうど突き切る。判定後は突き切った位置で止める
+                SetSwinging(false);
+                float t = player.ThrustStartup > 0f ? (Time.time - player.AttackTime) / player.ThrustStartup : 1f;
+                float k = Mathf.Clamp01((t - thrustPullRatio) / (1f - thrustPullRatio));
+                float reach = t < thrustPullRatio
+                    ? -thrustPull * Mathf.SmoothStep(0f, 1f, t / thrustPullRatio)
+                    : Mathf.Lerp(-thrustPull, thrustReach, k * k);   // 加速しながら突く
+                Quaternion r = Blade(directions / 2, 90f);   // 刃先が正面
+                float turn = 1f - Mathf.Exp(-returnSpeed * 2f * Time.deltaTime);
+                pos = Vector3.Lerp(pos, gripPosition + Vector3.forward * reach, t < thrustPullRatio ? turn : 1f);
+                rot = Quaternion.Slerp(rot, r, t < thrustPullRatio ? turn : 1f);
             }
             else
             {

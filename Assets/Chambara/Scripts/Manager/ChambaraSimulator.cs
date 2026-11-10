@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Chambara
 {
-    public enum PlayerState { Idle, Attack, Guard, Stun }
+    public enum PlayerState { Idle, Attack, Guard, Stun, Thrust }   // Thrust: 突き（Attackと同じく判定待ち→硬直）
     public enum AttackResult { Whiff, Guarded, Hit }        // 空振り / ガードされた / ヒット
     public enum ClashResult { None, Player0, Player1, Tie } // 同時判定なし / 1P勝ち / 2P勝ち / 相殺
 
@@ -27,6 +27,8 @@ namespace Chambara
 
         // 2人の間の距離（両端=1）
         public float Distance => 1f - players[0].position - players[1].position;
+        // 2人が今の移動を終えたときの距離
+        public float TargetDistance => 1f - players[0].targetPosition - players[1].targetPosition;
 
         // 攻撃が成功したかどうか
         public AttackResult Attack(int atk, int dir)
@@ -40,11 +42,42 @@ namespace Chambara
             return AttackResult.Hit;
         }
 
-        // 2人がほぼ同時に攻撃したときの判定（引数は攻撃した時刻・秒）
-        public ClashResult Clash(float time0, float time1)
+        // 突きが成功したかどうか（前へ出終わった後に呼ぶ）。ガードは方向を問わず防げる
+        public AttackResult Thrust(int atk)
+        {
+            if (Distance > r.thrustRange) return AttackResult.Whiff;
+            if (players[1 - atk].state == PlayerState.Guard) return AttackResult.Guarded;
+            return AttackResult.Hit;
+        }
+
+        // 突きで前へ出る。行き先を targetPosition に入れる（相手に stopDistance より近づかない・下がらない）
+        public void ThrustAdvance(int player)
+        {
+            Fighter me = players[player], op = players[1 - player];
+            float limit = 1f - op.targetPosition - r.stopDistance;
+            me.targetPosition = Math.Max(me.targetPosition, Math.Min(me.targetPosition + r.thrustDistance, limit));
+        }
+
+        // 突きが当たったとき：受けた側を1歩分（backStepDistance）後ろへ、当てた側を相手の至近距離（stopDistance）まで進める
+        // 受けた側がもう自分の端にいたら何も動かさず true（吹っ飛ばされる）
+        public bool ThrustPush(int atk)
+        {
+            Fighter me = players[atk], def = players[1 - atk];
+            if (def.targetPosition <= 1e-5f) return true;
+            def.targetPosition = Math.Max(0f, def.targetPosition - r.backStepDistance);
+            me.targetPosition = Math.Max(me.targetPosition, 1f - def.targetPosition - r.stopDistance);
+            return false;
+        }
+
+        // 攻撃（斬り・突き）が届く距離
+        public float Reach(PlayerState state) => state == PlayerState.Thrust ? r.thrustRange : r.attackRange;
+
+        // 2人がほぼ同時に攻撃したときの判定（引数は攻撃した時刻・秒、届く距離）
+        // 突きは前へ出ながら判定するので、移動を終えたときの距離で比べる
+        public ClashResult Clash(float time0, float time1, float range)
         {
             float diff = Math.Abs(time0 - time1);
-            if (Distance > r.attackRange || diff > r.closeCallTime) return ClashResult.None;
+            if (TargetDistance > range || diff > r.closeCallTime) return ClashResult.None;
             if (diff <= r.tieTime) return ClashResult.Tie;
             return time0 < time1 ? ClashResult.Player0 : ClashResult.Player1;
         }

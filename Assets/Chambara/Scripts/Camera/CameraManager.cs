@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace Chambara
 {
@@ -42,6 +43,19 @@ namespace Chambara
 
 
         GameState currentState = GameState.None;
+
+        [SerializeField] private UnityEvent onCameraDivision;
+        [SerializeField] private UnityEvent onCameraMerge;
+        bool isDivided = false;   // 開始時はメインカメラ1画面
+
+        //画面の分割状態を切り替える。状態が変わったときだけイベントを呼ぶ
+        private void SetDivided(bool divided)
+        {
+            if (isDivided == divided) return;
+            isDivided = divided;
+            if (divided) onCameraDivision?.Invoke();
+            else onCameraMerge?.Invoke();
+        }
 
         private void Awake()
         {
@@ -131,6 +145,7 @@ namespace Chambara
                 clashCamera.SetTarget(null);
                 clashCamera.gameObject.SetActive(false);
             }
+            SetDivided(true);
         }
 
         private void ChangeSlowMode()
@@ -138,6 +153,7 @@ namespace Chambara
             slowCamera.gameObject.SetActive(true);
             playerCamera.gameObject.SetActive(false);
             playerCamera2.gameObject.SetActive(false);
+            SetDivided(false);
             if (slowCameraRoutine != null) StopCoroutine(slowCameraRoutine);
             slowCameraRoutine = StartCoroutine(ChangeCameraBack());
         }
@@ -170,6 +186,7 @@ namespace Chambara
             playerCamera.gameObject.SetActive(false);
             playerCamera2.gameObject.SetActive(false);
             clashCamera.gameObject.SetActive(true);
+            SetDivided(false);
             clashCamera.Play(live);   // 今のカメラで一度見せたので、最初のカットからやり直す
             clashRoutine = null;
         }
