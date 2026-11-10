@@ -1,0 +1,98 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 373e99830cfadfb4f9a9e5fe0cfeb381, type: 3}
+  m_Name: AudioLibrary
+  m_EditorClassIdentifier: Assembly-CSharp::Pirates.AudioLibrary
+  cannonFire:
+    clips: []
+    volume: 1
+    pitchRange: {x: 0.95, y: 1.05}
+    loop: 0
+    spatialBlend: 0.5
+    minInterval: 0.03
+  cannonExplosion:
+    clips: []
+    volume: 1
+    pitchRange: {x: 0.95, y: 1.05}
+    loop: 0
+    spatialBlend: 0.5
+    minInterval: 0.03
+  sunk:
+    clips: []
+    volume: 1
+    pitchRange: {x: 0.95, y: 1.05}
+    loop: 0
+    spatialBlend: 0.5
+    minInterval: 0.03
+  treasurePickup:
+    clips: []
+    volume: 1
+    pitchRange: {x: 0.95, y: 1.05}
+    loop: 0
+    spatialBlend: 0
+    minInterval: 0.03
+  beam:
+    clips: []
+    volume: 1
+    pitchRange: {x: 0.95, y: 1.05}
+    loop: 0
+    spatialBlend: 0
+    minInterval: 0.03
+  barrier:
+    clips: []
+    volume: 1
+    pitchRange: {x: 0.95, y: 1.05}
+    loop: 0
+    spatialBlend: 0
+    minInterval: 0.03
+  gameOver:
+    clips: []
+    volume: 1
+    pitchRange: {x: 0.95, y: 1.05}
+    loop: 0
+    spatialBlend: 0
+    minInterval: 0.03
+  timeUp:
+    clips: []
+    volume: 1
+    pitchRange: {x: 0.95, y: 1.05}
+    loop: 0
+    spatialBlend: 0
+    minInterval: 0.03
+  resultCountUp:
+    clips: []
+    volume: 1
+    pitchRange: {x: 0.95, y: 1.05}
+    loop: 0
+    spatialBlend: 0
+    minInterval: 0.03
+  resultFinal:
+    clips: []
+    volume: 1
+    pitchRange: {x: 0.95, y: 1.05}
+    loop: 0
+    spatialBlend: 0
+    minInterval: 0.03
+  rankS:
+    clips: []
+    volume: 1
+    pitchRange: {x: 0.95, y: 1.05}
+    loop: 0
+    spatialBlend: 0
+    minInterval: 0.03
+  rankOther:
+    clips: []
+    volume: 1
+    pitchRange: {x: 0.95, y: 1.05}
+    loop: 0
+    spatialBlend: 0
+    minInterval: 0.03

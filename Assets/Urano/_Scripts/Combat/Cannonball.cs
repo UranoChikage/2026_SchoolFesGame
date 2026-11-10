@@ -133,6 +133,7 @@ namespace Pirates
             VfxAsset vfx = HitSurface.ResolveCannonVfx(surface);
             if (vfx != null) vfx.Play(point, explosionRadius * 2f);
             DrawExplosionRange(point);
+            AudioManager.Play(Sfx.CannonExplosion, point);
 
             // 範囲内のIDamageableに1回ずつダメージ（コライダーが複数あっても重複させない）
             damaged.Clear();

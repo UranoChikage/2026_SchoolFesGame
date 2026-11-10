@@ -47,6 +47,7 @@ namespace Pirates
             current = 0f;
             HealthChanged?.Invoke(current, maxHealth);
             Debug.Log($"[Sunk] {name} が自爆", this);
+            AudioManager.Play(Sfx.Sunk, transform.position);
             Died?.Invoke();
         }
 
@@ -66,6 +67,7 @@ namespace Pirates
             if (IsDead)
             {
                 Debug.Log($"[Sunk] {name} が沈没", this);
+                AudioManager.Play(Sfx.Sunk, transform.position);
                 Died?.Invoke();
             }
         }

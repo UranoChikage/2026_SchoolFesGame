@@ -148,6 +148,7 @@ namespace Pirates
             Cannonball ball = PoolManager.Spawn(projectilePrefab != null ? projectilePrefab : FallbackPrefab, origin, Quaternion.identity);
             BoatBuoyancy surface = water != null ? water : PlayerTarget.Current?.Water; // 未設定ならプレイヤー船の水面
             ball.Launch(velocity, explosionRadius, damage, hitMask, surface, owner, 15f, this);
+            AudioManager.Play(Sfx.CannonFire, origin);
 
             nextFireTime = Time.time + cooldown;
             return true;

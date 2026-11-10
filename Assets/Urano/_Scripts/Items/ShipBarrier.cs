@@ -32,6 +32,7 @@ namespace Pirates
 
             endTime = Time.time + item.Duration; // 重ねても延びず、最初に戻るだけ
             health.Invulnerable = true;
+            AudioManager.Play(Sfx.Barrier);
             ShowVisual(item);
         }
 

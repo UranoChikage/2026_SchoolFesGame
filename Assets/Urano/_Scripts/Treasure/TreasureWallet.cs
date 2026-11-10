@@ -85,6 +85,7 @@ namespace Pirates
             int before = Stars;
             Total += treasure.Value;
             Debug.Log($"[Treasure] {treasure.DisplayName} +{treasure.Value} (合計 {Total} / ランク {Rank})", this);
+            AudioManager.Play(Sfx.TreasurePickup);
             Added?.Invoke(treasure, Total);
             if (Stars != before) StarsChanged?.Invoke(Stars);
         }

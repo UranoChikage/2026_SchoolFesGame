@@ -20,6 +20,7 @@ namespace Pirates
         ItemAsset beam;
         float beamEnd;
         bool cameraEffectOn;
+        SoundHandle beamSound; // ビーム使用中に鳴らす音（終わったら止める）
 
         // ビームの見た目（ItemAsset のPrefabがあればそれ、無ければ仮の見た目）
         ItemAsset visualFor;
@@ -97,6 +98,8 @@ namespace Pirates
                 tailDist = 0f;
                 beamExtended = false;
                 muzzleVfxPlayed = false;
+                beamSound.Stop();
+                beamSound = AudioManager.Play(Sfx.Beam);
                 StartCameraEffect();
             }
             return true;
@@ -105,6 +108,7 @@ namespace Pirates
         /// <summary>毎フレーム、カーソルが指す位置を渡す。ビームが伸びきった後、その位置の船を沈める</summary>
         public void Tick(Vector3 aimPoint, bool hasAim)
         {
+            if (!IsBeamActive) beamSound.Stop();
             if (cameraEffectOn && !IsBeamActive) StopCameraEffect();
             if (beam == null) return;
 
@@ -271,6 +275,7 @@ namespace Pirates
 
         void OnDisable()
         {
+            beamSound.Stop();
             HideVisuals();
             if (cameraEffectOn) StopCameraEffect();
         }
