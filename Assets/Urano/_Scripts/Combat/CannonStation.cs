@@ -33,25 +33,36 @@ namespace Pirates
         [Header("JoyCon（ジャイロでカーソルを動かす）")]
         [SerializeField]
         [Tooltip("1度の回転あたりのカーソル移動量(px)の初期値。砲手全員で共有（最初に起動した砲の値が使われる）。Title の Select の感度とは別")]
-        float sensitivity = 15f;
+        float sensitivity = 12000f;
         [SerializeField]
         [Tooltip("スティック左右で調整できる下限")]
-        float sensitivityMin = 2f;
+        float sensitivityMin = 12000f;
         [SerializeField]
         [Tooltip("スティック左右で調整できる上限")]
-        float sensitivityMax = 60f;
+        float sensitivityMax = 16000f;
         [SerializeField]
         [Tooltip("スティックを倒しきったときの1秒あたりの変化量")]
-        float sensitivityStep = 20f;
+        float sensitivityStep = 500f;
         [SerializeField]
         [Tooltip("スティックのこれ以下の傾きは無視する")]
         float stickDeadZone = 0.3f;
         [SerializeField]
         [Tooltip("ローカル操作を許容する角度の広さ。1.41で±45度、2で±60度")]
-        float yawRelaxFactor = 2f;
+        float yawRelaxFactor = 1f;
         [SerializeField]
         [Tooltip("重力推定の追従速度。小さいほど安定するが遅れる")]
         float gravityBlend = 0.02f;
+
+        [Header("感度調整のリアクション")]
+        [SerializeField]
+        [Tooltip("感度1変化あたりのカーソルのスケール変化量")]
+        float scaleReaction = 0.02f;
+        [SerializeField]
+        [Tooltip("スケールが元に戻る速さ(秒)")]
+        float scaleRecovery = 0.12f;
+        [SerializeField]
+        [Tooltip("スケールの変化幅の上限")]
+        float scaleLimit = 0.35f;
 
         [Header("カーソル表示")]
         [SerializeField]
@@ -71,11 +82,19 @@ namespace Pirates
         /// <summary>砲手全員で共有するジャイロ感度(px/度)。Titleの感度とは別</summary>
         public static float SharedSensitivity => sharedSensitivity;
 
+        // 感度を変えたときのカーソルの拡大縮小（全員共有。1フレームに1回だけ戻す）
+        static float reactionOffset;
+        static float reactionVelocity;
+        static int reactionFrame = -1;
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetStatic()
         {
             activeStationNumber = 1;
             sharedSensitivity = -1f;
+            reactionOffset = 0f;
+            reactionVelocity = 0f;
+            reactionFrame = -1;
         }
 
         CannonShooter shooter;
@@ -111,6 +130,7 @@ namespace Pirates
         void Update()
         {
             SelectByNumberKey();
+            RecoverReaction();
 
             bool joycon = !forceMouse && GameInput.IsJoyconConnected(joyconIndex);
             bool fire;
@@ -192,9 +212,22 @@ namespace Pirates
             if (Mathf.Abs(x) < stickDeadZone) return;
 
             float amount = (Mathf.Abs(x) - stickDeadZone) / (1f - stickDeadZone);
+            float before = sharedSensitivity;
             sharedSensitivity = Mathf.Clamp(
                 sharedSensitivity + Mathf.Sign(x) * amount * sensitivityStep * Time.deltaTime,
                 sensitivityMin, sensitivityMax);
+
+            // 変化量ぶんカーソルを押し上げて手応えにする。上下限に張り付くと変化量は0になり、拡大は止まる
+            float delta = sharedSensitivity - before;
+            if (delta != 0f)
+                reactionOffset = Mathf.Clamp(reactionOffset + delta * scaleReaction, -scaleLimit, scaleLimit);
+        }
+
+        void RecoverReaction()
+        {
+            if (reactionFrame == Time.frameCount) return;
+            reactionFrame = Time.frameCount;
+            reactionOffset = Mathf.SmoothDamp(reactionOffset, 0f, ref reactionVelocity, scaleRecovery);
         }
 
         bool UpdateMouse()
@@ -239,7 +272,7 @@ namespace Pirates
             ItemAsset item = items != null ? items.CursorItem : null;
             float baseSize = item != null && item.CursorSize > 0f ? item.CursorSize : cursorSize;
             Sprite sprite = item != null ? item.CursorSprite : null;
-            float size = baseSize * (shooter.IsReady ? 1f : 0.6f);
+            float size = baseSize * (shooter.IsReady ? 1f : 0.6f) * (1f + reactionOffset);
             float x = cursor.x;
             float y = Screen.height - cursor.y; // GUIは上原点
 
