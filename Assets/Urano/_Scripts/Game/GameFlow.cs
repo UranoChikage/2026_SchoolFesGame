@@ -85,6 +85,7 @@ namespace Pirates
         CannonStation[] stations;
         float phaseEndTime;
         PlayableDirector outro; // 今回の終了演出（理由で切り替わる）
+        bool startRequested; // 開始要求済み（ロード画面が開き終わるのを待っている場合を含む）
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetStatic() => Current = null;
@@ -118,13 +119,26 @@ namespace Pirates
             Remaining = timeLimit;
             SetPlaying(false);
             TimeChanged?.Invoke(Remaining, timeLimit);
-            if (autoStart) StartGame();
+
+            // Play On Awake のままのTimelineがロード画面の裏で先に動かないよう、開始前に止めておく
+            StopIfPlaying(introDirector);
+            StopIfPlaying(outroDirector);
+            StopIfPlaying(sunkOutroDirector);
+
+            startRequested = autoStart;
         }
 
-        /// <summary>待機中の開始操作（UIボタンなどから呼ぶ）</summary>
+        static void StopIfPlaying(PlayableDirector director)
+        {
+            if (director != null && director.state == PlayState.Playing) director.Stop();
+        }
+
+        /// <summary>待機中の開始操作（UIボタンなどから呼ぶ）。ロード画面が開ききるまでは、開いてから始める</summary>
         public void StartGame()
         {
             if (Phase != GamePhase.Standby) return;
+            if (SceneTransition.IsOpening) { startRequested = true; return; }
+            startRequested = false;
             Phase = GamePhase.Intro;
             IntroStarted?.Invoke();
             onIntroStarted?.Invoke();
@@ -136,7 +150,12 @@ namespace Pirates
             switch (Phase)
             {
                 case GamePhase.Standby:
-                    if (GameInput.StartPressed()) StartGame();
+                    if (SceneTransition.IsOpening)
+                    {
+                        if (GameInput.StartPressed()) startRequested = true; // 開き終わったら始める
+                        break;
+                    }
+                    if (startRequested || GameInput.StartPressed()) StartGame();
                     break;
 
                 case GamePhase.Intro:
