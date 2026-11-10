@@ -182,6 +182,7 @@ namespace Pirates
                 wallet != null ? wallet.Rank : TreasureRank.B, Remaining, wallet != null ? wallet.Stars : 0,
                 wallet != null ? wallet.ThresholdA : 3000, wallet != null ? wallet.ThresholdS : 6000));
 
+            AudioManager.Play(reason == EndReason.TimeUp ? Sfx.TimeUp : Sfx.GameOver);
             GameEnded?.Invoke(Survived);
             onGameEnded?.Invoke();
             if (reason == EndReason.TimeUp) onTimeUp?.Invoke(); else onSunk?.Invoke();
@@ -197,7 +198,7 @@ namespace Pirates
             onResult?.Invoke();
 
             string scene = Reason == EndReason.TimeUp ? sceneAfterTimeUp : sceneAfterSunk;
-            if (!string.IsNullOrEmpty(scene)) SceneManager.LoadScene(scene);
+            SceneTransition.Load(scene);
         }
 
         // 導入・終了の待ち：Timelineがあれば再生して終了待ち、無ければ秒数待ち

@@ -317,7 +317,7 @@ namespace Title
             }
 
             decided = true;
-            SceneManager.LoadScene(scene);
+            Pirates.SceneTransition.Load(scene);
         }
         /// <summary>
         /// スティック左右で感度を調整する。全員共通の値を、誰のスティックでも動かせる。

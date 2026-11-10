@@ -91,6 +91,8 @@ namespace Pirates
                 rankImage.sprite = rank == TreasureRank.S ? rankS : rank == TreasureRank.A ? rankA : rankB;
                 rankImage.gameObject.SetActive(true);
                 onRankShown?.Invoke();
+                AudioManager.Play(Sfx.ResultFinal);
+                AudioManager.Play(rank == TreasureRank.S ? Sfx.RankS : Sfx.RankOther);
                 yield return Pop(rankImage.rectTransform, rankPop, 0.5f);
                 yield return new WaitForSecondsRealtime(gap);
             }
@@ -100,6 +102,7 @@ namespace Pirates
 
         IEnumerator CountUp(int from, int to, float time)
         {
+            SoundHandle countSound = AudioManager.Play(Sfx.ResultCountUp);
             for (float t = 0f; t < time; t += Time.unscaledDeltaTime)
             {
                 float k = 1f - Mathf.Pow(1f - t / time, 3f); // 最後に向けてゆっくり
@@ -110,6 +113,7 @@ namespace Pirates
                     bountyRoot.localScale = Vector3.Lerp(bountyRoot.localScale, Vector3.one, 14f * Time.unscaledDeltaTime);
                 yield return null;
             }
+            countSound.Stop();
             bountyNumber.SetValue(to);
             if (bountyRoot != null) bountyRoot.localScale = Vector3.one;
         }
@@ -127,7 +131,7 @@ namespace Pirates
 
         void GoTitle()
         {
-            if (!string.IsNullOrEmpty(titleScene)) SceneManager.LoadScene(titleScene);
+            if (!string.IsNullOrEmpty(titleScene)) SceneTransition.Load(titleScene);
             else Debug.LogWarning("[ResultSequence] titleScene が未設定です", this);
         }
     }

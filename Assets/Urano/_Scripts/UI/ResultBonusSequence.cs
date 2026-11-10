@@ -137,6 +137,7 @@ namespace Pirates
                 int to = (i + 1) * bonusPerStar;
                 Color target = ColorFor(i);
 
+                SoundHandle countSound = AudioManager.Play(Sfx.ResultCountUp);
                 for (float t = 0f; t < countTime; t += Time.unscaledDeltaTime)
                 {
                     int v = Mathf.RoundToInt(Mathf.Lerp(from, to, t / countTime));
@@ -145,6 +146,7 @@ namespace Pirates
                     row.localScale = Vector3.Lerp(row.localScale, Vector3.one, tickReturnSpeed * Time.unscaledDeltaTime);
                     yield return null;
                 }
+                countSound.Stop();
                 number.SetValue(to);
                 ApplyColor(target);
                 onStarCounted?.Invoke();
