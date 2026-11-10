@@ -76,12 +76,19 @@ namespace Pirates
             Set(gameOverImage, false);
         }
 
+        // 表示する時は必ず消してから出し直す。アニメが終わってもGameObjectが有効なまま残るので、
+        // そのままだと2回目以降はSetActive(true)しても何も起きず、アニメが頭から再生されない
         static void Set(GameObject go, bool active)
         {
-            if (go != null && go.activeSelf != active)
+            if (go == null) return;
+            if (active)
             {
-                go.SetActive(!false);
-                go.SetActive(active);
+                go.SetActive(false);
+                go.SetActive(true);
+            }
+            else if (go.activeSelf)
+            {
+                go.SetActive(false);
             }
         }
     }

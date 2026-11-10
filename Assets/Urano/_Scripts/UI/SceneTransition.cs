@@ -65,6 +65,10 @@ namespace Pirates
             else SceneManager.LoadScene(sceneName);
         }
 
+        // シーン読み込み直後は1フレームが非常に長く、そのまま進めるとアニメが一瞬で終わってしまう。1フレームで進める量に上限を付ける
+        const float MaxStep = 1f / 30f;
+        static float Step => Mathf.Min(Time.unscaledDeltaTime, MaxStep);
+
         bool CanPlay => animator != null && openClip != null;
 
         void Awake()
@@ -102,12 +106,12 @@ namespace Pirates
 
         IEnumerator OpenRoutine()
         {
-            for (float t = 0f; t < openDelay; t += Time.unscaledDeltaTime) yield return null;
+            for (float t = 0f; t < openDelay; t += Step) yield return null;
 
             float length = openClip.length;
             while (time < length)
             {
-                SetTime(time + Time.unscaledDeltaTime);
+                SetTime(time + Step);
                 if (opening && time >= length * releaseRatio) opening = false; // ここからTimelineを始めてよい
                 yield return null;
             }
@@ -144,7 +148,7 @@ namespace Pirates
 
                 while (time > 0f)
                 {
-                    SetTime(time - Time.unscaledDeltaTime);
+                    SetTime(time - Step);
                     yield return null;
                 }
                 SetTime(0f);
