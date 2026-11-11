@@ -12,20 +12,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 22fb4d1919e744ca8f285815053f5c9f, type: 3}
   m_Name: FallingRectBG_Warm
   m_EditorClassIdentifier: Assembly-CSharp::Chambara.FallingRectBackgroundSettings
-  count: 60
-  speedMultiplier: 1
+  count: 39
+  speedMultiplier: 11.6
   deformAmount: 1
   widthRange: {x: 6, y: 70}
-  heightRange: {x: 30, y: 170}
-  speedRange: {x: 40, y: 160}
+  heightRange: {x: 74, y: 216.2}
+  speedRange: {x: 50.4, y: 160}
   alphaRange: {x: 0.15, y: 0.7}
-  spawnAboveMargin: 200
-  backgroundColor: {r: 0.10196, g: 0.05882, b: 0.04706, a: 1}
+  spawnAboveMargin: 189.9
+  backgroundColor: {r: 0.7283019, g: 0.3822528, b: 0.32842293, a: 1}
   colors:
-  - {r: 0.84706, g: 0.35294, b: 0.18824, a: 1}
-  - {r: 0.93725, g: 0.62353, b: 0.15294, a: 1}
-  - {r: 0.94118, g: 0.60000, b: 0.48235, a: 1}
-  - {r: 0.98039, g: 0.78039, b: 0.45882, a: 1}
-  - {r: 0.60000, g: 0.23529, b: 0.11373, a: 1}
+  - {r: 0.78113204, g: 0.6075471, b: 0.5467924, a: 1}
+  - {r: 0.9372549, g: 0.18501957, b: 0.1529412, a: 1}
+  - {r: 0.735849, g: 0.22894265, b: 0.0541473, a: 1}
+  - {r: 0.94716984, g: 0.8488786, b: 0.85639465, a: 1}
   useUnscaledTime: 1
   maxDeltaTime: 0.05

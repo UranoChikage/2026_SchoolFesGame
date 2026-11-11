@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 816c270a9f36b0e4093c707ca26c6583, type: 3}
+  m_Name: SelectModelMotion
+  m_EditorClassIdentifier: Assembly-CSharp::Chambara.SelectModelMotionConfig
+  breathHeight: 0.05
+  breathSpeed: 3
+  jumpHeight: 0.35
+  jumpDuration: 0.35
+  jumpOnSword: 1
+  jumpSpins: 1
+  selectingFace: 0
+  readyFace: 3
