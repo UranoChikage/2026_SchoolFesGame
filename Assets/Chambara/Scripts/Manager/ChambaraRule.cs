@@ -16,6 +16,10 @@ namespace Chambara
         public float stopDistance     = 0.05f; // 1歩進むとこの距離より近くなる場合は前進できない
         public float attackRange      = 0.15f; // この距離より遠いと空振り
 
+        // 突き
+        public float thrustDistance   = 0.3f;  // 突きで前へ出る距離（相手に stopDistance より近づく分は進まない）
+        public float thrustRange      = 0.2f;  // 前へ出た後、この距離より遠いと空振り
+
         // 2人の攻撃時刻の差（秒）
         public float closeCallTime = 0.1f;     // これ以内なら「ほぼ同時」→ 速い方が勝ち
         public float tieTime       = 0.01f;    // これ以内なら「同時」→ 相殺

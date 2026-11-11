@@ -12,43 +12,18 @@ namespace Chambara
     ///          方向はその瞬間の角速度（回した向き）から8方向で決める
     ///   ガード … ガードボタン(Confirm = ZR/ZL)を押しながら、刃を正面と垂直に構える
     ///            刃が水平 → 上 / 刃先が下向き → 下 / 刃先が上向きで右に傾ける → 右 / 左に傾ける → 左
+    ///   突き … 回さずに前（相手の方）へ素早く突き出す。重力を除いた加速度がしきい値を超え、
+    ///          その向きが前方で、角速度が小さい（振っていない）ときに突いたとみなす
     ///   前進・後退 … スティック上下（上=前進 下=後退）
     ///   正面の合わせ直し … ZR/ZL の端を正面（画面）に向けて合わせ直しボタン(Cancel)。押すと剣先が正面を向く。最初に向きが取れたときは自動で合わせる
+    ///
+    /// 調整値は JoyconInputConfig（ScriptableObject）にまとめてある
     ///
     /// Joy-Conの向きが取れないとき（PCのキーボード・マウスなど）は、同じオブジェクトの DebugInputContext に任せる
     /// </summary>
     public class JoyconInputContext : MonoBehaviour, IChambaraInputContext, ISwordTracking
     {
-        public enum Axis { Right, Left, Up, Down, Forward, Back }
-
-        [Header("持ち方（Joy-Conのどの軸がどちらを向くか。Joy-Con自身の座標）")]
-        [SerializeField, Tooltip("刃が伸びる方向")] Axis bladeAxis = Axis.Forward;
-        [SerializeField, Tooltip("剣を真上に立てたとき相手の方を向く面")] Axis frontAxis = Axis.Down;
-
-        [Header("正面の合わせ直し")]
-        [SerializeField] SwitchButton recenterButton = SwitchButton.Cancel;
-        [SerializeField, Tooltip("合わせ直すときに構える剣の角度（真上=0、正面=90）")] float calibrationAngle = 90f;   // Cancel を押すと剣先が正面を向く
-
-        [Header("攻撃")]
-        [SerializeField, Tooltip("重力を除いた加速度（G）がこれを超えたら振ったとみなす")] float swingThreshold = 2f;
-        [SerializeField, Range(0.1f, 1f), Tooltip("加速度がしきい値のこの割合まで下がったら次の振りを受け付ける")] float swingRearm = 0.5f;
-        [SerializeField, Tooltip("振った方向を決めるのに必要な最低の角速度（度/秒）。これ未満なら突いただけとみなし振らない")] float swingMinAngularSpeed = 90f;
-        [SerializeField, Tooltip("重力の向きを推定し直す速さ。加速度の大きさが1G付近（ほぼ静止）のときだけ寄せる")] float gravityFollow = 5f;
-        [SerializeField, Tooltip("振った入力を覚えておく時間（秒）。硬直中に振っても後から出ないようにする")] float swingBuffer = 0.1f;
-
-        [Header("ガード")]
-        [SerializeField] SwitchButton guardButton = SwitchButton.Confirm;   // Joy-Con では ZR/ZL
-        [SerializeField, Tooltip("刃と正面のなす角が 90度±この角度 ならガードの構え")] float perpendicularTolerance = 30f;
-        [SerializeField, Tooltip("刃先の角度（真上=0）がこれ以内なら上向き、180-これ以上なら下向き。間は水平")] float verticalRange = 45f;
-        [SerializeField, Tooltip("上向きのとき、真上からこの角度以上傾けないと左右が決まらない")] float sideDeadZone = 5f;
-
-        [Header("移動")]
-        [SerializeField] bool useStick = true;
-        [SerializeField, Tooltip("スティックをこれ以上倒したら前進・後退")] float stickThreshold = 0.5f;
-        // ボタンでの移動は使わない（スティックのみ）
-        // [SerializeField] bool useButtons = true;
-        // [SerializeField] SwitchButton frontButton = SwitchButton.Up;
-        // [SerializeField] SwitchButton backButton = SwitchButton.Down;
+        [SerializeField, Tooltip("調整値（1P・2P共通）。未設定ならスクリプトの初期値を使う")] JoyconInputConfig config;
 
         const int Directions = 8;   // 攻撃方向の数（上=0から時計回り）
 
@@ -65,6 +40,8 @@ namespace Chambara
         Vector3 gravity;          // Joy-Conの姿勢の座標（SDKの基準）での重力による加速度
         int pendingSwing = -1;
         float pendingSwingTime;
+        bool pendingThrust;
+        float pendingThrustTime;
         int pose = -1;
         bool front, back;
 
@@ -74,6 +51,17 @@ namespace Chambara
         public PlayerInput LastInput { get; private set; } = PlayerInput.None;   // 最後に Read で返した入力
         public int LastSwing { get; private set; } = -1;  // 最後に振った方向（-1:まだ振っていない）
         public float LastSwingTime { get; private set; }
+        public float LastThrustTime { get; private set; } = -1f;   // 最後に突いた時刻（-1:まだ突いていない）
+        public Vector3 LinearAccel { get; private set; }           // 重力を除いた加速度（プレイヤー基準。z+が前）
+
+        private void Awake()
+        {
+            if (config == null)
+            {
+                Debug.LogWarning($"{name}: JoyconInputContext の config が未設定なので初期値を使います");
+                config = ScriptableObject.CreateInstance<JoyconInputConfig>();
+            }
+        }
 
         public void Init(int playerIndex)
         {
@@ -91,9 +79,11 @@ namespace Chambara
             if (!tracking) result = fallback != null ? fallback.Read() : PlayerInput.None;
             else
             {
-                int swing = pendingSwing >= 0 && Time.time - pendingSwingTime <= swingBuffer ? pendingSwing : -1;
+                int swing = pendingSwing >= 0 && Time.time - pendingSwingTime <= config.swingBuffer ? pendingSwing : -1;
+                bool thrust = swing < 0 && pendingThrust && Time.time - pendingThrustTime <= config.swingBuffer;
                 pendingSwing = -1;
-                result = new PlayerInput { pose = pose, swing = swing, isFront = front, isBack = back };
+                pendingThrust = false;
+                result = new PlayerInput { pose = pose, swing = swing, thrust = thrust, isFront = front, isBack = back };
             }
             LastInput = result;
             if (result.swing >= 0)
@@ -101,6 +91,7 @@ namespace Chambara
                 LastSwing = result.swing;
                 LastSwingTime = Time.time;
             }
+            if (result.thrust) LastThrustTime = Time.time;
             return result;
         }
 
@@ -123,18 +114,18 @@ namespace Chambara
             }
 
             Quaternion controller = Quaternion.LookRotation(z, y);   // x=右, y=上, z=前（SwitchInput.Angle と同じ）
-            Quaternion grip = Quaternion.LookRotation(AxisVector(frontAxis), AxisVector(bladeAxis));   // 剣の座標 → Joy-Conの座標
-            if (!calibrated || input.ButtonDown(playerIndex, recenterButton))
+            Quaternion grip = Quaternion.LookRotation(JoyconInputConfig.AxisVector(config.frontAxis), JoyconInputConfig.AxisVector(config.bladeAxis));   // 剣の座標 → Joy-Conの座標
+            if (!calibrated || input.ButtonDown(playerIndex, config.recenterButton))
             {
                 // 今の向きが calibrationAngle の構えになるようにする
-                calibration = Quaternion.Euler(calibrationAngle, 0f, 0f) * Quaternion.Inverse(grip) * Quaternion.Inverse(controller);
+                calibration = Quaternion.Euler(config.calibrationAngle, 0f, 0f) * Quaternion.Inverse(grip) * Quaternion.Inverse(controller);
                 calibrated = true;
             }
             Quaternion controllerInPlayer = calibration * controller;   // プレイヤー基準のJoy-Conの向き
             swordRotation = controllerInPlayer * grip;
 
             UpdateMove(input);
-            bool guarding = input.Button(playerIndex, guardButton);
+            bool guarding = input.Button(playerIndex, config.guardButton);
             pose = guarding ? GuardDirection(swordRotation * Vector3.up) : -1;
             UpdateSwing(input, controller, controllerInPlayer, guarding);
         }
@@ -142,11 +133,11 @@ namespace Chambara
         void UpdateMove(SwitchInput input)
         {
             front = back = false;
-            if (useStick)
+            if (config.useStick)
             {
                 float s = input.Stick(playerIndex).y;
-                front |= s >= stickThreshold;
-                back  |= s <= -stickThreshold;
+                front |= s >= config.stickThreshold;
+                back  |= s <= -config.stickThreshold;
             }
             // ボタンでの移動は使わない（スティックのみ）
             // if (useButtons)
@@ -156,18 +147,29 @@ namespace Chambara
             // }
         }
 
-        // 重力を除いた加速度がしきい値を超えた瞬間に1回だけ振る
+        // 重力を除いた加速度がしきい値を超えた瞬間に1回だけ振る（回していなければ、前へ動かしたときだけ突く）
         void UpdateSwing(SwitchInput input, Quaternion controller, Quaternion controllerInPlayer, bool guarding)
         {
-            float accel = LinearAcceleration(input, controller);
-            if (accel <= swingThreshold * swingRearm) swingArmed = true;
-            if (guarding || !swingArmed || accel < swingThreshold) return;
+            float accel = LinearAcceleration(input, controller, out Vector3 linear);
+            LinearAccel = calibration * linear;   // プレイヤー基準
+            if (accel <= Mathf.Min(config.swingThreshold, config.thrustThreshold) * config.swingRearm) swingArmed = true;
+            if (guarding || !swingArmed) return;
 
             // 方向は角速度から。正面の軸まわり（ひねり）は無視し、回転軸と垂直な向きを振った方向にする
             // 例: 右の軸まわり（振り下ろし）→ 下、上の軸まわり → 右
             Vector3 w = controllerInPlayer * input.AngularVelocity(playerIndex);   // プレイヤー基準の角速度（度/秒）
             Vector3 d = Vector3.Cross(w, Vector3.forward);
-            if (new Vector2(d.x, d.y).magnitude < swingMinAngularSpeed) return;   // 回していない（突いた・ひねっただけ）
+            if (new Vector2(d.x, d.y).magnitude < config.swingMinAngularSpeed)   // 回していない（突いた・ひねっただけ）
+            {
+                if (accel < config.thrustThreshold) return;
+                float forward = Vector3.Dot(LinearAccel, Vector3.forward) / accel * (config.invertThrustAccel ? -1f : 1f);
+                if (forward < config.thrustForwardDot) return;   // 前へ突いていない（引いた・横に動かした）
+                swingArmed = false;
+                pendingThrust = true;
+                pendingThrustTime = Time.time;
+                return;
+            }
+            if (accel < config.swingThreshold) return;
             swingArmed = false;
             pendingSwing = AngleToDirection(Mathf.Atan2(d.x, d.y) * Mathf.Rad2Deg, Directions);
             pendingSwingTime = Time.time;
@@ -175,8 +177,9 @@ namespace Chambara
 
         // 重力を除いた加速度の大きさ（G）
         // 加速度はJoy-Conの座標なので姿勢で回して向きをそろえ、ほぼ静止しているときの値を重力として引く
-        float LinearAcceleration(SwitchInput input, Quaternion controller)
+        float LinearAcceleration(SwitchInput input, Quaternion controller, out Vector3 linear)
         {
+            linear = Vector3.zero;
             Vector3 a = controller * input.Acceleration(playerIndex);
             if (a.sqrMagnitude < 1e-6f) return 0f;   // 値が来ていない
             if (!hasGravity)
@@ -186,22 +189,23 @@ namespace Chambara
             }
             else if (Mathf.Abs(a.magnitude - 1f) < 0.1f)
             {
-                gravity = Vector3.Lerp(gravity, a, 1f - Mathf.Exp(-gravityFollow * Time.deltaTime));
+                gravity = Vector3.Lerp(gravity, a, 1f - Mathf.Exp(-config.gravityFollow * Time.deltaTime));
             }
-            return (a - gravity).magnitude;
+            linear = a - gravity;
+            return linear.magnitude;
         }
 
         // 刃の向き（プレイヤー基準）からガード方向（上=0 右=2 下=4 左=6）。構えになっていなければ -1
         int GuardDirection(Vector3 blade)
         {
             float toFront = Vector3.Angle(blade, Vector3.forward);
-            if (Mathf.Abs(toFront - 90f) > perpendicularTolerance) return -1;
+            if (Mathf.Abs(toFront - 90f) > config.perpendicularTolerance) return -1;
 
             float tip = Mathf.Atan2(blade.x, blade.y) * Mathf.Rad2Deg;   // 刃先の角度。真上=0、右回りで+
             float abs = Mathf.Abs(tip);
-            if (abs >= 180f - verticalRange) return 4;   // 刃先が下向き
-            if (abs > verticalRange) return 0;           // 水平
-            if (abs < sideDeadZone) return pose == 2 || pose == 6 ? pose : -1;   // 真上付近は今の左右を保つ
+            if (abs >= 180f - config.verticalRange) return 4;   // 刃先が下向き
+            if (abs > config.verticalRange) return 0;           // 水平
+            if (abs < config.sideDeadZone) return pose == 2 || pose == 6 ? pose : -1;   // 真上付近は今の左右を保つ
             return tip > 0f ? 2 : 6;
         }
 
@@ -209,22 +213,6 @@ namespace Chambara
         {
             float step = 360f / directions;
             return ((Mathf.RoundToInt(angle / step) % directions) + directions) % directions;
-        }
-
-        static Vector3 AxisVector(Axis a) => a switch
-        {
-            Axis.Right   => Vector3.right,
-            Axis.Left    => Vector3.left,
-            Axis.Up      => Vector3.up,
-            Axis.Down    => Vector3.down,
-            Axis.Forward => Vector3.forward,
-            _            => Vector3.back,
-        };
-
-        private void OnValidate()
-        {
-            if (Mathf.Abs(Vector3.Dot(AxisVector(bladeAxis), AxisVector(frontAxis))) > 0.5f)
-                Debug.LogWarning("JoyconInputContext: bladeAxis と frontAxis は直交する軸にしてください");
         }
     }
 }

@@ -148,7 +148,7 @@ namespace Chambara
 
             bool idle = state == PlayerState.Idle && !player.IsStepping && !player.Lost;
             limp  = Mathf.Lerp(limp, player.Lost ? 1f : 0f, Damp(limpSpeed));
-            lunge = Mathf.Lerp(lunge, state == PlayerState.Attack ? attackLunge : 0f, Damp(bodySpeed));
+            lunge = Mathf.Lerp(lunge, state == PlayerState.Attack || state == PlayerState.Thrust ? attackLunge : 0f, Damp(bodySpeed));
             hop   = Mathf.Lerp(hop, player.Won || idle ? 1f : 0f, Damp(bodySpeed));
 
             // 体全体：呼吸・跳ね・攻撃の踏み込み・脱力で沈む

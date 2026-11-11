@@ -6,6 +6,7 @@ namespace Chambara
     {
         public int pose;   // 今の構え方向（-1:なし）
         public int swing;  // 振った方向（-1:振っていない）
+        public bool thrust; // 突いた（振りと同じく読んだら消費される）
 
         public bool isFront;   // 前進ボタンを押しているか（押しっぱなしの状態を返す。押し直しの判定はPlayerBehaviour側）
         public bool isBack;    // 後退ボタンを押しているか

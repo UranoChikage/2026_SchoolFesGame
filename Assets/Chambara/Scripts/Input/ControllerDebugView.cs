@@ -66,6 +66,8 @@ namespace Chambara
                 sb.AppendLine($"前進: {OnOff(last.isFront)}　後退: {OnOff(last.isBack)}　構え: {Dir(last.pose)}");
                 string swing = joycon.LastSwing >= 0 ? $"{Dir(joycon.LastSwing)}（{Time.time - joycon.LastSwingTime:F1}秒前）" : "-";
                 sb.AppendLine($"最後に振った方向: {swing}");
+                string thrust = joycon.LastThrustTime >= 0f ? $"{Time.time - joycon.LastThrustTime:F1}秒前" : "-";
+                sb.AppendLine($"最後に突いた: {thrust}　加速度(前+): {Vec(joycon.LinearAccel)}");
             }
             else if (player != null)
             {

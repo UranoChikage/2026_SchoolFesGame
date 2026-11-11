@@ -16,7 +16,7 @@ namespace Chambara
                     return model.model;
                 }
             }
-            Debug.LogError($"‚»‚ñ‚Èƒ‚ƒfƒ‹–¼‚Í‚Ë‚¥");
+            //Debug.LogError($"‚»‚ñ‚Èƒ‚ƒfƒ‹–¼‚Í‚Ë‚¥");
             return null;
         }
 
