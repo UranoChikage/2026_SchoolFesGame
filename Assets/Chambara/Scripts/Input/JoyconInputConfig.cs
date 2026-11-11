@@ -13,8 +13,8 @@ namespace Chambara
         public enum Axis { Right, Left, Up, Down, Forward, Back }
 
         [Header("持ち方（Joy-Conのどの軸がどちらを向くか。Joy-Con自身の座標）")]
-        [Tooltip("刃が伸びる方向")] public Axis bladeAxis = Axis.Back;   // ZR/ZL の端。Forward だと上下が逆になった
-        [Tooltip("剣を真上に立てたとき相手の方を向く面")] public Axis frontAxis = Axis.Down;
+        [Tooltip("刃が伸びる方向")] public Axis bladeAxis = Axis.Up;     // ZR/ZL の端（Joy-Conの長い方の軸）
+        [Tooltip("剣を真上に立てたとき相手の方を向く面")] public Axis frontAxis = Axis.Back;   // 左右が逆なら bladeAxis=Down / frontAxis=Forward にする
 
         [Header("正面の合わせ直し")]
         public SwitchButton recenterButton = SwitchButton.Cancel;
