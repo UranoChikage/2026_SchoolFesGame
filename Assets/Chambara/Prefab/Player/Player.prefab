@@ -1375,6 +1375,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ece57dc4597846c0b746c191f64eaa4d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Chambara.JoyconInputContext
+  config: {fileID: 11400000, guid: a50f450c00bf43b4b7ef39ed873c6e6a, type: 2}
 --- !u!114 &7170576937681483606
 MonoBehaviour:
   m_ObjectHideFlags: 0
