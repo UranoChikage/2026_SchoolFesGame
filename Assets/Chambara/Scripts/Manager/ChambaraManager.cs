@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using Common;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -55,7 +56,8 @@ namespace Chambara
 
         [Header("Match Settings")]
         [SerializeField] int winScore = 2;                 // 何本先取で勝ちか
-        [SerializeField] Key nextRoundKey = Key.Space;     // 1本取った後、このキーで次のラウンドへ
+        [SerializeField] Key nextRoundKey = Key.Space;     // 1本取った後、このキーで次のラウンドへ（決着後は再戦）
+        [SerializeField] SwitchButton nextRoundButton = SwitchButton.Confirm;   // Joy-Con（1P・2Pどちらでも）で次へ進むボタン。ZR/ZL
         [SerializeField] float winnerResultDelay = 1.5f;   // 決着のスコア表示から WinnerResult を呼ぶまで（実時間・秒）
         [SerializeField] WinnerResult winnerResult;        // 未設定ならシーンから探す
 
@@ -63,6 +65,7 @@ namespace Chambara
         public int[] Scores => scores;                     // 取った本数（[0]:1P [1]:2P）
         public int LastRoundWinner { get; private set; } = -1;   // 直前のラウンドで1本取った方（-1:引き分け）
         bool waitingNextRound;                             // 次のラウンドへ進むボタン待ち
+        bool waitingRematch;                               // 決着後、再戦するボタン待ち
 
         private void Awake()
         {
@@ -81,6 +84,7 @@ namespace Chambara
         public void ReadyGame()
         {
             waitingNextRound = false;
+            waitingRematch = false;
             LastRoundWinner = -1;
             sim = new ChambaraSimulator(rule);
             players = new[]
@@ -120,9 +124,10 @@ namespace Chambara
                 foreach (var p in players) p.Render();
             }
 
-            if (waitingNextRound && Keyboard.current != null && Keyboard.current[nextRoundKey].wasPressedThisFrame)
+            if ((waitingNextRound || waitingRematch) && NextPressed())
             {
-                NextRound();
+                if (waitingRematch) Rematch();
+                else NextRound();
             }
         }
 
@@ -145,12 +150,39 @@ namespace Chambara
             yield return new WaitForSecondsRealtime(winnerResultDelay);
             if (winnerResult != null) winnerResult.Play(winner, scores[0], scores[1]);
             else Debug.LogWarning("WinnerResult がシーンにありません");
+            Debug.Log($"{nextRoundKey} / Joy-Con の {nextRoundButton} で再戦");
+            waitingRematch = true;
+        }
+
+        // 次へ進む操作（キーボード、または1P・2Pどちらかの Joy-Con）
+        bool NextPressed()
+        {
+            if (Keyboard.current != null && Keyboard.current[nextRoundKey].wasPressedThisFrame) return true;
+            for (int i = 0; i < 2; i++)
+            {
+                if (SwitchInput.I.ButtonDown(i, nextRoundButton)) return true;
+            }
+            return false;
+        }
+
+        // 決着後、スコアを0に戻して同じキャラでもう一試合
+        public void Rematch()
+        {
+            if (!waitingRematch) return;
+            waitingRematch = false;
+            Array.Clear(scores, 0, scores.Length);
+            Restart();
         }
 
         // プレイヤーを作り直して、次のラウンドを Ready から始める（UIボタンや Joy-Con からも呼べる）
         public void NextRound()
         {
             if (!waitingNextRound) return;
+            Restart();
+        }
+
+        void Restart()
+        {
             StopAllCoroutines();
             SetTimeScale(1f);
             foreach (var p in players)
