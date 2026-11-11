@@ -21,6 +21,7 @@ MonoBehaviour:
   swingMinAngularSpeed: 3
   gravityFollow: 5
   swingBuffer: 0.3
+  thrustMaxAngularSpeed: 0.3
   thrustThreshold: 2
   thrustForwardDot: 0.142
   invertThrustAccel: 0

@@ -13,7 +13,7 @@ namespace Chambara
     ///   ガード … ガードボタン(Confirm = ZR/ZL)を押しながら、刃を正面と垂直に構える
     ///            刃が水平 → 上 / 刃先が下向き → 下 / 刃先が上向きで右に傾ける → 右 / 左に傾ける → 左
     ///   突き … 回さずに前（相手の方）へ素早く突き出す。重力を除いた加速度がしきい値を超え、
-    ///          その向きが前方で、角速度が小さい（振っていない）ときに突いたとみなす
+    ///          その向きが前方で、角速度（ひねりを除く）がほぼ0（thrustMaxAngularSpeed 以下）のときに突いたとみなす
     ///   前進・後退 … スティック上下（上=前進 下=後退）
     ///   正面の合わせ直し … ZR/ZL の端を正面（画面）に向けて合わせ直しボタン(Cancel)。押すと剣先が正面を向く。最初に向きが取れたときは自動で合わせる
     ///
@@ -159,8 +159,10 @@ namespace Chambara
             // 例: 右の軸まわり（振り下ろし）→ 下、上の軸まわり → 右
             Vector3 w = controllerInPlayer * input.AngularVelocity(playerIndex);   // プレイヤー基準の角速度（度/秒）
             Vector3 d = Vector3.Cross(w, Vector3.forward);
-            if (new Vector2(d.x, d.y).magnitude < config.swingMinAngularSpeed)   // 回していない（突いた・ひねっただけ）
+            float angular = new Vector2(d.x, d.y).magnitude;
+            if (angular < config.swingMinAngularSpeed)   // 振りになるほど回していない
             {
+                if (angular > config.thrustMaxAngularSpeed) return;   // 突きは角速度がほぼ0のときだけ
                 if (accel < config.thrustThreshold) return;
                 float forward = Vector3.Dot(LinearAccel, Vector3.forward) / accel * (config.invertThrustAccel ? -1f : 1f);
                 if (forward < config.thrustForwardDot) return;   // 前へ突いていない（引いた・横に動かした）

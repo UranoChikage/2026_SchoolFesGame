@@ -28,6 +28,7 @@ namespace Chambara
         [Tooltip("振った入力を覚えておく時間（秒）。硬直中に振っても後から出ないようにする")] public float swingBuffer = 0.1f;
 
         [Header("突き")]
+        [Tooltip("角速度（ひねりを除く）がこれ以下のときだけ突きになる（≒角速度0）。これと swingMinAngularSpeed の間では何も出ない")] public float thrustMaxAngularSpeed = 0.3f;
         [Tooltip("重力を除いた加速度（G）がこれを超えたら突いたとみなす")] public float thrustThreshold = 2f;
         [Range(0f, 1f), Tooltip("加速度の向きと前方の cos がこれ以上なら前へ突いたとみなす")] public float thrustForwardDot = 0.7f;
         [Tooltip("引いたときに突きが出る（前へ突いても出ない）場合はチェックする（加速度の符号を反転）")] public bool invertThrustAccel = false;
