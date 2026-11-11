@@ -16,13 +16,13 @@ MonoBehaviour:
   frontAxis: 5
   recenterButton: 1
   calibrationAngle: 90
-  swingThreshold: 1
+  swingThreshold: 3
   swingRearm: 0.699
-  swingMinAngularSpeed: 0.2
+  swingMinAngularSpeed: 3
   gravityFollow: 5
   swingBuffer: 0.3
-  thrustThreshold: 1.37
-  thrustForwardDot: 0.484
+  thrustThreshold: 2
+  thrustForwardDot: 0.142
   invertThrustAccel: 0
   guardButton: 0
   perpendicularTolerance: 30
