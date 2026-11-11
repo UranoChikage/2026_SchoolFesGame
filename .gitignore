@@ -109,3 +109,4 @@ InitTestScene*.unity*
 /[Aa]ssets/[Ss]ceneDependencyCache*
 
 private/
+Assets/Common/Input/BackendsNn.meta
