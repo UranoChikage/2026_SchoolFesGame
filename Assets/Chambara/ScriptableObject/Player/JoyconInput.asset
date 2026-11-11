@@ -18,7 +18,7 @@ MonoBehaviour:
   calibrationAngle: 90
   swingThreshold: 1
   swingRearm: 0.699
-  swingMinAngularSpeed: 60
+  swingMinAngularSpeed: 0.2
   gravityFollow: 5
   swingBuffer: 0.3
   thrustThreshold: 1.37
