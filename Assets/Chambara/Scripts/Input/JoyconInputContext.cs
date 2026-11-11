@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Common;
 using UnityEngine;
 
@@ -8,8 +9,8 @@ namespace Chambara
     ///
     /// ■ 操作
     ///   構え（アイドル・移動中） … Joy-Conの向きをそのまま剣に反映する（フルトラッキング）
-    ///   攻撃 … 素早く振る。加速度（重力を除いた分）がしきい値を超えた瞬間に振ったとみなし、
-    ///          方向はその瞬間の角速度（回した向き）から8方向で決める
+    ///   攻撃 … 刃先の向きが swingTime 秒以内に swingAngle 度以上動いたら振ったとみなす
+    ///          方向は、動き始めの刃先から今の刃先へ動いた向き（後ろから見て。上=0から時計回りの8方向）
     ///   ガード … ガードボタン(Confirm = ZR/ZL)を押しながら、刃を正面と垂直に構える
     ///            刃が水平 → 上 / 刃先が下向き → 下 / 刃先が上向きで右に傾ける → 右 / 左に傾ける → 左
     ///   突き … 回さずに前（相手の方）へ素早く突き出す。重力を除いた加速度がしきい値を超え、
@@ -35,7 +36,9 @@ namespace Chambara
         Quaternion swordRotation; // 剣（pivot）のプレイヤー基準の回転
         bool tracking;            // 今フレーム向きが取れたか
 
-        bool swingArmed = true;
+        bool thrustArmed = true;
+        float swingBlockedUntil;   // この時刻までは次の振りを受け付けない
+        readonly Queue<(float time, Vector3 tip)> tipHistory = new();   // 刃先の向き（プレイヤー基準）の履歴。swingTime 秒分
         bool hasGravity;
         Vector3 gravity;          // Joy-Conの姿勢の座標（SDKの基準）での重力による加速度
         int pendingSwing = -1;
@@ -110,6 +113,7 @@ namespace Chambara
             {
                 calibrated = false;   // 繋ぎ直したら合わせ直す
                 hasGravity = false;
+                tipHistory.Clear();
                 return;
             }
 
@@ -127,7 +131,8 @@ namespace Chambara
             UpdateMove(input);
             bool guarding = input.Button(playerIndex, config.guardButton);
             pose = guarding ? GuardDirection(swordRotation * Vector3.up) : -1;
-            UpdateSwing(input, controller, controllerInPlayer, guarding);
+            UpdateSwing(guarding);
+            UpdateThrust(input, controller, controllerInPlayer, guarding);
         }
 
         void UpdateMove(SwitchInput input)
@@ -147,34 +152,50 @@ namespace Chambara
             // }
         }
 
-        // 重力を除いた加速度がしきい値を超えた瞬間に1回だけ振る（回していなければ、前へ動かしたときだけ突く）
-        void UpdateSwing(SwitchInput input, Quaternion controller, Quaternion controllerInPlayer, bool guarding)
+        // 刃先の向きが swingTime 秒以内に swingAngle 度以上動いたら、動いた向きに1回振る
+        void UpdateSwing(bool guarding)
+        {
+            float now = Time.time;
+            Vector3 tip = swordRotation * Vector3.up;   // 刃先の向き（プレイヤー基準。x+右 y+上 z+前）
+            while (tipHistory.Count > 0 && now - tipHistory.Peek().time > config.swingTime) tipHistory.Dequeue();
+            tipHistory.Enqueue((now, tip));
+
+            if (guarding || now < swingBlockedUntil) return;
+
+            // 一番古い（大きく動いた）ものから順に、今の向きと swingAngle 度以上離れているものを探す
+            foreach (var (_, from) in tipHistory)
+            {
+                if (Vector3.Angle(from, tip) < config.swingAngle) continue;
+
+                // 動いた向き = 後ろから見た刃先の位置（x, y）の差
+                Vector2 d = new Vector2(tip.x - from.x, tip.y - from.y);
+                if (d.sqrMagnitude < 1e-4f) return;   // 前後にだけ動いた（後ろから見て動いていない）
+                pendingSwing = AngleToDirection(Mathf.Atan2(d.x, d.y) * Mathf.Rad2Deg, Directions);
+                pendingSwingTime = now;
+                swingBlockedUntil = now + config.swingCooldown;
+                thrustArmed = false;   // 振りの終わりの急停止で突きが出ないようにする
+                tipHistory.Clear();
+                return;
+            }
+        }
+
+        // 回さずに前へ素早く動かしたら1回突く
+        void UpdateThrust(SwitchInput input, Quaternion controller, Quaternion controllerInPlayer, bool guarding)
         {
             float accel = LinearAcceleration(input, controller, out Vector3 linear);
             LinearAccel = calibration * linear;   // プレイヤー基準
-            if (accel <= Mathf.Min(config.swingThreshold, config.thrustThreshold) * config.swingRearm) swingArmed = true;
-            if (guarding || !swingArmed) return;
+            if (accel <= config.thrustThreshold * config.thrustRearm && Time.time >= swingBlockedUntil) thrustArmed = true;
+            if (guarding || !thrustArmed || accel < config.thrustThreshold) return;
 
-            // 方向は角速度から。正面の軸まわり（ひねり）は無視し、回転軸と垂直な向きを振った方向にする
-            // 例: 右の軸まわり（振り下ろし）→ 下、上の軸まわり → 右
-            Vector3 w = controllerInPlayer * input.AngularVelocity(playerIndex);   // プレイヤー基準の角速度（度/秒）
-            Vector3 d = Vector3.Cross(w, Vector3.forward);
-            float angular = new Vector2(d.x, d.y).magnitude;
-            if (angular < config.swingMinAngularSpeed)   // 振りになるほど回していない
-            {
-                if (angular > config.thrustMaxAngularSpeed) return;   // 突きは角速度がほぼ0のときだけ
-                if (accel < config.thrustThreshold) return;
-                float forward = Vector3.Dot(LinearAccel, Vector3.forward) / accel * (config.invertThrustAccel ? -1f : 1f);
-                if (forward < config.thrustForwardDot) return;   // 前へ突いていない（引いた・横に動かした）
-                swingArmed = false;
-                pendingThrust = true;
-                pendingThrustTime = Time.time;
-                return;
-            }
-            if (accel < config.swingThreshold) return;
-            swingArmed = false;
-            pendingSwing = AngleToDirection(Mathf.Atan2(d.x, d.y) * Mathf.Rad2Deg, Directions);
-            pendingSwingTime = Time.time;
+            // 正面の軸まわり（ひねり）を除いた角速度がほぼ0のときだけ
+            Vector3 w = controllerInPlayer * input.AngularVelocity(playerIndex);   // プレイヤー基準の角速度
+            if (new Vector2(w.x, w.y).magnitude > config.thrustMaxAngularSpeed) return;
+
+            float forward = Vector3.Dot(LinearAccel, Vector3.forward) / accel * (config.invertThrustAccel ? -1f : 1f);
+            if (forward < config.thrustForwardDot) return;   // 前へ突いていない（引いた・横に動かした）
+            thrustArmed = false;
+            pendingThrust = true;
+            pendingThrustTime = Time.time;
         }
 
         // 重力を除いた加速度の大きさ（G）

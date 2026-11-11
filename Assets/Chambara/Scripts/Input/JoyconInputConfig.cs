@@ -1,5 +1,6 @@
 using Common;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Chambara
 {
@@ -20,16 +21,17 @@ namespace Chambara
         public SwitchButton recenterButton = SwitchButton.Cancel;
         [Tooltip("合わせ直すときに構える剣の角度（真上=0、正面=90）")] public float calibrationAngle = 90f;   // Cancel を押すと剣先が正面を向く
 
-        [Header("攻撃")]
-        [Tooltip("重力を除いた加速度（G）がこれを超えたら振ったとみなす")] public float swingThreshold = 2f;
-        [Range(0.1f, 1f), Tooltip("加速度がしきい値のこの割合まで下がったら次の振りを受け付ける")] public float swingRearm = 0.5f;
-        [Tooltip("振った方向を決めるのに必要な最低の角速度（度/秒）。これ未満なら突いただけとみなし振らない")] public float swingMinAngularSpeed = 90f;
-        [Tooltip("重力の向きを推定し直す速さ。加速度の大きさが1G付近（ほぼ静止）のときだけ寄せる")] public float gravityFollow = 5f;
+        [Header("攻撃（刃先の向きが swingTime 秒以内に swingAngle 度以上動いたら、動いた向きに振る）")]
+        [Tooltip("この時間（秒）以内に動いた分だけを見る")] public float swingTime = 0.3f;
+        [Tooltip("刃先の向きがこの角度（度）以上動いたら振ったとみなす")] public float swingAngle = 90f;
+        [Tooltip("振った後、この時間（秒）は次の振りを受け付けない（1回の大振りで2回出ないようにする）")] public float swingCooldown = 0.3f;
         [Tooltip("振った入力を覚えておく時間（秒）。硬直中に振っても後から出ないようにする")] public float swingBuffer = 0.1f;
 
         [Header("突き")]
-        [Tooltip("角速度（ひねりを除く）がこれ以下のときだけ突きになる（≒角速度0）。これと swingMinAngularSpeed の間では何も出ない")] public float thrustMaxAngularSpeed = 0.3f;
+        [Tooltip("角速度（ひねりを除く）がこれ以下のときだけ突きになる（≒角速度0）")] public float thrustMaxAngularSpeed = 0.3f;
         [Tooltip("重力を除いた加速度（G）がこれを超えたら突いたとみなす")] public float thrustThreshold = 2f;
+        [FormerlySerializedAs("swingRearm"), Range(0.1f, 1f), Tooltip("加速度が thrustThreshold のこの割合まで下がったら次の突きを受け付ける")] public float thrustRearm = 0.5f;
+        [Tooltip("重力の向きを推定し直す速さ。加速度の大きさが1G付近（ほぼ静止）のときだけ寄せる")] public float gravityFollow = 5f;
         [Range(0f, 1f), Tooltip("加速度の向きと前方の cos がこれ以上なら前へ突いたとみなす")] public float thrustForwardDot = 0.7f;
         [Tooltip("引いたときに突きが出る（前へ突いても出ない）場合はチェックする（加速度の符号を反転）")] public bool invertThrustAccel = false;
 
