@@ -25,6 +25,7 @@ MonoBehaviour:
   thrustRearm: 0.699
   gravityFollow: 5
   thrustForwardDot: 0.142
+  thrustLockout: 0.3
   invertThrustAccel: 0
   guardButton: 0
   perpendicularTolerance: 30

@@ -33,6 +33,7 @@ namespace Chambara
         [FormerlySerializedAs("swingRearm"), Range(0.1f, 1f), Tooltip("加速度が thrustThreshold のこの割合まで下がったら次の突きを受け付ける")] public float thrustRearm = 0.5f;
         [Tooltip("重力の向きを推定し直す速さ。加速度の大きさが1G付近（ほぼ静止）のときだけ寄せる")] public float gravityFollow = 5f;
         [Range(0f, 1f), Tooltip("加速度の向きと前方の cos がこれ以上なら前へ突いたとみなす")] public float thrustForwardDot = 0.7f;
+        [Tooltip("前以外（引いた・横に動かした）の動きを検知したら、この時間（秒）突きを受け付けない。止める動きで突きが出ないようにする")] public float thrustLockout = 0.3f;
         [Tooltip("引いたときに突きが出る（前へ突いても出ない）場合はチェックする（加速度の符号を反転）")] public bool invertThrustAccel = false;
 
         [Header("ガード")]

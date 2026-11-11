@@ -37,6 +37,7 @@ namespace Chambara
         bool tracking;            // 今フレーム向きが取れたか
 
         bool thrustArmed = true;
+        float thrustBlockedUntil;  // この時刻までは突きを受け付けない（前以外に動かした後）
         float swingBlockedUntil;   // この時刻までは次の振りを受け付けない
         readonly Queue<(float time, Vector3 tip)> tipHistory = new();   // 刃先の向き（プレイヤー基準）の履歴。swingTime 秒分
         bool hasGravity;
@@ -184,15 +185,21 @@ namespace Chambara
         {
             float accel = LinearAcceleration(input, controller, out Vector3 linear);
             LinearAccel = calibration * linear;   // プレイヤー基準
-            if (accel <= config.thrustThreshold * config.thrustRearm && Time.time >= swingBlockedUntil) thrustArmed = true;
+            if (accel <= config.thrustThreshold * config.thrustRearm && Time.time >= swingBlockedUntil && Time.time >= thrustBlockedUntil) thrustArmed = true;
             if (guarding || !thrustArmed || accel < config.thrustThreshold) return;
 
             // 正面の軸まわり（ひねり）を除いた角速度がほぼ0のときだけ
             Vector3 w = controllerInPlayer * input.AngularVelocity(playerIndex);   // プレイヤー基準の角速度
             if (new Vector2(w.x, w.y).magnitude > config.thrustMaxAngularSpeed) return;
 
+            // しきい値を超えた最初の瞬間の向きで決める。前以外なら、その後の止める動き（逆向きの加速度）で出ないよう止める
             float forward = Vector3.Dot(LinearAccel, Vector3.forward) / accel * (config.invertThrustAccel ? -1f : 1f);
-            if (forward < config.thrustForwardDot) return;   // 前へ突いていない（引いた・横に動かした）
+            if (forward < config.thrustForwardDot)   // 前へ突いていない（引いた・横に動かした）
+            {
+                thrustArmed = false;
+                thrustBlockedUntil = Time.time + config.thrustLockout;
+                return;
+            }
             thrustArmed = false;
             pendingThrust = true;
             pendingThrustTime = Time.time;
