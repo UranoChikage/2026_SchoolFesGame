@@ -139,6 +139,7 @@ namespace Chambara
 
         /// <summary>入力元を差し替える（Joy-Con 用など）</summary>
         public void SetInput(int player, ISelectInput input) => inputs[player] = input;
+        public ISelectInput GetInput(int player) => inputs[player];
 
         void Update()
         {
