@@ -7473,14 +7473,14 @@ MonoBehaviour:
   manager: {fileID: 513620853}
   cursorPrefab: {fileID: 1670493039}
   cursorParent: {fileID: 2007391916}
-  sensitivity: 15
-  sensitivityMin: 2
-  sensitivityMax: 60
-  sensitivityStep: 20
+  sensitivity: 12000
+  sensitivityMin: 12000
+  sensitivityMax: 30000
+  sensitivityStep: 500
   stickDeadZone: 0.3
   yawRelaxFactor: 2
   gravityBlend: 0.02
-  smoothing: 0.06
+  smoothing: 0.02
   playerColors:
   - {r: 1, g: 0.35, b: 0.35, a: 1}
   - {r: 0.35, g: 0.6, b: 1, a: 1}
@@ -8688,7 +8688,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: beeb1f8d8b6ca6c4ba72e4e2eda59a83, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 04a72c986ce79e1478824fcfe4316b45, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
