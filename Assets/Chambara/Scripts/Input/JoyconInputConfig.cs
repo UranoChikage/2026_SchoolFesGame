@@ -1,6 +1,5 @@
 using Common;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace Chambara
 {
@@ -21,27 +20,27 @@ namespace Chambara
         public SwitchButton recenterButton = SwitchButton.Cancel;
         [Tooltip("合わせ直すときに構える剣の角度（真上=0、正面=90）")] public float calibrationAngle = 90f;   // Cancel を押すと剣先が正面を向く
 
-        [Header("攻撃（刃先が swingStartSpeed 以上の速さで動き出してから swingAngle 度以上動いたら、動いた向きに振る）")]
-        [Tooltip("刃先がこの速さ（度/秒）を超えたら振り始めとみなす。ゆっくりした振りかぶりで振りが出ないようにする")] public float swingStartSpeed = 300f;
+        [Header("攻撃（刃先が速く動き出してから swingAngle 度以上回り、一番速いときに swingMinPeakSpeed を超えていたら、回った向きに振る）")]
+        [Tooltip("刃先がこの速さ（度/秒）を超えたら振り始めとみなす")] public float swingStartSpeed = 300f;
         [Tooltip("刃先がこの速さ（度/秒）を下回ったら振り終わりとみなす")] public float swingEndSpeed = 150f;
+        [Tooltip("振りの途中で一番速いときにこの速さ（度/秒）を超えていないと振りにしない。振りかぶりや構え直しで出るなら上げ、振っても出ないなら下げる")] public float swingMinPeakSpeed = 450f;
+        [Tooltip("振り始めからこの角度（度）以上回ったら振ったとみなす。小さいほど早く出るが、方向がぶれやすくなる")] public float swingAngle = 45f;
         [Tooltip("1回の振りとして見る最長の時間（秒）")] public float swingTime = 0.3f;
-        [Tooltip("振り始めから刃先の向きがこの角度（度）以上動いたら振ったとみなす")] public float swingAngle = 60f;
-        [Tooltip("後ろから見た刃先の動き（刃先は長さ1）がこれ未満なら振りにしない（前後にだけ動かしたとき方向がぶれないようにする）")] public float swingMinScreenMove = 0.3f;
-        [Tooltip("振った後、この時間（秒）は次の振りを受け付けない（1回の大振りで2回出ないようにする）")] public float swingCooldown = 0.3f;
-        [Tooltip("振った入力を覚えておく時間（秒）。硬直中に振っても後から出ないようにする")] public float swingBuffer = 0.1f;
+        [Tooltip("振った・突いた後、この時間（秒）以内に始まった動きは振りにしない（構えに戻す動きで出ないようにする）")] public float swingCooldown = 0.3f;
+        [Tooltip("振り・突きの入力を覚えておく時間（秒）。硬直・移動が明ける直前に振っても出る")] public float swingBuffer = 0.1f;
 
-        [Header("突き")]
-        [Tooltip("角速度（ひねりを除く）がこれ以下のときだけ突きになる（≒角速度0）")] public float thrustMaxAngularSpeed = 0.3f;
-        [Tooltip("重力を除いた加速度（G）がこれを超えたら突いたとみなす")] public float thrustThreshold = 2f;
-        [FormerlySerializedAs("swingRearm"), Range(0.1f, 1f), Tooltip("加速度が thrustThreshold のこの割合まで下がったら次の突きを受け付ける")] public float thrustRearm = 0.5f;
-        [Tooltip("重力の向きを推定し直す速さ。加速度の大きさが1G付近（ほぼ静止）のときだけ寄せる")] public float gravityFollow = 5f;
-        [Range(0f, 1f), Tooltip("加速度の向きと前方の cos がこれ以上なら前へ突いたとみなす")] public float thrustForwardDot = 0.7f;
-        [Tooltip("前以外（引いた・横に動かした）の動きを検知したら、この時間（秒）突きを受け付けない。止める動きで突きが出ないようにする")] public float thrustLockout = 0.3f;
+        [Header("突き（重力を除いた加速度をためた「前へ出た勢い」が thrustImpulse を超えたら突く）")]
+        [Tooltip("前へ出た勢い（G・秒。0.1 ≒ 秒速1m）がこれを超えたら突いたとみなす。出にくければ下げ、勝手に出るなら上げる")] public float thrustImpulse = 0.1f;
+        [Tooltip("勢いをためる時間（秒）。これより前の加速度は消えていく")] public float thrustWindow = 0.15f;
+        [Tooltip("刃先がこの速さ（度/秒）より速く回っている間は突きにしない（振りと区別する）")] public float thrustMaxTipSpeed = 250f;
+        [Range(0f, 1f), Tooltip("勢いの向きと前方の cos がこれ以上なら前へ突いたとみなす")] public float thrustForwardDot = 0.5f;
+        [Tooltip("振った後、この時間（秒）突きを受け付けない。振り終わりの急停止で突きが出ないようにする")] public float thrustLockout = 0.3f;
+        [Tooltip("重力の向きを推定し直す速さ。ほぼ静止しているときだけ寄せる")] public float gravityFollow = 5f;
         [Tooltip("引いたときに突きが出る（前へ突いても出ない）場合はチェックする（加速度の符号を反転）")] public bool invertThrustAccel = false;
 
         [Header("ガード")]
         public SwitchButton guardButton = SwitchButton.Confirm;   // Joy-Con では ZR/ZL
-        [Tooltip("刃と正面のなす角が 90度±この角度 ならガードの構え")] public float perpendicularTolerance = 30f;
+        [Tooltip("刃と正面のなす角が 90度±この角度 ならガードの構え")] public float perpendicularTolerance = 45f;
         [Tooltip("刃先の角度（真上=0）がこれ以内なら上向き、180-これ以上なら下向き。間は水平")] public float verticalRange = 45f;
         [Tooltip("上向きのとき、真上からこの角度以上傾けないと左右が決まらない")] public float sideDeadZone = 5f;
         [Tooltip("今の構えから抜けるときだけ、境目をこの角度（度）広げる。境目で手がぶれても構えが切り替わらないようにする")] public float guardHysteresis = 10f;
