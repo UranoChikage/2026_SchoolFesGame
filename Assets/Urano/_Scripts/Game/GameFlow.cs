@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Playables;
@@ -127,14 +128,39 @@ namespace Pirates
 
             startRequested = autoStart;
 
-            // 【診断】導入Timelineが再生されるたびに、いつ・誰が呼んだかをログに出す（原因が分かったら消す）
+            // 導入Timelineの0秒時点の状態を、再生を待たずに反映する。
+            // Activation Track はTimelineが評価されるまで効かないので、これが無いと待機中は、エフェクトなどが
+            // シーンに保存されたON/OFFのままになる（autoStart だと直後に再生されるので気づきにくい）。
+            // 再生はしない（Pausedのまま）ので、StartGame で改めて頭から再生される
             if (introDirector != null)
             {
-                introDirector.played += d => Debug.Log(
-                    $"[GameFlow診断] 導入Timelineが再生開始 t={Time.realtimeSinceStartup:F2} phase={Phase} IsOpening={SceneTransition.IsOpening}", this);
-                introDirector.stopped += d => Debug.Log(
-                    $"[GameFlow診断] 導入Timelineが停止 t={Time.realtimeSinceStartup:F2} phase={Phase}", this);
+                introDirector.time = 0d;
+                introDirector.Evaluate();
+                HoldTimelineAnimators(introDirector);
             }
+        }
+
+        // 導入Timelineの Animation Track にバインドされたAnimatorは、コントローラの初期ステートが勝手に再生されてしまう
+        // （Play On Awake の設定が無い）。0秒の姿勢にしたまま止めておき、導入が始まる直前に動かせる状態へ戻す
+        readonly List<Animator> heldAnimators = new List<Animator>();
+
+        void HoldTimelineAnimators(PlayableDirector director)
+        {
+            heldAnimators.Clear();
+            if (director.playableAsset == null) return;
+            foreach (PlayableBinding binding in director.playableAsset.outputs)
+            {
+                if (binding.outputTargetType != typeof(Animator)) continue;
+                if (!(director.GetGenericBinding(binding.sourceObject) is Animator animator) || animator == null) continue;
+                animator.enabled = false;
+                heldAnimators.Add(animator);
+            }
+        }
+
+        void ReleaseTimelineAnimators()
+        {
+            foreach (Animator animator in heldAnimators) if (animator != null) animator.enabled = true;
+            heldAnimators.Clear();
         }
 
         static void StopIfPlaying(PlayableDirector director)
@@ -236,6 +262,7 @@ namespace Pirates
         {
             phaseEndTime = Time.time + fallbackSeconds;
             if (director == null) return;
+            ReleaseTimelineAnimators(); // 止めておいたAnimatorを、Timelineが動かせる状態に戻す
             director.time = 0d; // 2回目以降も先頭から
             director.Play();
         }
@@ -261,6 +288,7 @@ namespace Pirates
             if (Phase != GamePhase.Intro) return;
             if (introDirector != null)
             {
+                ReleaseTimelineAnimators();
                 introDirector.time = introDirector.duration;
                 introDirector.Evaluate();
                 introDirector.Stop();
