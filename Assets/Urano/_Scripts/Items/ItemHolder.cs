@@ -285,7 +285,7 @@ namespace Pirates
         {
             CannonStation station = shooter != null ? shooter.Station : null;
             if (station == null) return;
-            beamVibrationId = station.LoopVibration(GameVibration.BeamFile);
+            beamVibrationId = station.LoopVibration(GameVibration.BeamFile, beam.Duration); // Beamの使用時間ぶんだけ鳴らす
             beamVibrating = true;
         }
 

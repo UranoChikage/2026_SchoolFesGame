@@ -162,6 +162,7 @@ MonoBehaviour:
   slowBrake: 3
   lateralDamping: 4
   angularDamping: 2
+  capsizeAngle: 90
   sinkDuration: 5
   sinkSpeed: 0.8
   sinkRollSpeed: 6
@@ -1135,7 +1136,7 @@ GameObject:
   - component: {fileID: 4657601846405257119}
   - component: {fileID: 3910007504657249985}
   - component: {fileID: 283455078455466480}
-  m_Layer: 3
+  m_Layer: 6
   m_Name: ShipVisual
   m_TagString: Untagged
   m_Icon: {fileID: 0}

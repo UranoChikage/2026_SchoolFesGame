@@ -85,6 +85,11 @@ namespace Pirates
 
         public bool IsSunk => sunk;
 
+        /// <summary>照準のアシストが狙う位置（船の位置）</summary>
+        public Vector3 AimPosition => transform.position;
+        /// <summary>照準のアシストが偏差に使う速度（ワールド）</summary>
+        public Vector3 AimVelocity => rb != null ? rb.linearVelocity : Vector3.zero;
+
         // 「まだ一度も敵がカメラに映っていない」ときに EnemyFirstContact が立てる。並走役以外の全員が、画面の中心付近へ向かう
         public static bool SeekingCamera { get; private set; }
         static Vector3 seekPoint;

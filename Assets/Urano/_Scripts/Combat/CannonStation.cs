@@ -64,6 +64,40 @@ namespace Pirates
         [Tooltip("スケールの変化幅の上限")]
         float scaleLimit = 0.35f;
 
+        [Header("エイムアシスト（敵船にゆるく吸い付く・軽く偏差）")]
+        [SerializeField]
+        [Tooltip("ONで、カーソルが敵船の近くにあると少しだけ吸い付き、敵の動きを軽く先読みする。手で動かせば外れるので、狙う操作は残る")]
+        bool aimAssist = true;
+        [SerializeField]
+        [Tooltip("敵船の画面上の位置からこの距離(px)以内にカーソルがあるときだけ働く。大きいほど遠くから効く")]
+        float assistRadius = 220f;
+        [SerializeField]
+        [Range(0f, 1f)]
+        [Tooltip("吸い付きの強さ。0=なし、1=敵船に完全に重なる。小さいほどゆるい")]
+        float assistStrength = 0.45f;
+        [SerializeField]
+        [Range(0f, 1f)]
+        [Tooltip("偏差の量。0=偏差なし、1=敵の速度×弾の滞空時間ぶん先を狙う。小さいほど軽い")]
+        float leadAmount = 0.4f;
+        [SerializeField]
+        [Tooltip("吸い付きの滑らかさ(秒)。大きいほどゆっくり寄る")]
+        float assistSmoothTime = 0.18f;
+        [SerializeField]
+        [Tooltip("アシストが効き始めた瞬間、カーソルを跳ねさせながら1回転させる（見た目だけの演出）")]
+        bool lockOnSpin = true;
+        [SerializeField]
+        [Tooltip("1回転にかける時間(秒)")]
+        float lockOnSpinTime = 0.45f;
+        [SerializeField]
+        [Tooltip("跳ねるときの拡大量。0.5で最大1.5倍")]
+        float lockOnPop = 0.5f;
+        [SerializeField]
+        [Tooltip("ロック中、敵船のまわりにブラケット（四隅の枠）と、偏差で狙っている位置の点を出す。寄り具合に応じて濃くなる")]
+        bool showLockMarker = true;
+        [SerializeField]
+        [Tooltip("ロックのブラケットの大きさ(px)")]
+        float lockMarkerSize = 110f;
+
         [Header("カーソル表示")]
         [SerializeField]
         Color cursorColor = Color.red;
@@ -100,7 +134,16 @@ namespace Pirates
         CannonShooter shooter;
         AimController aim;
         TrajectoryLine trajectory;
-        Vector2 cursor;
+        Vector2 cursor;          // 表示・照準に使う最終位置（inputCursor + assistOffset）
+        Vector2 inputCursor;     // 入力だけで動かした位置。アシストの影響を受けない
+        Vector2 assistOffset;    // アシストによるずれ
+        Vector2 assistVelocity;
+        EnemyShip assistTarget;  // いま吸い付いている敵（ころころ変わらないよう粘らせる）
+        const float MaxLeadTime = 2f;
+        float spinStartTime = -999f; // 回転演出を始めた時刻（Time.unscaledTime）
+        Vector2 lockShipScreen;      // ロック中の敵船の画面座標（ブラケットを描く位置）
+        Vector2 lockLeadScreen;      // 偏差を足した狙い位置の画面座標
+        float lockWeight;            // 寄り具合（0〜1）
         readonly GyroPointer pointer = new GyroPointer();
         string status = "";
         Quaternion barrelRotInStation = Quaternion.identity; // 砲身の初期姿勢（この砲を基準）
@@ -123,7 +166,7 @@ namespace Pirates
             => GameVibration.PlayFile(joyconIndex, path, fallbackStrong, fallbackDuration);
 
         /// <summary>振動データをループ再生して再生IDを返す。止めるときは StopLoopVibration に渡す</summary>
-        public int LoopVibration(string path) => GameVibration.LoopFile(joyconIndex, path);
+        public int LoopVibration(string path, float duration = -1f) => GameVibration.LoopFile(joyconIndex, path, duration);
         public void StopLoopVibration(int playId) => GameVibration.StopLoop(joyconIndex, playId);
 
         /// <summary>この砲手の色（カーソル・予測線と同じ）。獲得通知などで使う</summary>
@@ -145,12 +188,15 @@ namespace Pirates
             // 砲手ごとに初期位置をずらして重ならないようにする
             float x = Screen.width * (0.25f + 0.25f * ((Mathf.Max(1, stationNumber) - 1) % 3));
             cursor = new Vector2(x, Screen.height * 0.5f);
+            inputCursor = cursor;
         }
 
         void Update()
         {
             SelectByNumberKey();
             RecoverReaction();
+
+            cursor = inputCursor; // 入力はアシストを含まない位置に対して行う（アシストが積み重ならないように）
 
             bool joycon = !forceMouse && GameInput.IsJoyconConnected(joyconIndex);
             bool fire;
@@ -173,6 +219,9 @@ namespace Pirates
 
             cursor.x = Mathf.Clamp(cursor.x, 0f, Screen.width);
             cursor.y = Mathf.Clamp(cursor.y, 0f, Screen.height);
+            inputCursor = cursor;
+
+            ApplyAimAssist(status != "waiting");
 
             aim.SetScreenPosition(cursor);
             aim.Refresh();
@@ -188,6 +237,93 @@ namespace Pirates
 
             // ビーム使用中はこの砲は撃てないので、予測線は出さない
             UpdateTrajectory(status != "waiting" && shooter.IsAlive && !items.IsBeamActive);
+        }
+
+        // エイムアシスト：入力のカーソル(inputCursor)に「敵船へ寄るずれ」を足して、最終のカーソル(cursor)にする。
+        // 手でカーソルを動かせば敵船から離れてずれが小さくなるので、狙う操作はそのまま残る
+        void ApplyAimAssist(bool active)
+        {
+            Vector2 desired = Vector2.zero;
+            if (aimAssist && active && shooter.IsAlive)
+            {
+                if (TryFindAssistTarget(out Vector2 targetScreen, out float weight))
+                    desired = (targetScreen - inputCursor) * (assistStrength * weight);
+            }
+            else
+            {
+                assistTarget = null; // アシストが切れたらロックも解く（目印が残らないように）
+            }
+
+            assistOffset = Vector2.SmoothDamp(assistOffset, desired, ref assistVelocity, assistSmoothTime);
+            cursor = inputCursor + assistOffset;
+            cursor.x = Mathf.Clamp(cursor.x, 0f, Screen.width);
+            cursor.y = Mathf.Clamp(cursor.y, 0f, Screen.height);
+        }
+
+        // 入力のカーソルに画面上で一番近い敵船を探す。targetScreen=偏差を足した狙い位置の画面座標、weight=近いほど1（半径の外は0）
+        bool TryFindAssistTarget(out Vector2 targetScreen, out float weight)
+        {
+            targetScreen = default;
+            weight = 0f;
+
+            Camera cam = Camera.main;
+            if (cam == null || assistRadius <= 0f) return false;
+
+            EnemyShip best = null;
+            float bestScore = float.MaxValue;
+            float bestDistance = 0f;
+            Vector2 bestScreen = default;
+
+            foreach (EnemyShip enemy in EnemyShip.Active)
+            {
+                if (enemy == null || enemy.IsSunk) continue;
+
+                Vector3 sp = cam.WorldToScreenPoint(enemy.AimPosition);
+                if (sp.z <= 0f) continue; // カメラの後ろ
+
+                float distance = Vector2.Distance(new Vector2(sp.x, sp.y), inputCursor);
+                bool locked = enemy == assistTarget;
+                if (distance > assistRadius * (locked ? 1.25f : 1f)) continue; // 今吸い付いている敵は、少し遠くまで離さない
+
+                float score = locked ? distance * 0.7f : distance; // 粘らせて、近い敵の間で行ったり来たりしないようにする
+                if (score < bestScore)
+                {
+                    bestScore = score;
+                    best = enemy;
+                    bestDistance = distance;
+                    bestScreen = new Vector2(sp.x, sp.y);
+                }
+            }
+
+            // ロックする敵が決まった瞬間（敵がいない→いる、または別の敵へ移った）に、カーソルの回転演出を始める。
+            // 回転の途中で別の敵に割り込まれたら、そこから頭からやり直す
+            if (best != null && best != assistTarget && lockOnSpin) spinStartTime = Time.unscaledTime;
+            assistTarget = best;
+            if (best == null) return false;
+
+            // 偏差：敵の速度 × 弾の滞空時間 のうち、leadAmount ぶんだけ先を狙う
+            Vector3 aimPoint = best.AimPosition;
+            if (leadAmount > 0f && shooter.TryGetFlightTime(aimPoint, out float flightTime))
+            {
+                Vector3 velocity = best.AimVelocity;
+                velocity.y = 0f;
+                aimPoint += velocity * (Mathf.Min(flightTime, MaxLeadTime) * leadAmount);
+            }
+
+            Vector3 led = cam.WorldToScreenPoint(aimPoint);
+            if (led.z <= 0f)
+            {
+                assistTarget = null;
+                return false;
+            }
+            targetScreen = new Vector2(led.x, led.y);
+            lockShipScreen = bestScreen;
+            lockLeadScreen = targetScreen;
+
+            float t = Mathf.Clamp01(bestDistance / assistRadius);
+            weight = 1f - t * t * (3f - 2f * t); // 近いほど1、半径の端で0（なめらか）
+            lockWeight = weight;
+            return true;
         }
 
         // 予測線：選ばれている砲だけ、カーソルが指す位置へ撃った弾道を表示する
@@ -277,6 +413,51 @@ namespace Pirates
             barrel.rotation = Quaternion.AngleAxis(yaw, Vector3.up) * baseRot;
         }
 
+        // ロック中の目印：敵船のまわりの四隅のブラケットと、偏差で狙っている位置の点。寄り具合が強いほど濃くなる
+        void DrawLockMarker()
+        {
+            if (!showLockMarker || assistTarget == null) return;
+
+            Color c = cursorColor;
+            c.a = Mathf.Lerp(0.4f, 1f, lockWeight);
+            Color old = GUI.color;
+            GUI.color = c;
+
+            Texture2D white = Texture2D.whiteTexture;
+            float cx = lockShipScreen.x;
+            float cy = Screen.height - lockShipScreen.y;
+            float half = lockMarkerSize * 0.5f * (1f + 0.06f * Mathf.Sin(Time.unscaledTime * 8f)); // ゆるく脈打つ
+            float len = lockMarkerSize * 0.28f;
+            const float thick = 3f;
+
+            // 四隅（左上・右上・左下・右下）に「 」型を描く
+            for (int sx = -1; sx <= 1; sx += 2)
+            {
+                for (int sy = -1; sy <= 1; sy += 2)
+                {
+                    float px = cx + sx * half;
+                    float py = cy + sy * half;
+                    GUI.DrawTexture(new Rect(sx > 0 ? px - len : px, sy > 0 ? py - thick : py, len, thick), white);
+                    GUI.DrawTexture(new Rect(sx > 0 ? px - thick : px, sy > 0 ? py - len : py, thick, len), white);
+                }
+            }
+
+            // 偏差で狙っている位置
+            float lx = lockLeadScreen.x;
+            float ly = Screen.height - lockLeadScreen.y;
+            GUI.DrawTexture(new Rect(lx - 4f, ly - 4f, 8f, 8f), white);
+
+            GUI.color = old;
+        }
+
+        // 回転演出の進み具合（0〜1）。演出中でなければ -1
+        float SpinProgress()
+        {
+            if (!lockOnSpin || lockOnSpinTime <= 0f) return -1f;
+            float t = (Time.unscaledTime - spinStartTime) / lockOnSpinTime;
+            return t >= 0f && t < 1f ? t : -1f;
+        }
+
         // 砲手ごとの色付きカーソル（クールタイム中は小さく）
         void OnGUI()
         {
@@ -289,6 +470,17 @@ namespace Pirates
             float size = baseSize * (shooter.IsReady ? 1f : 0.6f) * (1f + reactionOffset);
             float x = cursor.x;
             float y = Screen.height - cursor.y; // GUIは上原点
+            float labelOffset = size * 0.5f;    // 名前の位置は演出で動かさない
+
+            // アシストが効いた瞬間：跳ねながら（拡大して戻る）1回転する。見た目だけ
+            Matrix4x4 oldMatrix = GUI.matrix;
+            float spin = SpinProgress();
+            if (spin >= 0f)
+            {
+                float ease = 1f - Mathf.Pow(1f - spin, 3f);          // 最初は速く、最後にゆっくり止まる
+                size *= 1f + lockOnPop * Mathf.Sin(spin * Mathf.PI); // 真ん中で一番大きく
+                GUIUtility.RotateAroundPivot(360f * ease, new Vector2(x, y));
+            }
 
             Color old = GUI.color;
             GUI.color = cursorColor;
@@ -309,8 +501,10 @@ namespace Pirates
                 GUI.DrawTexture(new Rect(x - size * 0.5f, y - 2f, size, 4f), Texture2D.whiteTexture);
                 GUI.DrawTexture(new Rect(x - 2f, y - size * 0.5f, 4f, size), Texture2D.whiteTexture);
             }
+            GUI.matrix = oldMatrix; // 名前は回さない
+            DrawLockMarker();
             // 砲手の表示名。砲手1〜3 = P2〜P4（P1は舵取り役）
-            GUI.Label(new Rect(x + size * 0.5f + 4f, y - 12f, 200f, 24f), $"P{stationNumber + 1}");
+            GUI.Label(new Rect(x + labelOffset + 4f, y - 12f, 200f, 24f), $"P{stationNumber + 1}");
             GUI.color = old;
         }
     }

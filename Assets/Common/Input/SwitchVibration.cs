@@ -85,6 +85,14 @@ namespace Common
             {
                 float dt = Time.unscaledDeltaTime;
                 foreach (var d in devices.Values) d.Update(dt);
+
+                // 時間指定のループを、時間が来たら止める
+                for (int i = timedLoops.Count - 1; i >= 0; i--)
+                {
+                    if (Time.unscaledTime < timedLoops[i].EndTime) continue;
+                    StopPlay(timedLoops[i].Index, timedLoops[i].PlayId);
+                    timedLoops.RemoveAt(i);
+                }
             }
         }
 
@@ -112,6 +120,24 @@ namespace Common
             Diag($"Loop index={index} path={path} → 再生ID={id}");
             return id;
         }
+
+        /// <summary>bnvib をループ再生し、duration 秒たったら自動で止める。duration が負なら止めるまで続く</summary>
+        public static int Loop(int index, string path, float duration)
+        {
+            int id = Loop(index, path);
+            if (id >= 0 && duration >= 0f)
+                timedLoops.Add(new TimedLoop { Index = index, PlayId = id, EndTime = Time.unscaledTime + duration });
+            return id;
+        }
+
+        // 時間指定のループ。Driver が毎フレーム見て、時間が来たものを止める
+        struct TimedLoop
+        {
+            public int Index;
+            public int PlayId;
+            public float EndTime;
+        }
+        static readonly List<TimedLoop> timedLoops = new List<TimedLoop>();
 
         /// <summary>Play / Loop が返したIDの再生だけを止める</summary>
         public static void StopPlay(int index, int playId)

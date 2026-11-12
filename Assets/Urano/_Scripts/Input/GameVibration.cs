@@ -26,10 +26,10 @@ namespace Pirates
             else SwitchVibration.Low(joyconIndex, fallbackDuration);
         }
 
-        /// <summary>振動データをループ再生し、再生IDを返す。再生できなければ弱めの継続振動にして -1 を返す</summary>
-        public static int LoopFile(int joyconIndex, string path)
+        /// <summary>振動データをループ再生し、再生IDを返す。duration 秒で自動で止まる（負なら止めるまで）。再生できなければ弱めの継続振動にして -1 を返す</summary>
+        public static int LoopFile(int joyconIndex, string path, float duration = -1f)
         {
-            int id = SwitchVibration.Loop(joyconIndex, path);
+            int id = SwitchVibration.Loop(joyconIndex, path, duration);
             if (id < 0) SwitchVibration.Low(joyconIndex, -1f);
             return id;
         }

@@ -83,10 +83,9 @@ MonoBehaviour:
   owner: {fileID: 0}
   water: {fileID: 0}
   projectilePrefab: {fileID: 8299707208915026063, guid: 689b16d8b2446a143b29cbfa390f4406, type: 3}
-  explosionVfx: {fileID: 11400000, guid: 83d71a82294302243b32d783648538a0, type: 2}
   fallbackBallSize: 0.5
   mode: 0
-  projectileSpeed: 40
+  projectileSpeed: 80
   launchAngle: 22
   highArc: 0
   explosionRadius: 4
@@ -112,16 +111,19 @@ MonoBehaviour:
   forceMouse: 0
   stationNumber: 1
   barrel: {fileID: 6001071320214336055}
-  downAxis: 2
-  xAxis: 1
-  yAxis: 0
-  invertX: 0
-  invertY: 0
-  tiltRange: 40
+  sensitivity: 12000
+  sensitivityMin: 12000
+  sensitivityMax: 16000
+  sensitivityStep: 500
+  stickDeadZone: 0.3
+  yawRelaxFactor: 1
+  gravityBlend: 0.02
+  scaleReaction: 0.02
+  scaleRecovery: 0.12
+  scaleLimit: 0.35
   cursorColor: {r: 1, g: 0, b: 0, a: 1}
   cursorTexture: {fileID: 2800000, guid: c08d336c37d42fb47bd4ac752e2f3689, type: 3}
   cursorSize: 40
-  smoothing: 10
 --- !u!114 &8628198920000537608
 MonoBehaviour:
   m_ObjectHideFlags: 0
