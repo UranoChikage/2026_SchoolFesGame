@@ -99,9 +99,7 @@ namespace Common
             {
                 if (!Debug.isDebugBuild) return;
                 if (style == null) style = new GUIStyle(GUI.skin.label) { fontSize = 22, normal = { textColor = Color.yellow } };
-                string text = $"Vibration 登録=[{string.Join(",", devices.Keys)}]
-" + string.Join("
-", diagLines);
+                string text = $"Vibration 登録=[{string.Join(",", devices.Keys)}]" + string.Join("", diagLines);
                 float h = 34f * (diagLines.Count + 1);
                 GUI.Label(new Rect(10f, Screen.height - h - 10f, Screen.width - 20f, h), text, style);
             }
