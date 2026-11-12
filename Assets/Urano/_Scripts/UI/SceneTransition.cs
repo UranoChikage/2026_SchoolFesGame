@@ -85,6 +85,10 @@ namespace Pirates
                 return;
             }
 
+            // コントローラが付いていると、ロード用Imageが有効になるたびにそのクリップが頭から順再生されて、逆再生を上書きしてしまう。
+            // 再生はPlayableで直接行うので、コントローラは外しておく
+            animator.runtimeAnimatorController = null;
+
             // 最初の1フレームから「覆われた状態」にしておく（開く前にシーンが見えてしまうのを防ぐ）
             opening = true;
             imageShown = true;
