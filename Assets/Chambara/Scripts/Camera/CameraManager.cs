@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor.ShaderKeywordFilter;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -35,6 +36,11 @@ namespace Chambara
         [SerializeField] private Vector3 cameraOffset = new Vector3(0.5f, 1.8f, -2f);   // プレイヤーから見たカメラの位置（x:右 y:上 z:前）
         [SerializeField] private Vector3 lookOffset   = new Vector3(0f, 1.2f, 2f);      // プレイヤーから見た注視点（前方＝相手の方を見る）
 
+        [Header("ResultCamera Settings")]
+        [SerializeField] Vector3 resultCameraOffset = new Vector3(0f, 0f, -3f);   // プレイヤーの間の中心から見たカメラの位置（x:右 y:上 z:前）
+        [SerializeField] float resultDuration = 1.5f;   // 演出の長さ（秒）
+        Vector3 resultStartPos;
+
         [Header("Expand Settings")]
         [SerializeField] private float expandRate = 1.3f;   // 拡大率（1で等倍。FOVを 1/expandRate にする）
         [SerializeField] private AnimationCurve expandCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);   // 0→1 で等倍→最大拡大
@@ -67,13 +73,14 @@ namespace Chambara
             ChambaraManager.Instance.OnGameStateChanged += ChangeGameState;
             ChambaraManager.Instance.OnKnockback += loser => ChangeClashMode(loser.Body, Opponent(loser).transform);
 
-            // ChambaraManager の Start が先に動いて、登録前に Ready になっていたらここで反映する
+            // ChambaraManager の Start が先に動いて、登録前に Waiting / Ready になっていたらここで反映する
             if (ChambaraManager.Instance.GameState != GameState.None) ChangeGameState(ChambaraManager.Instance.GameState);
         }
         private void ChangeGameState(GameState newState)
         {
             switch (newState)
             {
+                case GameState.Waiting:
                 case GameState.Ready:
                     Initialize();
                     break;
@@ -91,7 +98,7 @@ namespace Chambara
 
         private void Update()
         {
-            if(currentState is GameState.Playing or GameState.Ready)
+            if(currentState is GameState.Playing or GameState.Ready or GameState.Waiting)
             {
                 SetPlayerCameraPos(ChambaraManager.Instance.Players[0].transform, playerCamera,cameraOffset);
 
@@ -188,6 +195,24 @@ namespace Chambara
             mainCamera.gameObject.SetActive(false);
             resultCamera.gameObject.SetActive(true);
             SetDivided(false);
+
+            StartCoroutine(ResultCameraAnim(resultCamera));
+        }
+
+        IEnumerator ResultCameraAnim(Camera resultCamera)
+        {
+            if(resultCamera == null) yield break;
+            Vector3 endPos = resultCamera.transform.position;
+            Vector3 StartPos=endPos + resultCameraOffset;
+
+            for (float t = 0f; t < resultDuration; t += Time.unscaledDeltaTime)
+            {
+                float p = t / resultDuration;
+                resultCamera.transform.position = Vector3.Lerp(StartPos, endPos, p);
+                yield return null;
+            }
+
+            resultCamera.transform.position = endPos;
         }
 
         private static PlayerBehaviour Opponent(PlayerBehaviour p)
