@@ -392,7 +392,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1645385952649043126, guid: 1965411636c731b459ad1d86693f1761, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8072403245802333957, guid: 1965411636c731b459ad1d86693f1761, type: 3}
       propertyPath: m_LocalScale.x
@@ -3097,7 +3097,7 @@ MonoBehaviour:
   maxDistance: 200
   edgeMargin: 40
   iconSize: 36
-  enemyColor: {r: 1, g: 0.25, b: 0.2, a: 1}
+  enemyColor: {r: 1, g: 0, b: 0.06914902, a: 1}
   useItemColor: 1
   itemColor: {r: 1, g: 0.9, b: 0.3, a: 1}
   treasureColor: {r: 1, g: 0.75, b: 0.1, a: 0.9}
@@ -3299,7 +3299,7 @@ PlayableDirector:
   m_Enabled: 1
   serializedVersion: 3
   m_PlayableAsset: {fileID: 11400000, guid: ac6e6e2469c69bc4bbe38915beb6595a, type: 2}
-  m_InitialState: 1
+  m_InitialState: 0
   m_WrapMode: 2
   m_DirectorUpdateMode: 1
   m_InitialTime: 0
@@ -3951,7 +3951,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &1376441283
 Transform:
   m_ObjectHideFlags: 0
@@ -4743,7 +4743,7 @@ MonoBehaviour:
   timeLimit: 90
   autoStart: 1
   introDirector: {fileID: 1281058468}
-  introDuration: 3
+  introDuration: 0
   outroDirector: {fileID: 0}
   outroDuration: 3
   sceneAfterTimeUp: ShipGame_Result
@@ -4769,18 +4769,6 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 1
         m_CallState: 2
-      - m_Target: {fileID: 3579663890952336682}
-        m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
-        m_MethodName: SetActive
-        m_Mode: 6
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
       - m_Target: {fileID: 21025704}
         m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
         m_MethodName: SetActive
@@ -4804,6 +4792,18 @@ MonoBehaviour:
           m_FloatArgument: 0
           m_StringArgument: 
           m_BoolArgument: 1
+        m_CallState: 2
+      - m_Target: {fileID: 3579663890952336682}
+        m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
+        m_MethodName: SetActive
+        m_Mode: 6
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
         m_CallState: 2
   onGameEnded:
     m_PersistentCalls:
@@ -5674,7 +5674,7 @@ MonoBehaviour:
   animator: {fileID: 1760409759}
   openClip: {fileID: 7400000, guid: ba562d9bd959692429581fad2b9987e6, type: 2}
   loadImage: {fileID: 1760409755}
-  releaseRatio: 0.8
+  releaseRatio: 0.4
   openDelay: 0.1
 --- !u!4 &1764553682 stripped
 Transform:
@@ -6743,64 +6743,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2043463852}
   m_CullTransparentMesh: 1
---- !u!1001 &2068794284
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 1264479756985504634, guid: 040a76d095ffba44dba15934c4473147, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 45.641003
-      objectReference: {fileID: 0}
-    - target: {fileID: 1264479756985504634, guid: 040a76d095ffba44dba15934c4473147, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 2.228
-      objectReference: {fileID: 0}
-    - target: {fileID: 1264479756985504634, guid: 040a76d095ffba44dba15934c4473147, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 31.245495
-      objectReference: {fileID: 0}
-    - target: {fileID: 1264479756985504634, guid: 040a76d095ffba44dba15934c4473147, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 1264479756985504634, guid: 040a76d095ffba44dba15934c4473147, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1264479756985504634, guid: 040a76d095ffba44dba15934c4473147, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1264479756985504634, guid: 040a76d095ffba44dba15934c4473147, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1264479756985504634, guid: 040a76d095ffba44dba15934c4473147, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: -90
-      objectReference: {fileID: 0}
-    - target: {fileID: 1264479756985504634, guid: 040a76d095ffba44dba15934c4473147, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1264479756985504634, guid: 040a76d095ffba44dba15934c4473147, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2201106846867017612, guid: 040a76d095ffba44dba15934c4473147, type: 3}
-      propertyPath: m_Name
-      value: Beam
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects:
-    - {fileID: 7714738972484119967, guid: 040a76d095ffba44dba15934c4473147, type: 3}
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 040a76d095ffba44dba15934c4473147, type: 3}
 --- !u!1001 &2070869729
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -6933,7 +6875,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2201106846867017612, guid: 07c4f26bae474af4093bcbbb31be9046, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2520435667047159446, guid: 07c4f26bae474af4093bcbbb31be9046, type: 3}
       propertyPath: m_LocalPosition.x
@@ -7263,6 +7205,10 @@ PrefabInstance:
       propertyPath: m_LocalPosition.z
       value: 0.0815
       objectReference: {fileID: 0}
+    - target: {fileID: 1564268304369677072, guid: ece323cb80ee83a49a26fd695f39a179, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 1950790764802718300, guid: ece323cb80ee83a49a26fd695f39a179, type: 3}
       propertyPath: m_LocalPosition.y
       value: -3.13
@@ -7443,6 +7389,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: DummyBoat
       objectReference: {fileID: 0}
+    - target: {fileID: 7893235048593905874, guid: ece323cb80ee83a49a26fd695f39a179, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 8764027302253656636, guid: ece323cb80ee83a49a26fd695f39a179, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0.2553
@@ -7539,6 +7489,10 @@ PrefabInstance:
       propertyPath: rudder
       value: 
       objectReference: {fileID: 859830823}
+    - target: {fileID: 3312140120932352368, guid: 4c9914546edff42459dc39bae3b2ddea, type: 3}
+      propertyPath: maxHealth
+      value: 500
+      objectReference: {fileID: 0}
     - target: {fileID: 3579663890758369582, guid: 4c9914546edff42459dc39bae3b2ddea, type: 3}
       propertyPath: m_Name
       value: Boat
@@ -7559,6 +7513,10 @@ PrefabInstance:
       propertyPath: input
       value: 
       objectReference: {fileID: 859830823}
+    - target: {fileID: 8481343348621125902, guid: 4c9914546edff42459dc39bae3b2ddea, type: 3}
+      propertyPath: capsizeAngle
+      value: 70
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -7605,5 +7563,4 @@ SceneRoots:
   - {fileID: 1022654268}
   - {fileID: 1122428514}
   - {fileID: 531563239}
-  - {fileID: 2068794284}
   - {fileID: 980934585}
