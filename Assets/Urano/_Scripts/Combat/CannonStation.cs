@@ -72,6 +72,9 @@ namespace Pirates
         [Tooltip("敵船の画面上の位置からこの距離(px)以内にカーソルがあるときだけ働く。大きいほど遠くから効く")]
         float assistRadius = 220f;
         [SerializeField]
+        [Tooltip("ONで、海に浮かぶアイテムにも吸い付く（まだアイテムを持っていないときだけ）")]
+        bool assistItems = true;
+        [SerializeField]
         [Range(0f, 1f)]
         [Tooltip("吸い付きの強さ。0=なし、1=敵船に完全に重なる。小さいほどゆるい")]
         float assistStrength = 0.45f;
@@ -138,7 +141,7 @@ namespace Pirates
         Vector2 inputCursor;     // 入力だけで動かした位置。アシストの影響を受けない
         Vector2 assistOffset;    // アシストによるずれ
         Vector2 assistVelocity;
-        EnemyShip assistTarget;  // いま吸い付いている敵（ころころ変わらないよう粘らせる）
+        IAimTarget assistTarget; // いま吸い付いている対象（敵船・アイテム。ころころ変わらないよう粘らせる）
         const float MaxLeadTime = 2f;
         float spinStartTime = -999f; // 回転演出を始めた時刻（Time.unscaledTime）
         Vector2 lockShipScreen;      // ロック中の敵船の画面座標（ブラケットを描く位置）
@@ -269,29 +272,24 @@ namespace Pirates
             Camera cam = Camera.main;
             if (cam == null || assistRadius <= 0f) return false;
 
-            EnemyShip best = null;
+            IAimTarget best = null;
             float bestScore = float.MaxValue;
             float bestDistance = 0f;
             Vector2 bestScreen = default;
 
             foreach (EnemyShip enemy in EnemyShip.Active)
             {
-                if (enemy == null || enemy.IsSunk) continue;
+                if (enemy == null) continue;
+                ConsiderTarget(cam, enemy, ref best, ref bestScore, ref bestDistance, ref bestScreen);
+            }
 
-                Vector3 sp = cam.WorldToScreenPoint(enemy.AimPosition);
-                if (sp.z <= 0f) continue; // カメラの後ろ
-
-                float distance = Vector2.Distance(new Vector2(sp.x, sp.y), inputCursor);
-                bool locked = enemy == assistTarget;
-                if (distance > assistRadius * (locked ? 1.25f : 1f)) continue; // 今吸い付いている敵は、少し遠くまで離さない
-
-                float score = locked ? distance * 0.7f : distance; // 粘らせて、近い敵の間で行ったり来たりしないようにする
-                if (score < bestScore)
+            // 海に浮かぶアイテムにも吸い付く。ただし取れない状態（すでに所持中・ビーム使用中）なら狙っても無駄なので対象にしない
+            if (assistItems && items != null && items.Held == null && !items.IsBeamActive)
+            {
+                foreach (ItemPickup pickup in ItemPickup.Active)
                 {
-                    bestScore = score;
-                    best = enemy;
-                    bestDistance = distance;
-                    bestScreen = new Vector2(sp.x, sp.y);
+                    if (pickup == null) continue;
+                    ConsiderTarget(cam, pickup, ref best, ref bestScore, ref bestDistance, ref bestScreen);
                 }
             }
 
@@ -342,6 +340,29 @@ namespace Pirates
         }
 
         // 数字キー（上段／テンキー）で操作する砲手を切り替える
+        // 候補1つを調べて、いまの最有力より近ければ入れ替える
+        void ConsiderTarget(Camera cam, IAimTarget target, ref IAimTarget best, ref float bestScore,
+            ref float bestDistance, ref Vector2 bestScreen)
+        {
+            if (!target.CanAssist) return;
+
+            Vector3 sp = cam.WorldToScreenPoint(target.AimPosition);
+            if (sp.z <= 0f) return; // カメラの後ろ
+
+            float distance = Vector2.Distance(new Vector2(sp.x, sp.y), inputCursor);
+            bool locked = target == assistTarget;
+            if (distance > assistRadius * (locked ? 1.25f : 1f)) return; // 今吸い付いている対象は、少し遠くまで離さない
+
+            float score = locked ? distance * 0.7f : distance; // 粘らせて、近いもの同士で行ったり来たりしないようにする
+            if (score < bestScore)
+            {
+                bestScore = score;
+                best = target;
+                bestDistance = distance;
+                bestScreen = new Vector2(sp.x, sp.y);
+            }
+        }
+
         void SelectByNumberKey()
         {
             if (GameInput.StationSelectPressed(stationNumber)) activeStationNumber = stationNumber;

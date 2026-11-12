@@ -6,8 +6,13 @@ namespace Pirates
     /// 海に浮かぶアイテム。大砲を当てると、当てた砲手が取得する（拾う操作なし）。
     /// その砲手がすでにアイテムを持っていたら取得できず、そのまま残る。
     /// </summary>
-    public class ItemPickup : MonoBehaviour
+    public class ItemPickup : MonoBehaviour, IAimTarget
     {
+        // エイムアシストの対象（海に浮かんで動かないので、偏差はなし）
+        public Vector3 AimPosition => transform.position;
+        public Vector3 AimVelocity => Vector3.zero;
+        public bool CanAssist => true;
+
         [SerializeField]
         [Tooltip("上下にゆれる幅(m)")]
         float bobHeight = 0.3f;

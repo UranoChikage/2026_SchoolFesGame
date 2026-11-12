@@ -9,7 +9,7 @@ namespace Pirates
     /// </summary>
     [RequireComponent(typeof(Rigidbody))]
     [RequireComponent(typeof(ShipHealth))]
-    public class EnemyShip : MonoBehaviour, ISlowable
+    public class EnemyShip : MonoBehaviour, ISlowable, IAimTarget
     {
         // 実行時にPlayerTargetから自動取得する（Inspectorでは設定しない）
         Transform target;
@@ -89,6 +89,7 @@ namespace Pirates
         public Vector3 AimPosition => transform.position;
         /// <summary>照準のアシストが偏差に使う速度（ワールド）</summary>
         public Vector3 AimVelocity => rb != null ? rb.linearVelocity : Vector3.zero;
+        public bool CanAssist => !sunk;
 
         // 「まだ一度も敵がカメラに映っていない」ときに EnemyFirstContact が立てる。並走役以外の全員が、画面の中心付近へ向かう
         public static bool SeekingCamera { get; private set; }
