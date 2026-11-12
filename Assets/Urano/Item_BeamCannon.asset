@@ -28,6 +28,6 @@ MonoBehaviour:
   beamHitVfx: {fileID: 11400000, guid: a9d60906d1ea3f3489611cd747b135d1, type: 2}
   beamExtendSpeed: 200
   beamRetractSpeed: 200
-  cameraZoomOut: 6
-  cameraShake: 0.15
+  cameraZoomOut: 10
+  cameraShake: 1
   barrierRadius: 6

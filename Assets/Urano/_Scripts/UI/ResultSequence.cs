@@ -131,8 +131,22 @@ namespace Pirates
 
         void GoTitle()
         {
-            if (!string.IsNullOrEmpty(titleScene)) SceneTransition.Load(titleScene);
-            else Debug.LogWarning("[ResultSequence] titleScene が未設定です", this);
+            if (string.IsNullOrEmpty(titleScene))
+            {
+                Debug.LogWarning("[ResultSequence] titleScene が未設定です", this);
+                return;
+            }
+
+            // タイトルが読み込まれたらプールを解除する（遷移の演出中は、並べた船を残しておくため、読み込み後に行う）
+            SceneManager.sceneLoaded -= ClearPoolOnLoad;
+            SceneManager.sceneLoaded += ClearPoolOnLoad;
+            SceneTransition.Load(titleScene);
+        }
+
+        static void ClearPoolOnLoad(Scene scene, LoadSceneMode mode)
+        {
+            SceneManager.sceneLoaded -= ClearPoolOnLoad;
+            PoolManager.Clear();
         }
     }
 }

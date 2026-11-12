@@ -69,6 +69,22 @@ namespace Pirates
             queue.Enqueue(pooled);
         }
 
+        /// <summary>プールのルート以下にある T を全て返す（使用中・返却済みの両方）。リザルトで船を並べるときなどに使う</summary>
+        public static List<T> FindAll<T>() where T : Component
+        {
+            var list = new List<T>();
+            if (root != null) root.GetComponentsInChildren(true, list);
+            return list;
+        }
+
+        /// <summary>プールを解除する。保持しているインスタンスを全て破棄し、次のSpawnから作り直す（タイトルへ戻るときなど）</summary>
+        public static void Clear()
+        {
+            pools.Clear();
+            if (root != null) Object.Destroy(root.gameObject);
+            root = null;
+        }
+
         static PooledObject Dequeue(GameObject prefab)
         {
             if (!pools.TryGetValue(prefab, out var queue)) return null;
