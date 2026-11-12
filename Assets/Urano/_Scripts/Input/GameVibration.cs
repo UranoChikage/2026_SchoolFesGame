@@ -14,9 +14,9 @@ namespace Pirates
         public const float MediumPulse = 0.25f;
 
         // 振動データ（StreamingAssets からの相対パス）。bnvib は他の振動と同時に鳴る
-        public const string FireFile = "Exprosion.bnvib";      // 大砲の発射
-        public const string ExplosionFile = "Exprosion.bnvib"; // 着弾の爆発
-        public const string BeamFile = "smash.bnvib";          // Beam中（ループ）
+        public const string FireFile = "Vibration/Exprosion.bnvib";      // 大砲の発射
+        public const string ExplosionFile = "Vibration/Exprosion.bnvib"; // 着弾の爆発
+        public const string BeamFile = "Vibration/smash.bnvib";          // Beam中（ループ）
 
         /// <summary>振動データを1回再生する。再生できなければ（デバイス無し・ファイル無し）、代わりに短い振動を出す</summary>
         public static void PlayFile(int joyconIndex, string path, bool fallbackStrong, float fallbackDuration)
