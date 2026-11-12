@@ -340,22 +340,6 @@ namespace Pirates
             return true;
         }
 
-        // 予測線：選ばれている砲だけ、カーソルが指す位置へ撃った弾道を表示する
-        void UpdateTrajectory(bool active)
-        {
-            if (trajectory == null) return;
-
-            if (active && aim.HasAim && shooter.TryGetLaunchVelocity(aim.AimPoint, out Vector3 velocity))
-            {
-                trajectory.Show(shooter.MuzzlePosition, velocity, aim.AimPoint.y, shooter.IsReady);
-            }
-            else
-            {
-                trajectory.Hide();
-            }
-        }
-
-        // 数字キー（上段／テンキー）で操作する砲手を切り替える
         // 候補1つを調べて、いまの最有力より近ければ入れ替える
         void ConsiderTarget(Camera cam, IAimTarget target, ref IAimTarget best, ref float bestScore,
             ref float bestDistance, ref Vector2 bestScreen)
@@ -379,6 +363,22 @@ namespace Pirates
             }
         }
 
+        // 予測線：選ばれている砲だけ、カーソルが指す位置へ撃った弾道を表示する
+        void UpdateTrajectory(bool active)
+        {
+            if (trajectory == null) return;
+
+            if (active && aim.HasAim && shooter.TryGetLaunchVelocity(aim.AimPoint, out Vector3 velocity))
+            {
+                trajectory.Show(shooter.MuzzlePosition, velocity, aim.AimPoint.y, shooter.IsReady);
+            }
+            else
+            {
+                trajectory.Hide();
+            }
+        }
+
+        // 数字キー（上段／テンキー）で操作する砲手を切り替える
         void SelectByNumberKey()
         {
             if (GameInput.StationSelectPressed(stationNumber)) activeStationNumber = stationNumber;
