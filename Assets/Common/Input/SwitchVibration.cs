@@ -36,6 +36,7 @@ namespace Common
         {
             if (device == null) devices.Remove(index);
             else devices[index] = device;
+            if (device != null) SelfTest(device);
             Diag($"Register index={index} device={(device != null ? device.GetType().Name : "解除")} 登録数={devices.Count}");
         }
 
@@ -45,7 +46,34 @@ namespace Common
         {
             Debug.Log("[Vibration診断] " + message);
             diagLines.Add($"{Time.realtimeSinceStartup:F1}s {message}");
-            if (diagLines.Count > 10) diagLines.RemoveAt(0);
+            if (diagLines.Count > 14) diagLines.RemoveAt(0);
+        }
+
+        // 【診断】bnvib がどのパスの書き方なら読めるかを、最初に登録された1台で試す（開発ビルドのみ・起動時に一瞬鳴る）。
+        // 結果は画面左下に「テスト パス → 再生ID」で出る（-1 は読めない）。原因が分かったら消す
+        static bool selfTested;
+        static readonly string[] testPaths =
+        {
+            "Vibration/SampleB.bnvib",  // サンプル（これも -1 なら、パスの書き方より前の問題）
+            "Vibration/smash.bnvib",
+            "Vibration/Exprosion.bnvib",
+            "Vibration/smash",          // 拡張子なし
+            "SampleB.bnvib",            // Vibration/ なし
+            "smash.bnvib",
+        };
+
+        static void SelfTest(ISwitchVibrateInput device)
+        {
+            if (selfTested || !Debug.isDebugBuild) return;
+            selfTested = true;
+            foreach (string path in testPaths)
+            {
+                int id;
+                try { id = device.PlayResources(path); }
+                catch (System.Exception e) { Diag($"テスト {path} → 例外 {e.GetType().Name}"); continue; }
+                Diag($"テスト {path} → {id}");
+                if (id >= 0) device.StopPlay(id);
+            }
         }
 
         // 【診断】デバイス未登録のまま呼ばれたことを、番号ごとに1回だけ知らせる。原因が分かったら消す
