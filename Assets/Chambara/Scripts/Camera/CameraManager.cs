@@ -73,13 +73,14 @@ namespace Chambara
             ChambaraManager.Instance.OnGameStateChanged += ChangeGameState;
             ChambaraManager.Instance.OnKnockback += loser => ChangeClashMode(loser.Body, Opponent(loser).transform);
 
-            // ChambaraManager の Start が先に動いて、登録前に Ready になっていたらここで反映する
+            // ChambaraManager の Start が先に動いて、登録前に Waiting / Ready になっていたらここで反映する
             if (ChambaraManager.Instance.GameState != GameState.None) ChangeGameState(ChambaraManager.Instance.GameState);
         }
         private void ChangeGameState(GameState newState)
         {
             switch (newState)
             {
+                case GameState.Waiting:
                 case GameState.Ready:
                     Initialize();
                     break;
@@ -97,7 +98,7 @@ namespace Chambara
 
         private void Update()
         {
-            if(currentState is GameState.Playing or GameState.Ready)
+            if(currentState is GameState.Playing or GameState.Ready or GameState.Waiting)
             {
                 SetPlayerCameraPos(ChambaraManager.Instance.Players[0].transform, playerCamera,cameraOffset);
 

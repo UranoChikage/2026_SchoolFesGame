@@ -7,7 +7,7 @@ using UnityEngine.SceneManagement;
 
 namespace Chambara
 {
-    public enum GameState { None, Ready ,Playing, Slow, Finished } //開始前 /プレイ中 /スロー演出中 / 終了後
+    public enum GameState { None, Waiting, Ready ,Playing, Slow, Finished } //初期化前 /準備完了・開始待ち /Ready演出中 /プレイ中 /スロー演出中 / 終了後
 
     /// <summary>
     /// 試合の流れ。プレイヤーの状態を更新し、判定はChambaraSimulatorに任せる
@@ -21,6 +21,8 @@ namespace Chambara
         [SerializeField] Transform edgePlayerPos0;
         [SerializeField] Transform edgePlayerPos1;
         [SerializeField] float matchTime = 60f;
+        [SerializeField, Tooltip("ON: シーン開始後すぐ Ready を始める / OFF: ReadyGame() が呼ばれるまで待つ（AllPlayersReady の onAllReady などから呼ぶ）")]
+        bool autoReady = false;
         [SerializeField] ChambaraRule rule = new ChambaraRule();
 
         ChambaraSimulator sim;
@@ -84,10 +86,20 @@ namespace Chambara
             if (hitStop == null) hitStop = FindAnyObjectByType<HitStop>();
             if (hitStop == null) Debug.LogWarning("HitStop がシーンにないので、ヒットストップせずに吹っ飛ばします");
             if (winnerResult == null) winnerResult = FindAnyObjectByType<WinnerResult>();
-            ReadyGame();
+            SetupRound();
+            if (autoReady) ReadyGame();
         }
 
+        // Ready（開始演出）を始める。初期化済みで開始待ち（Waiting）のときだけ有効
+        // 1ラウンド目は autoReady が OFF ならこれが呼ばれるまで待つ（UnityEvent から呼べる）
         public void ReadyGame()
+        {
+            if (gameState != GameState.Waiting) return;
+            SetGameState(GameState.Ready);
+        }
+
+        // プレイヤーを作って配置し、カメラなどを初期化する（Waiting にする）。Ready はまだ始めない
+        void SetupRound()
         {
             waitingNextRound = false;
             waitingTitleUi = false;
@@ -105,12 +117,12 @@ namespace Chambara
             string[] swords = ChambaraSelection.HasValue ? ChambaraSelection.SwordModelNames : swordModelNames;
             players[0].Init(0, models[0], swords[0], sim, edgePlayerPos0, edgePlayerPos1);
             players[1].Init(1, models[1], swords[1], sim, edgePlayerPos1, edgePlayerPos0);
-            startTime = Time.time;
-            SetGameState(GameState.Ready);
+            SetGameState(GameState.Waiting);
         }
 
         public void StartGame()
         {
+            startTime = Time.time;   // 開始待ちの時間は試合時間に含めない
             SetGameState(GameState.Playing);
         }
 
@@ -127,7 +139,7 @@ namespace Chambara
                 if (Time.time - startTime >= matchTime) Finish("時間切れ 引き分け", -1);
             }
 
-            if (gameState != GameState.Ready && gameState != GameState.None)
+            if (gameState is not (GameState.None or GameState.Waiting or GameState.Ready))
             {
                 foreach (var p in players) p.Render();
             }
@@ -208,7 +220,8 @@ namespace Chambara
             {
                 if (p != null) Destroy(p.gameObject);
             }
-            ReadyGame();
+            SetupRound();
+            ReadyGame();   // 2ラウンド目以降はすぐ Ready
         }
 
         private void OnValidate()
