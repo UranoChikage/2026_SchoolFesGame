@@ -35,11 +35,15 @@ namespace Chambara
         {
             Fighter def = players[1 - atk];
             if (Distance > r.attackRange) return AttackResult.Whiff;
-            if (def.state == PlayerState.Guard )
-            {
-                if(Mathf.Abs(Mirror(def.dir) - dir)<=1)return AttackResult.Guarded;
-            }
+            if (def.state == PlayerState.Guard && DirectionDiff(Mirror(def.dir), dir) <= 1) return AttackResult.Guarded;
             return AttackResult.Hit;
+        }
+
+        // 2つの方向の差（一周つながっているので 0 と 7 は隣＝差1）
+        int DirectionDiff(int a, int b)
+        {
+            int d = Math.Abs(a - b) % r.directions;
+            return Math.Min(d, r.directions - d);
         }
 
         // 突きが成功したかどうか（前へ出終わった後に呼ぶ）。ガードは方向を問わず防げる

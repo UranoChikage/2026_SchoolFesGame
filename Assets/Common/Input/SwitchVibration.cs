@@ -81,10 +81,18 @@ namespace Common
             Object.DontDestroyOnLoad(go);
             go.AddComponent<Driver>();
         }
-        /// <summary>bnvib ファイルを再生する。path は StreamingAssets からの相対パス（例: "Vibration/hit.bnvib"）</summary>
-        public static void Play(int index, string path)
+        /// <summary>bnvib を再生する（他の振動と同時に鳴る）。戻り値は再生ID、失敗時 -1</summary>
+        public static int Play(int index, string path)
+            => devices.TryGetValue(index, out var d) ? d.PlayResources(path) : -1;
+
+        /// <summary>bnvib をループ再生する。止めるときは戻り値を StopPlay に渡す</summary>
+        public static int Loop(int index, string path)
+            => devices.TryGetValue(index, out var d) ? d.PlayResources(path, true) : -1;
+
+        /// <summary>Play / Loop が返したIDの再生だけを止める</summary>
+        public static void StopPlay(int index, int playId)
         {
-            if (devices.TryGetValue(index, out var d)) d.PlayResources(path);
+            if (devices.TryGetValue(index, out var d)) d.StopPlay(playId);
         }
 
         /// <summary>登録済みの全コントローラーの振動を止める</summary>

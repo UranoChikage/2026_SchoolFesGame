@@ -9,8 +9,10 @@ namespace Chambara
     ///
     /// ■ 操作
     ///   構え（アイドル・移動中） … Joy-Conの向きをそのまま剣に反映する（フルトラッキング）
-    ///   攻撃 … 刃先の向きが swingTime 秒以内に swingAngle 度以上動いたら振ったとみなす
-    ///          方向は、動き始めの刃先から今の刃先へ動いた向き（後ろから見て。上=0から時計回りの8方向）
+    ///   攻撃 … 刃先が swingStartSpeed（度/秒）以上の速さで動き出したら振り始め。そこから swingAngle 度以上動いたら振ったとみなす
+    ///          ゆっくりした振りかぶりは振りにならない。途中で逆向きに切り返したら、そこから振り直しとして数える
+    ///          方向は、振り始めの刃先から今の刃先へ動いた向き（後ろから見て。上=0から時計回りの8方向）
+    ///          移動中・硬直中など行動を受け付けないときは出さない（受け付けるようになった時点でまだ振っていれば出る）
     ///   ガード … ガードボタン(Confirm = ZR/ZL)を押しながら、刃を正面と垂直に構える
     ///            刃が水平 → 上 / 刃先が下向き → 下 / 刃先が上向きで右に傾ける → 右 / 左に傾ける → 左
     ///   突き … 回さずに前（相手の方）へ素早く突き出す。重力を除いた加速度がしきい値を超え、
@@ -39,7 +41,17 @@ namespace Chambara
         bool thrustArmed = true;
         float thrustBlockedUntil;  // この時刻までは突きを受け付けない（前以外に動かした後）
         float swingBlockedUntil;   // この時刻までは次の振りを受け付けない
-        readonly Queue<(float time, Vector3 tip)> tipHistory = new();   // 刃先の向き（プレイヤー基準）の履歴。swingTime 秒分
+        // 振りの検出（刃先の向きはプレイヤー基準）
+        bool hasPrevTip;
+        Vector3 prevTip;          // 前のフレームの刃先の向き
+        bool inStroke;            // 速く動かしている最中か
+        bool strokeFired;         // この振りでもう攻撃を出したか
+        float strokeStartTime;
+        Vector3 strokeFrom;       // 振り始めの刃先の向き
+        Vector2 strokeMove;       // 振り始めから後ろから見て動いた量
+        int lastReadFrame = -10;  // 最後に Read されたフレーム（PlayerBehaviour が行動を受け付けているか）
+
+        float poseSeen;           // 今の構えを最後に確認した時刻
         bool hasGravity;
         Vector3 gravity;          // Joy-Conの姿勢の座標（SDKの基準）での重力による加速度
         int pendingSwing = -1;
@@ -79,6 +91,7 @@ namespace Chambara
 
         public PlayerInput Read()
         {
+            lastReadFrame = Time.frameCount;
             PlayerInput result;
             if (!tracking) result = fallback != null ? fallback.Read() : PlayerInput.None;
             else
@@ -114,7 +127,8 @@ namespace Chambara
             {
                 calibrated = false;   // 繋ぎ直したら合わせ直す
                 hasGravity = false;
-                tipHistory.Clear();
+                hasPrevTip = false;
+                inStroke = false;
                 return;
             }
 
@@ -125,15 +139,37 @@ namespace Chambara
                 // 今の向きが calibrationAngle の構えになるようにする
                 calibration = Quaternion.Euler(config.calibrationAngle, 0f, 0f) * Quaternion.Inverse(grip) * Quaternion.Inverse(controller);
                 calibrated = true;
+                hasPrevTip = false;   // 向きが飛ぶので、振りとして数えない
+                inStroke = false;
             }
             Quaternion controllerInPlayer = calibration * controller;   // プレイヤー基準のJoy-Conの向き
             swordRotation = controllerInPlayer * grip;
 
             UpdateMove(input);
             bool guarding = input.Button(playerIndex, config.guardButton);
-            pose = guarding ? GuardDirection(swordRotation * Vector3.up) : -1;
-            UpdateSwing(guarding);
+            UpdateGuard(guarding);
+            // 前のフレームか今のフレームに Read されていれば、行動を受け付けている（Update の順番はどちらでもよい）
+            bool accepting = Time.frameCount - lastReadFrame <= 1;
+            UpdateSwing(guarding, accepting);
             UpdateThrust(input, controller, controllerInPlayer, guarding);
+        }
+
+        // ガードの構え。境目で手がぶれても、guardGraceTime 秒続くまでは今の構えを保つ（ボタンを離したらすぐ解く）
+        void UpdateGuard(bool guarding)
+        {
+            float now = Time.time;
+            if (!guarding)
+            {
+                pose = -1;
+                return;
+            }
+            int raw = GuardDirection(swordRotation * Vector3.up);
+            if (raw == pose) poseSeen = now;
+            else if (pose < 0 || now - poseSeen > config.guardGraceTime)
+            {
+                pose = raw;
+                poseSeen = now;
+            }
         }
 
         void UpdateMove(SwitchInput input)
@@ -153,31 +189,52 @@ namespace Chambara
             // }
         }
 
-        // 刃先の向きが swingTime 秒以内に swingAngle 度以上動いたら、動いた向きに1回振る
-        void UpdateSwing(bool guarding)
+        // 刃先が速く動き出してから swingAngle 度以上動いたら、動いた向きに1回振る
+        void UpdateSwing(bool guarding, bool accepting)
         {
             float now = Time.time;
             Vector3 tip = swordRotation * Vector3.up;   // 刃先の向き（プレイヤー基準。x+右 y+上 z+前）
-            while (tipHistory.Count > 0 && now - tipHistory.Peek().time > config.swingTime) tipHistory.Dequeue();
-            tipHistory.Enqueue((now, tip));
-
-            if (guarding || now < swingBlockedUntil) return;
-
-            // 一番古い（大きく動いた）ものから順に、今の向きと swingAngle 度以上離れているものを探す
-            foreach (var (_, from) in tipHistory)
+            if (!hasPrevTip)
             {
-                if (Vector3.Angle(from, tip) < config.swingAngle) continue;
-
-                // 動いた向き = 後ろから見た刃先の位置（x, y）の差
-                Vector2 d = new Vector2(tip.x - from.x, tip.y - from.y);
-                if (d.sqrMagnitude < 1e-4f) return;   // 前後にだけ動いた（後ろから見て動いていない）
-                pendingSwing = AngleToDirection(Mathf.Atan2(d.x, d.y) * Mathf.Rad2Deg, Directions);
-                pendingSwingTime = now;
-                swingBlockedUntil = now + config.swingCooldown;
-                thrustArmed = false;   // 振りの終わりの急停止で突きが出ないようにする
-                tipHistory.Clear();
+                prevTip = tip;
+                hasPrevTip = true;
                 return;
             }
+
+            // 刃先の速さ（度/秒）。スロー演出中も同じ速さで判定できるよう実時間で測る
+            float dt = Time.unscaledDeltaTime;
+            float speed = dt > 0f ? Vector3.Angle(prevTip, tip) / dt : 0f;
+            Vector2 step = new Vector2(tip.x - prevTip.x, tip.y - prevTip.y);   // 後ろから見た今フレームの動き
+
+            if (inStroke)
+            {
+                if (speed < config.swingEndSpeed || now - strokeStartTime > config.swingTime) inStroke = false;   // 止まった・長すぎる
+                else if (strokeMove.sqrMagnitude > 1e-6f && step.sqrMagnitude > 1e-6f
+                         && Vector2.Dot(step.normalized, strokeMove.normalized) < -0.3f)
+                    StartStroke(prevTip, now);   // 逆向きに切り返した（振りかぶり→振り下ろし）
+            }
+            if (!inStroke && speed >= config.swingStartSpeed) StartStroke(prevTip, now);
+            if (inStroke) strokeMove += step;
+            prevTip = tip;
+
+            if (!inStroke || strokeFired || guarding || !accepting || now < swingBlockedUntil) return;
+            if (Vector3.Angle(strokeFrom, tip) < config.swingAngle) return;
+            if (strokeMove.magnitude < config.swingMinScreenMove) return;   // ほぼ前後にだけ動いた
+
+            pendingSwing = AngleToDirection(Mathf.Atan2(strokeMove.x, strokeMove.y) * Mathf.Rad2Deg, Directions);
+            pendingSwingTime = now;
+            swingBlockedUntil = now + config.swingCooldown;
+            thrustArmed = false;   // 振りの終わりの急停止で突きが出ないようにする
+            strokeFired = true;    // 同じ振りでは1回だけ
+        }
+
+        void StartStroke(Vector3 from, float now)
+        {
+            inStroke = true;
+            strokeFired = false;
+            strokeStartTime = now;
+            strokeFrom = from;
+            strokeMove = Vector2.zero;
         }
 
         // 回さずに前へ素早く動かしたら1回突く
@@ -228,13 +285,17 @@ namespace Chambara
         // 刃の向き（プレイヤー基準）からガード方向（上=0 右=2 下=4 左=6）。構えになっていなければ -1
         int GuardDirection(Vector3 blade)
         {
+            // 今の構えから抜けにくくなるよう、境目を guardHysteresis 度ずらす
+            float h = config.guardHysteresis;
             float toFront = Vector3.Angle(blade, Vector3.forward);
-            if (Mathf.Abs(toFront - 90f) > config.perpendicularTolerance) return -1;
+            if (Mathf.Abs(toFront - 90f) > config.perpendicularTolerance + (pose >= 0 ? h : 0f)) return -1;
 
             float tip = Mathf.Atan2(blade.x, blade.y) * Mathf.Rad2Deg;   // 刃先の角度。真上=0、右回りで+
             float abs = Mathf.Abs(tip);
-            if (abs >= 180f - config.verticalRange) return 4;   // 刃先が下向き
-            if (abs > config.verticalRange) return 0;           // 水平
+            float downEdge = 180f - config.verticalRange + (pose == 4 ? -h : pose == 0 ? h : 0f);   // これ以上なら下向き
+            float upEdge = config.verticalRange + (pose == 0 ? -h : pose == 2 || pose == 6 ? h : 0f);  // これ以下なら上向き
+            if (abs >= downEdge) return 4;   // 刃先が下向き
+            if (abs > upEdge) return 0;      // 水平
             if (abs < config.sideDeadZone) return pose == 2 || pose == 6 ? pose : -1;   // 真上付近は今の左右を保つ
             return tip > 0f ? 2 : 6;
         }
