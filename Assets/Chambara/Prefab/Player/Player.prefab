@@ -1429,6 +1429,7 @@ MonoBehaviour:
   knockbackGravity: 10
   knockbackFlipSpeed: 900
   knockbackTwistSpeed: 0
+  poseConfig: {fileID: 11400000, guid: a3f7997ce09044bfb704bc9adb2ab117, type: 2}
 --- !u!1 &9032446081639304592
 GameObject:
   m_ObjectHideFlags: 0

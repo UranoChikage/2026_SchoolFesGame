@@ -76,8 +76,12 @@ namespace Chambara
 
         static readonly int[] guardDirections = new int[4] { 0, 2, 4, 6 };   // 上右下左の4方向
 
+        /// <summary>このプレイヤーのキャラクター名（ModelList の名前）</summary>
+        public string ModelName { get; private set; }
+
         public void Init(int playerIndex, string modelName, string swordName, ChambaraSimulator sim, Transform edge, Transform opponentEdge)
         {
+            ModelName = modelName;
             this.sim = sim;
             this.playerIndex = playerIndex;
             Data = sim.players[playerIndex];
@@ -216,6 +220,23 @@ namespace Chambara
 
         public void Lose() => Lost = true;
 
+        public bool InResult { get; private set; }   // 試合の決着演出中（決まった位置に立って勝ち・負けのポーズ）
+        Vector3 resultPos;
+
+        // 試合の決着演出：point の位置・向きに立たせて、勝ち・負けのポーズをとらせる（吹っ飛んで消えていても戻す）
+        public void PlayResult(Transform point)
+        {
+            InResult = true;
+            gameObject.SetActive(true);
+            IsStepping = false;
+            StepJump = 0f;
+            lean = 0f;
+            resultPos = point.position;
+            baseRotation = point.rotation;
+            transform.SetPositionAndRotation(resultPos, baseRotation);
+            if (bodyRig != null) bodyRig.PlayResult(Won);
+        }
+
         /// <summary>入力元が剣の向きを出しているとき、その回転（プレイヤー基準）を返す</summary>
         public bool TryGetTrackedSword(out Quaternion rotation)
         {
@@ -257,6 +278,14 @@ namespace Chambara
 
         public void Render()
         {
+            if (InResult)
+            {
+                // 決着演出中は決まった位置に立ったまま（のけぞり・移動はしない）
+                StepJump = 0f;
+                transform.SetPositionAndRotation(resultPos, baseRotation);
+                return;
+            }
+
             StepJump = UpdateStep();
 
             bool stunned = Data.state == PlayerState.Stun;

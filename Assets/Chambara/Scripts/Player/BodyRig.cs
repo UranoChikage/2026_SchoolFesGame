@@ -66,6 +66,9 @@ namespace Chambara
         [SerializeField, Tooltip("後ろ回りの回転速度（度/秒）")] float knockbackFlipSpeed = 720f;
         [SerializeField, Tooltip("体の縦軸まわりのきりもみ回転速度（度/秒）")] float knockbackTwistSpeed = 1080f;
 
+        [Header("試合の決着（勝ち・負けのポーズの数値）")]
+        [SerializeField, Tooltip("未設定なら初期値で動く")] ResultPoseConfig poseConfig;
+
         PlayerBehaviour player;
         Sword sword;
         Transform floatPivot, chest, neck;
@@ -87,6 +90,24 @@ namespace Chambara
         bool knockedBack;
         Vector3 knockbackOffset, knockbackVel;   // Player のローカル座標
         float knockbackFlip, knockbackTwist;
+
+        // 決着演出
+        enum ResultPose { None, Victory, Defeat }
+        ResultPose result;
+        float resultTime;            // 決着演出が始まってからの時間
+        bool collapsed;              // 負け：崩れ落ち始めたか
+        float sink, sinkVel;         // 負け：崩れ落ちて沈んだ深さ
+        Transform gripR, gripL;      // 手（剣の握りの子）
+        Vector3 handRPos, handLPos, swordPos, swordFromPos;
+        Quaternion handRRot, handLRot, swordRot, swordFromRot;
+
+        // パーツの大きさ（決着のポーズで手を置く位置に使う。ワールド座標）
+        Vector3 headOffset;          // 首から頭の中心（Player の向き基準）
+        float headRadius = 0.1f, headHeight = 0.2f, bodyRadius = 0.15f, bodyHeight = 0.3f;
+        float groundOffset;          // Player の位置から足元（一番下のパーツの下端）までの高さ
+
+        public Transform Head => neck;   // 頭（涙のエフェクトなどを付ける）
+        public Vector3 HeadCenter => neck.position + neck.rotation * headOffset;
 
         private void Awake()
         {
@@ -132,11 +153,28 @@ namespace Chambara
 
             if (sword != null && sword.Pivot != null)
             {
-                AttachHand(Find(handRName), handROffset);
-                AttachHand(Find(handLName), handLOffset);
+                gripR = AttachHand(Find(handRName), handROffset);
+                gripL = AttachHand(Find(handLName), handLOffset);
             }
 
             floatRest = transform.InverseTransformPoint(floatPivot.position);
+
+            // 決着のポーズ用に、パーツの大きさを覚えておく（モデルを差し替えても合うように）
+            headOffset = Quaternion.Inverse(transform.rotation) * (headCenter - neckPos);
+            if (head != null)
+            {
+                Bounds hb = PartBounds(head);
+                headRadius = Mathf.Max(hb.extents.x, hb.extents.z, 0.05f);
+                headHeight = Mathf.Max(hb.size.y, 0.05f);
+            }
+            if (body != null)
+            {
+                Bounds bb = PartBounds(body);
+                bodyRadius = Mathf.Max(bb.extents.x, bb.extents.z, 0.05f);
+                bodyHeight = Mathf.Max(bb.size.y, 0.05f);
+            }
+            Transform bottomPart = lower != null ? lower : body;
+            groundOffset = bottomPart != null ? PartBounds(bottomPart).min.y - transform.position.y : 0f;
         }
 
         private void LateUpdate()
@@ -146,32 +184,47 @@ namespace Chambara
 
             PlayerState state = player.Data != null ? player.Data.state : PlayerState.Idle;
 
-            bool idle = state == PlayerState.Idle && !player.IsStepping && !player.Lost;
-            limp  = Mathf.Lerp(limp, player.Lost ? 1f : 0f, Damp(limpSpeed));
-            lunge = Mathf.Lerp(lunge, state == PlayerState.Attack || state == PlayerState.Thrust ? attackLunge : 0f, Damp(bodySpeed));
+            bool inResult = result != ResultPose.None;
+            if (inResult) resultTime += dt;
+            bool idle = state == PlayerState.Idle && !player.IsStepping && !player.Lost && !inResult;
+            limp  = Mathf.Lerp(limp, player.Lost && !inResult ? 1f : 0f, Damp(limpSpeed));   // 決着演出では脱力の代わりに崩れ落ちる
+            lunge = Mathf.Lerp(lunge, !inResult && (state == PlayerState.Attack || state == PlayerState.Thrust) ? attackLunge : 0f, Damp(bodySpeed));
             hop   = Mathf.Lerp(hop, player.Won || idle ? 1f : 0f, Damp(bodySpeed));
+            float sob = UpdateDefeatBody(dt);   // 負け：崩れ落ちて、しゃくり上げる（0〜1）
 
             // 体全体：呼吸・跳ね・攻撃の踏み込み・脱力で沈む
             float y = Mathf.Sin(Time.time * breathSpeed) * breathHeight * (1f - limp)
                     + Mathf.Abs(Mathf.Sin(Time.time * hopSpeed)) * hopHeight * hop
                     + player.StepJump
-                    - limpSink * limp;
+                    - limpSink * limp
+                    - sink + sob * poseConfig.sobHeight;
             Vector3 floatPos = transform.TransformPoint(floatRest + new Vector3(0f, y, lunge));
             floatPivot.SetPositionAndRotation(floatPos, transform.rotation);
             UpdateKnockback(dt, floatPos);
 
             // 胴：剣の向き（Player基準）に合わせてひねる・傾ける
             Vector3 b = sword != null && sword.Pivot != null ? floatPivot.InverseTransformDirection(sword.Pivot.up) : Vector3.up;
-            Vector3 chestTarget = new Vector3((restBladeY - b.y) * bendAngle + limpBend * limp, b.x * twistAngle, -b.x * tiltAngle);
+            Vector3 chestTarget = result switch
+            {
+                ResultPose.Victory => new Vector3(-poseConfig.victoryLeanBack, 0f, 0f),
+                ResultPose.Defeat  => collapsed ? new Vector3(poseConfig.defeatBend + sob * poseConfig.sobAngle, 0f, 0f) : Vector3.zero,
+                _ => new Vector3((restBladeY - b.y) * bendAngle + limpBend * limp, b.x * twistAngle, -b.x * tiltAngle),
+            };
             chestEuler = Vector3.Lerp(chestEuler, chestTarget, Damp(bodySpeed));
             chest.rotation = floatPivot.rotation * Quaternion.Euler(chestEuler);
 
             // 頭：胴の回転を打ち消して相手を見る。怯みで上を向き、負けるとうなだれる
             Vector3 headTarget = -chestEuler * headStabilize;
-            if (state == PlayerState.Stun) headTarget.x -= stunHeadTilt;
+            if (state == PlayerState.Stun && !inResult) headTarget.x -= stunHeadTilt;
             headTarget.x += limpHeadDrop * limp;
+            if (result == ResultPose.Victory) headTarget = new Vector3(-poseConfig.victoryHeadUp, 0f, 0f);
+            if (result == ResultPose.Defeat) headTarget = collapsed ? new Vector3(poseConfig.defeatHeadDrop, 0f, 0f) : Vector3.zero;
             headEuler = Vector3.Lerp(headEuler, headTarget, Damp(bodySpeed));
             neck.rotation = chest.rotation * Quaternion.Euler(headEuler);
+
+            // 決着のポーズ：剣と手を動かす（Sword が置いた剣を上書きする）
+            if (result == ResultPose.Victory) UpdateVictoryHands();
+            if (result == ResultPose.Defeat && collapsed) UpdateDefeatHands();
 
             if (hair != null) UpdateSpring(hair, hairStiffness, hairDamping, hairMaxAngle, dt);
             foreach (var tail in tails) UpdateSpring(tail, tailStiffness, tailDamping, tailMaxAngle, dt);
@@ -211,6 +264,106 @@ namespace Chambara
             }
         }
 
+        /// <summary>
+        /// 試合の決着演出を始める。won: 勝ったなら片腕を突き上げて喜ぶ、負けたなら崩れ落ちて泣く
+        /// 呼ぶ前に Player を演出の位置・向きに置いておく
+        /// </summary>
+        public void PlayResult(bool won)
+        {
+            if (poseConfig == null) poseConfig = ScriptableObject.CreateInstance<ResultPoseConfig>();   // 未設定なら初期値
+            result = won ? ResultPose.Victory : ResultPose.Defeat;
+            resultTime = 0f;
+            collapsed = false;
+            knockedBack = false;   // 吹っ飛んでいたら戻す
+            limp = 0f;
+            sink = sinkVel = 0f;
+            chestEuler = headEuler = Vector3.zero;   // 立った状態から始める（負けた方はここから崩れ落ちる）
+
+            // 今の剣と手の位置から動き始める
+            if (sword != null && sword.Pivot != null)
+            {
+                swordPos = sword.Pivot.position;
+                swordRot = sword.Pivot.rotation;
+            }
+            if (gripR != null) { handRPos = gripR.position; handRRot = gripR.rotation; }
+            if (gripL != null) { handLPos = gripL.position; handLRot = gripL.rotation; }
+        }
+
+        // 負け：defeatDelay 待ってから、バネで沈んで（少し弾んで）崩れ落ちる。しゃくり上げの強さ（0〜1）を返す
+        float UpdateDefeatBody(float dt)
+        {
+            if (result != ResultPose.Defeat) return 0f;
+            if (!collapsed)
+            {
+                if (resultTime < poseConfig.defeatDelay) return 0f;
+                collapsed = true;
+                // 剣を落とし始める位置と、顔を覆い始める手の位置
+                if (sword != null && sword.Pivot != null)
+                {
+                    swordFromPos = sword.Pivot.position;
+                    swordFromRot = sword.Pivot.rotation;
+                }
+                if (gripR != null) { handRPos = gripR.position; handRRot = gripR.rotation; }
+                if (gripL != null) { handLPos = gripL.position; handLRot = gripL.rotation; }
+            }
+
+            sinkVel += ((poseConfig.defeatSink - sink) * poseConfig.defeatSinkStiffness - sinkVel * poseConfig.defeatSinkDamping) * dt;
+            sink += sinkVel * dt;
+
+            // 崩れ落ちてから少しして、ひっく、ひっくと肩を震わせる
+            float t = resultTime - poseConfig.defeatDelay;
+            float fadeIn = Mathf.Clamp01((t - poseConfig.sobStartDelay) / 0.5f);
+            return Mathf.Pow(Mathf.Abs(Mathf.Sin(t * poseConfig.sobSpeed)), 3f) * fadeIn;
+        }
+
+        // 勝ち：剣を握った右手を頭の上へ突き上げ（ときどき突き上げ直す）、左手は腰に当てる
+        void UpdateVictoryHands()
+        {
+            float k = Damp(poseConfig.handSpeed);
+            Vector3 up = floatPivot.up, right = floatPivot.right;
+
+            if (sword != null && sword.Pivot != null)
+            {
+                float pump = Mathf.Abs(Mathf.Sin(resultTime * poseConfig.victoryPumpSpeed)) * poseConfig.victoryPumpHeight;
+                Vector3 target = neck.position + right * (bodyRadius + poseConfig.victorySpread) + up * (headHeight + poseConfig.victoryRaise + pump);
+                Quaternion targetRot = floatPivot.rotation * Quaternion.Euler(0f, 0f, -poseConfig.victoryBladeTilt);   // 刃を上に、少し外へ傾ける
+                swordPos = Vector3.Lerp(swordPos, target, k);
+                swordRot = Quaternion.Slerp(swordRot, targetRot, k);
+                sword.Pivot.SetPositionAndRotation(swordPos, swordRot);
+            }
+
+            Vector3 hip = chest.position - right * (bodyRadius + 0.03f) + up * (bodyHeight * 0.2f);
+            MoveHand(gripL, ref handLPos, ref handLRot, hip, chest.rotation, k);
+        }
+
+        // 負け：剣を足元に落とし、両手で顔を覆う
+        void UpdateDefeatHands()
+        {
+            if (sword != null && sword.Pivot != null)
+            {
+                float p = poseConfig.swordDropTime > 0f ? Mathf.Clamp01((resultTime - poseConfig.defeatDelay) / poseConfig.swordDropTime) : 1f;
+                p *= p;   // 加速しながら落ちる
+                Vector3 to = transform.position + transform.rotation * new Vector3(poseConfig.droppedSwordPos.x, groundOffset + poseConfig.droppedSwordPos.y, poseConfig.droppedSwordPos.z);
+                Quaternion toRot = transform.rotation * Quaternion.Euler(0f, poseConfig.droppedSwordYaw, 0f) * Quaternion.Euler(0f, 0f, -90f);   // 刃を寝かせる
+                sword.Pivot.SetPositionAndRotation(Vector3.Lerp(swordFromPos, to, p), Quaternion.Slerp(swordFromRot, toRot, p));
+            }
+
+            float k = Damp(poseConfig.handSpeed);
+            Vector3 face = HeadCenter + neck.forward * (headRadius + poseConfig.defeatHandGap) - neck.up * (headRadius * 0.1f);
+            Vector3 side = neck.right * (headRadius * 0.45f);
+            MoveHand(gripR, ref handRPos, ref handRRot, face + side, neck.rotation, k);
+            MoveHand(gripL, ref handLPos, ref handLRot, face - side, neck.rotation, k);
+        }
+
+        // 手を剣から離して target へ動かす（握りの子のまま、ワールドの位置・向きを上書きする）
+        static void MoveHand(Transform grip, ref Vector3 pos, ref Quaternion rot, Vector3 target, Quaternion targetRot, float k)
+        {
+            if (grip == null) return;
+            pos = Vector3.Lerp(pos, target, k);
+            rot = Quaternion.Slerp(rot, targetRot, k);
+            grip.SetPositionAndRotation(pos, rot);
+        }
+
         void UpdateSpring(Spring s, float stiffness, float damping, float maxAngle, float dt)
         {
             Quaternion target = neck.rotation;
@@ -232,11 +385,12 @@ namespace Chambara
         }
 
         // 握りの子にして、刃の方向に offset だけずらす
-        void AttachHand(Transform hand, float offset)
+        Transform AttachHand(Transform hand, float offset)
         {
-            if (hand == null) return;
+            if (hand == null) return null;
             Transform grip = Anchor(hand.name + "_Grip", sword.Pivot, PartBounds(hand).center, hand);
             grip.localPosition = Vector3.up * (offset / sword.Pivot.lossyScale.y);
+            return grip;
         }
 
         // pos に空のオブジェクトを作り、見た目を変えずに parts の親にする
