@@ -1,4 +1,6 @@
+using System.Collections;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Chambara
 {
@@ -8,9 +10,9 @@ namespace Chambara
     /// </summary>
     public class WinnerResult : MonoBehaviour
     {
-        [Header("立ち位置（位置と向き。カメラの方を向けておく）")]
-        [SerializeField] Transform winnerPoint;
-        [SerializeField] Transform loserPoint;
+        [Header("立ち位置（位置と向き。カメラの方を向けておく）。勝敗に関係なく 1P / 2P で固定")]
+        [SerializeField, FormerlySerializedAs("winnerPoint")] Transform player1Point;
+        [SerializeField, FormerlySerializedAs("loserPoint")] Transform player2Point;
 
         [Header("カメラ（シーンに置いて無効にしておく。演出中だけ有効にする）")]
         [SerializeField] Camera resultCamera;
@@ -45,12 +47,14 @@ namespace Chambara
             Debug.Log($"{winner + 1}P の勝ち！ {score1} - {score2}");
 
             PlayerBehaviour[] players = ChambaraManager.Instance.Players;
-            PlayerBehaviour w = players[winner], l = players[1 - winner];
+            PlayerBehaviour l = players[1 - winner];
 
-            if (winnerPoint != null) w.PlayResult(winnerPoint);
-            else Debug.LogWarning("WinnerResult の winnerPoint が未設定です");
-            if (loserPoint != null) l.PlayResult(loserPoint);
-            else Debug.LogWarning("WinnerResult の loserPoint が未設定です");
+            Transform[] points = { player1Point, player2Point };
+            for (int i = 0; i < 2; i++)
+            {
+                if (points[i] != null) players[i].PlayResult(points[i]);
+                else Debug.LogWarning($"WinnerResult の player{i + 1}Point が未設定です");
+            }
 
             if (resultCamera != null && CameraManager.Instance != null) CameraManager.Instance.ChangeResultMode(resultCamera);
             else Debug.LogWarning("WinnerResult の resultCamera が未設定です");
