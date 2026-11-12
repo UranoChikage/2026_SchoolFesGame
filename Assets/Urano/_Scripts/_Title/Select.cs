@@ -40,6 +40,9 @@ namespace Title
         [Tooltip("選択肢。画面に並べた順に入れる")]
         [SerializeField] RectTransform[] buttons;
 
+        [Tooltip("カーソルが乗ったパネルを広げる演出。無くても動く")]
+        [SerializeField] SelectPanelExpander expander;
+
         [Tooltip("buttons と同じ順で、移動先のシーン名。空（または足りない分）は、そのボタンの Button.onClick を呼ぶ（Resultのタイトルへ戻るボタンなど）")]
         [SerializeField] string[] sceneNames;
 
@@ -93,6 +96,9 @@ namespace Title
             new Color(1f, 0.85f, 0.35f),  // 黄
         };
 
+        [Tooltip("ON: カーソル本体の Image をプレイヤー色にする。OFF: Prefab の色のままにして、P1などの Text だけ色を変える")]
+        [SerializeField] bool colorCursorImage = true;
+
         const int MaxCursors = 8;
 
         /// <summary>カーソル1人ぶん</summary>
@@ -109,6 +115,7 @@ namespace Title
         }
 
         readonly Cursor[] cursors = new Cursor[MaxCursors];
+        readonly Vector3[] corners = new Vector3[4];   // FindHovered 用の使い回し
         RectTransform parent;
         int spawned;     // 生成済みカーソル数
         bool decided;    // 二重遷移の防止
@@ -169,6 +176,7 @@ namespace Title
 
                 Move(i, c);
                 c.hovered = FindHovered(c);
+                if (expander != null && c.hovered >= 0) expander.Select(c.hovered);
 
                 if (c.hovered >= 0 && SwitchInput.I.ButtonDown(i, SwitchButton.Confirm))
                 {
@@ -222,8 +230,32 @@ namespace Title
             rect.anchoredPosition = start;
 
             var image = rect.GetComponent<Image>();
-            if (image != null && playerColors.Length > 0)
+            if (colorCursorImage && image != null && playerColors.Length > 0)
                 image.color = playerColors[index % playerColors.Length];
+
+            // 子に Text があれば「何Pか」を書く（レガシー Text と TMP の両方に対応。無ければ何もしない）
+            string label = $"P{index + 1}";
+            var legacyText = rect.GetComponentInChildren<Text>(true);
+            var tmpText = rect.GetComponentInChildren<TMPro.TMP_Text>(true);
+
+            // 文字（頂点カラー）もプレイヤーの色にそろえる。playerColors が空なら Prefab の色のまま
+            bool hasColor = playerColors.Length > 0;
+            Color playerColor = hasColor ? playerColors[index % playerColors.Length] : Color.white;
+
+            // 白だと見えないので、ほぼ白（RGBすべて0.9以上）のときは黒にする
+            if (playerColor.r >= 0.9f && playerColor.g >= 0.9f && playerColor.b >= 0.9f)
+                playerColor = new Color(0f, 0f, 0f, playerColor.a);
+
+            if (legacyText != null)
+            {
+                legacyText.text = label;
+                if (hasColor) legacyText.color = playerColor;
+            }
+            if (tmpText != null)
+            {
+                tmpText.text = label;
+                if (hasColor) tmpText.color = playerColor;
+            }
 
             return new Cursor { rect = rect, position = start, baseScale = rect.localScale };
         }
@@ -276,13 +308,14 @@ namespace Title
         /// <summary>そのカーソルが乗っているボタン。無ければ -1</summary>
         int FindHovered(Cursor c)
         {
-            Vector2 p = c.rect.anchoredPosition;
+            // LayoutGroup 配下のボタンは Anchor/Pivot が親と揃わないので、ワールド座標で判定する
+            Vector3 p = c.rect.position;
             for (int i = 0; i < buttons.Length; i++)
             {
                 if (buttons[i] == null || !buttons[i].gameObject.activeInHierarchy) continue; // 非表示のボタンは選べない
-                Rect r = buttons[i].rect;
-                r.position += buttons[i].anchoredPosition;
-                if (r.Contains(p)) return i;
+                buttons[i].GetWorldCorners(corners);   // 0:左下 2:右上
+                if (p.x >= corners[0].x && p.x <= corners[2].x &&
+                    p.y >= corners[0].y && p.y <= corners[2].y) return i;
             }
             return -1;
         }
