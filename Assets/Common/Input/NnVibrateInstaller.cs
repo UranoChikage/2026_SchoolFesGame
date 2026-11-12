@@ -27,21 +27,22 @@ namespace Common
         }
         readonly List<Slot> slots = new List<Slot>();
 
-        // VibrationFramework の初期化済みの組み合わせ。Init と StartThread を呼ばずに Play すると落ちる（サンプルの HidVibrationThread と同じ手順）
-        readonly HashSet<(NpadId, NpadStyle)> initialized = new HashSet<(NpadId, NpadStyle)>();
-        static bool threadStarted;
+        // VibrationFramework は、Init を全部済ませてから StartThread する（サンプルの HidVibrationThread と同じ順）。
+        // StartThread のあとに Init を足すと、後から繋いだコントローラー（2P以降）で落ちるので、最初に1回だけまとめて行う。
+        // Init はコントローラーが繋がっていなくても呼べる（サンプルも No1 を繋ぐ前に呼んでいる）
+        static readonly NpadId[] InitPads = { NpadId.No1, NpadId.No2, NpadId.No3, NpadId.No4 }; // Pirates/Chambara の最大人数
+        static bool frameworkReady;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        static void ResetStatic() => threadStarted = false;
+        static void ResetStatic() => frameworkReady = false;
 
-        void EnsureFramework(NpadId id, NpadStyle style)
+        static void EnsureFramework()
         {
-            if (initialized.Add((id, style))) VibrationFramework.Init(id, style);
-            if (!threadStarted)
-            {
-                VibrationFramework.StartThread();
-                threadStarted = true;
-            }
+            if (frameworkReady) return;
+            frameworkReady = true;
+            VibrationFramework.Init(NpadId.Handheld, NpadStyle.Handheld);
+            foreach (NpadId id in InitPads) VibrationFramework.Init(id, NpadStyle.FullKey);
+            VibrationFramework.StartThread();
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -71,7 +72,7 @@ namespace Common
                     s.Vib.Stop();
                     s.Id = id;
                     s.Style = style;
-                    EnsureFramework(id, style); // 先に初期化（未初期化のまま Play すると落ちる）
+                    EnsureFramework(); // 先に初期化（未初期化のまま Play すると落ちる。最初の1回だけ実行される）
                     s.Vib.GetVibrationDevice((int)id, (int)style);
                     slots[index] = s;
                     SwitchVibration.Register(index, s.Vib);
