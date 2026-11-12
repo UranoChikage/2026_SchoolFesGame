@@ -24,7 +24,8 @@ namespace Chambara
     ///          ・振った直後（swingCooldown 秒）に始まった動きは、構えに戻す動きとみなして振りにしない
     ///   突き … 重力を除いた加速度を短い時間（thrustWindow 秒）ためて「前へ出た勢い」を求め、thrustImpulse を超えたら突いたとみなす
     ///          ・瞬間の加速度ではなく勢いで見るので、手を引いて止めた反動や、突き終わりの急停止では出ない
-    ///          ・剣を回している間は遠心力が混ざるので数えない
+    ///          ・剣を回している間は遠心力が混ざるので数えない。勢いをためている間に刃先が thrustMaxTurn 度以上回ったときも、
+    ///            振り上げ・振り下ろしとみなして突きにしない（前に構えたまま振り上げても突きにならない）
     ///   ガード … 境目で手がぶれても構えが切り替わらないよう、角度のヒステリシスと猶予時間を入れてある
     ///   振り・突きは swingBuffer 秒だけ覚えておき、硬直・移動が明けた直後なら出る（先行入力）
     ///
@@ -73,6 +74,7 @@ namespace Chambara
         bool hasGravity;
         Vector3 gravity;          // Joy-Conの姿勢の座標（SDKの基準）での重力による加速度
         Vector3 thrustVelocity;   // 重力を除いた加速度をためた勢い（G・秒。プレイヤー基準）
+        float thrustTurn;         // 勢いをためている間に刃先が回った量（度）。勢いと同じく古い分は消えていく
         bool thrustArmed = true;
         float thrustBlockedUntil; // この時刻までは突きを受け付けない（振った後）
         float thrustPeakTime;
@@ -102,6 +104,7 @@ namespace Chambara
         public float StrokeTravel => strokeMove.magnitude;         // 今の（最後の）振りで回った量。swingAngle と比べる
         public float ThrustImpulse { get; private set; }           // 前へ出た勢い。thrustImpulse と比べる
         public float ThrustImpulsePeak { get; private set; }       // 直近1秒で一番大きかった勢い
+        public float ThrustTurn => thrustTurn;                     // 直近で刃先が回った量。thrustMaxTurn を超えている間は突きにならない
 
         private void Awake()
         {
@@ -215,6 +218,7 @@ namespace Chambara
             inStroke = false;
             TipSpeed = 0f;
             thrustVelocity = Vector3.zero;
+            thrustTurn = 0f;
             ThrustImpulse = 0f;
         }
 
@@ -287,9 +291,14 @@ namespace Chambara
         {
             LinearAccel = calibration * LinearAcceleration(input, controller, dt);   // プレイヤー基準
 
-            // 振っている間とその直後は受け付けない（遠心力・振り終わりの急停止が前向きの加速度に見えるため）
+            // 直近（thrustWindow 秒）で刃先が回った量。振り上げのように、振りと数えるほど速くない回転も拾う
+            float decay = Mathf.Exp(-dt / Mathf.Max(config.thrustWindow, 0.01f));
+            thrustTurn = thrustTurn * decay + TipSpeed * dt;
+
+            // 振っている間とその直後、剣を回している間は受け付けない
+            // （遠心力・回し終わりの急停止・姿勢の推定の遅れが前向きの加速度に見えるため）
             if (inStroke) thrustBlockedUntil = now + config.thrustLockout;
-            if (guarding || now < thrustBlockedUntil || TipSpeed > config.thrustMaxTipSpeed)
+            if (guarding || now < thrustBlockedUntil || TipSpeed > config.thrustMaxTipSpeed || thrustTurn > config.thrustMaxTurn)
             {
                 thrustVelocity = Vector3.zero;
                 ThrustImpulse = 0f;
@@ -297,7 +306,7 @@ namespace Chambara
             }
 
             // 加速度をためて勢い（速度の変化）にする。古い分は thrustWindow 秒で消えていく
-            thrustVelocity = thrustVelocity * Mathf.Exp(-dt / Mathf.Max(config.thrustWindow, 0.01f)) + LinearAccel * dt;
+            thrustVelocity = thrustVelocity * decay + LinearAccel * dt;
             float forward = thrustVelocity.z * (config.invertThrustAccel ? -1f : 1f);
             ThrustImpulse = forward;
             if (forward > ThrustImpulsePeak || now - thrustPeakTime > 1f)

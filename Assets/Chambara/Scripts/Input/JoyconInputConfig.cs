@@ -33,6 +33,7 @@ namespace Chambara
         [Tooltip("前へ出た勢い（G・秒。0.1 ≒ 秒速1m）がこれを超えたら突いたとみなす。出にくければ下げ、勝手に出るなら上げる")] public float thrustImpulse = 0.1f;
         [Tooltip("勢いをためる時間（秒）。これより前の加速度は消えていく")] public float thrustWindow = 0.15f;
         [Tooltip("刃先がこの速さ（度/秒）より速く回っている間は突きにしない（振りと区別する）")] public float thrustMaxTipSpeed = 250f;
+        [Tooltip("勢いをためている間（直近 thrustWindow 秒）に刃先がこの角度（度）以上回ったら突きにしない。振り上げ・振り下ろしで突きが出るなら下げ、突いても出ないなら上げる")] public float thrustMaxTurn = 20f;
         [Range(0f, 1f), Tooltip("勢いの向きと前方の cos がこれ以上なら前へ突いたとみなす")] public float thrustForwardDot = 0.5f;
         [Tooltip("振った後、この時間（秒）突きを受け付けない。振り終わりの急停止で突きが出ないようにする")] public float thrustLockout = 0.3f;
         [Tooltip("重力の向きを推定し直す速さ。ほぼ静止しているときだけ寄せる")] public float gravityFollow = 5f;
