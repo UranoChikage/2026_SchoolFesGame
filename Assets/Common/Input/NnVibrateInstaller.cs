@@ -27,24 +27,6 @@ namespace Common
         }
         readonly List<Slot> slots = new List<Slot>();
 
-        // VibrationFramework は、Init を全部済ませてから StartThread する（サンプルの HidVibrationThread と同じ順）。
-        // StartThread のあとに Init を足すと、後から繋いだコントローラー（2P以降）で落ちるので、最初に1回だけまとめて行う。
-        // Init はコントローラーが繋がっていなくても呼べる（サンプルも No1 を繋ぐ前に呼んでいる）
-        static readonly NpadId[] InitPads = { NpadId.No1, NpadId.No2, NpadId.No3, NpadId.No4 }; // Pirates/Chambara の最大人数
-        static bool frameworkReady;
-
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        static void ResetStatic() => frameworkReady = false;
-
-        static void EnsureFramework()
-        {
-            if (frameworkReady) return;
-            frameworkReady = true;
-            VibrationFramework.Init(NpadId.Handheld, NpadStyle.Handheld);
-            foreach (NpadId id in InitPads) VibrationFramework.Init(id, NpadStyle.FullKey);
-            VibrationFramework.StartThread();
-        }
-
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         static void Install()
         {
@@ -72,7 +54,6 @@ namespace Common
                     s.Vib.Stop();
                     s.Id = id;
                     s.Style = style;
-                    EnsureFramework(); // 先に初期化（未初期化のまま Play すると落ちる。最初の1回だけ実行される）
                     s.Vib.GetVibrationDevice((int)id, (int)style);
                     slots[index] = s;
                     SwitchVibration.Register(index, s.Vib);
