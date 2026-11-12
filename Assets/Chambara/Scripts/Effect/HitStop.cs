@@ -42,7 +42,7 @@ namespace Chambara
             OnPlay?.Invoke();
         }
 
-        // スロー演出の途中で当たったときは、duration + stopDuration を ChambaraManager の slowDuration より短くしておく
+        // スロー演出の途中で当たったときは、ChambaraManager がヒットストップの終わりを待ってから元の速さに戻す
         IEnumerator Stop()
         {
             var manager = ChambaraManager.Instance;
