@@ -130,6 +130,8 @@ namespace Pirates
             if (IsClosing) return;
             IsClosing = true;
             if (openRoutine != null) { StopCoroutine(openRoutine); openRoutine = null; }
+            // このコンポーネントがロード用Imageと同じGameObjectにあると、Imageを消した後はコルーチンを始められない。先に出す
+            if (loadImage != null) loadImage.SetActive(true);
             StartCoroutine(CloseRoutine(sceneName));
         }
 
