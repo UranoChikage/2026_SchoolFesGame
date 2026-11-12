@@ -39,14 +39,8 @@ namespace Common
             Diag($"Register index={index} device={(device != null ? device.GetType().Name : "解除")} 登録数={devices.Count}");
         }
 
-        // 【診断】実機でログが見られないので、開発ビルドのときだけ画面の隅にも出す。原因が分かったら消す
-        static readonly List<string> diagLines = new List<string>();
-        static void Diag(string message)
-        {
-            Debug.Log("[Vibration診断] " + message);
-            diagLines.Add($"{Time.realtimeSinceStartup:F1}s {message}");
-            if (diagLines.Count > 14) diagLines.RemoveAt(0);
-        }
+        // 【診断】コンソールに出すだけのログ。原因が分かったら消す
+        static void Diag(string message) => Debug.Log("[Vibration診断] " + message);
 
         // 【診断】デバイス未登録のまま呼ばれたことを、番号ごとに1回だけ知らせる。原因が分かったら消す
         static readonly HashSet<int> warned = new HashSet<int>();
@@ -91,17 +85,6 @@ namespace Common
             {
                 float dt = Time.unscaledDeltaTime;
                 foreach (var d in devices.Values) d.Update(dt);
-            }
-
-            // 【診断】開発ビルドのときだけ、画面左下に振動の状態を出す
-            GUIStyle style;
-            void OnGUI()
-            {
-                if (!Debug.isDebugBuild) return;
-                if (style == null) style = new GUIStyle(GUI.skin.label) { fontSize = 22, normal = { textColor = Color.yellow } };
-                string text = $"Vibration 登録=[{string.Join(",", devices.Keys)}]" + string.Join("", diagLines);
-                float h = 34f * (diagLines.Count + 1);
-                GUI.Label(new Rect(10f, Screen.height - h - 10f, Screen.width - 20f, h), text, style);
             }
         }
 
