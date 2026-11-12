@@ -24,6 +24,22 @@ namespace Pirates
             Current = this;
         }
 
+        // 被弾したら全員のコントローラーを振動させる
+        ShipHealth health;
+
+        void OnEnable()
+        {
+            health = GetComponent<ShipHealth>();
+            if (health != null) health.Damaged += OnDamaged;
+        }
+
+        void OnDisable()
+        {
+            if (health != null) health.Damaged -= OnDamaged;
+        }
+
+        void OnDamaged(DamageInfo info) => GameVibration.HighAll(GameVibration.MediumPulse);
+
         void OnDestroy()
         {
             if (Current == this) Current = null;

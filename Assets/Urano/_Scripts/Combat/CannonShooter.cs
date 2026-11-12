@@ -107,6 +107,19 @@ namespace Pirates
             }
         }
 
+        CannonStation station;
+        bool stationResolved;
+
+        /// <summary>この砲を操作する砲手（敵の砲はnull）。振動の送り先</summary>
+        public CannonStation Station
+        {
+            get
+            {
+                if (!stationResolved) { station = GetComponent<CannonStation>(); stationResolved = true; }
+                return station;
+            }
+        }
+
         Transform Muzzle => muzzle != null ? muzzle : transform;
 
         /// <summary>砲口の位置</summary>
@@ -149,6 +162,7 @@ namespace Pirates
             BoatBuoyancy surface = water != null ? water : PlayerTarget.Current?.Water; // 未設定ならプレイヤー船の水面
             ball.Launch(velocity, explosionRadius, damage, hitMask, surface, owner, 15f, this);
             AudioManager.Play(Sfx.CannonFire, origin);
+            Station?.Vibrate(true, GameVibration.ShortPulse);
 
             nextFireTime = Time.time + cooldown;
             return true;

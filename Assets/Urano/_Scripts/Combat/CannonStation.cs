@@ -106,6 +106,18 @@ namespace Pirates
         Quaternion barrelRotInStation = Quaternion.identity; // 砲身の初期姿勢（この砲を基準）
         ItemHolder items;
 
+        /// <summary>この砲手が使うJoyConの番号。振動の送り先に使う</summary>
+        public int JoyconIndex => joyconIndex;
+
+        /// <summary>この砲手のコントローラーを振動させる。duration が負なら StopVibrate まで続く</summary>
+        public void Vibrate(bool strong, float duration)
+        {
+            if (strong) GameVibration.High(joyconIndex, duration);
+            else GameVibration.Low(joyconIndex, duration);
+        }
+
+        public void StopVibrate() => GameVibration.Stop(joyconIndex);
+
         /// <summary>この砲手の色（カーソル・予測線と同じ）。獲得通知などで使う</summary>
         public Color PlayerColor => cursorColor;
 

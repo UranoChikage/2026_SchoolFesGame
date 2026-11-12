@@ -21,6 +21,7 @@ namespace Pirates
         float beamEnd;
         bool cameraEffectOn;
         SoundHandle beamSound; // ビーム使用中に鳴らす音（終わったら止める）
+        bool beamVibrating;    // ビーム使用中の振動を出している間true
 
         // ビームの見た目（ItemAsset のPrefabがあればそれ、無ければ仮の見た目）
         ItemAsset visualFor;
@@ -100,6 +101,7 @@ namespace Pirates
                 muzzleVfxPlayed = false;
                 beamSound.Stop();
                 beamSound = AudioManager.Play(Sfx.Beam);
+                StartBeamVibration();
                 StartCameraEffect();
             }
             return true;
@@ -108,7 +110,11 @@ namespace Pirates
         /// <summary>毎フレーム、カーソルが指す位置を渡す。ビームが伸びきった後、その位置の船を沈める</summary>
         public void Tick(Vector3 aimPoint, bool hasAim)
         {
-            if (!IsBeamActive) beamSound.Stop();
+            if (!IsBeamActive)
+            {
+                beamSound.Stop();
+                StopBeamVibration();
+            }
             if (cameraEffectOn && !IsBeamActive) StopCameraEffect();
             if (beam == null) return;
 
@@ -273,9 +279,27 @@ namespace Pirates
             if (BoatFollowCamera.Current != null) BoatFollowCamera.Current.EndEffect();
         }
 
+        // ビーム使用中、この砲手のコントローラーを振動させ続ける（終わるか無効になったら止める）
+        void StartBeamVibration()
+        {
+            CannonStation station = shooter != null ? shooter.Station : null;
+            if (station == null) return;
+            station.Vibrate(false, -1f);
+            beamVibrating = true;
+        }
+
+        void StopBeamVibration()
+        {
+            if (!beamVibrating) return;
+            beamVibrating = false;
+            CannonStation station = shooter != null ? shooter.Station : null;
+            if (station != null) station.StopVibrate();
+        }
+
         void OnDisable()
         {
             beamSound.Stop();
+            StopBeamVibration();
             HideVisuals();
             if (cameraEffectOn) StopCameraEffect();
         }
