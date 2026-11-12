@@ -105,6 +105,10 @@ namespace Pirates
                 StartBeamVibration();
                 StartCameraEffect();
             }
+
+            // カットイン（アイテムの種類を問わず、砲手ごと。置いていなければ何も起きない）
+            var cutInStation = GetComponent<CannonStation>();
+            if (cutInStation != null) BeamCutIn.Play(cutInStation.StationNumber);
             return true;
         }
 

@@ -172,6 +172,22 @@ namespace Pirates
         public int LoopVibration(string path, float duration = -1f) => GameVibration.LoopFile(joyconIndex, path, duration);
         public void StopLoopVibration(int playId) => GameVibration.StopLoop(joyconIndex, playId);
 
+        /// <summary>砲手番号(1〜)。カットインの表示先を決めるのに使う</summary>
+        public int StationNumber => stationNumber;
+
+        /// <summary>
+        /// この砲手を操作する人がいるか。いなければカーソル・予測線・ロック目印を出さない。
+        /// コントローラーが1つも繋がっていない（PCデバッグ）ときと、forceMouse のときは、全員いるものとして扱う
+        /// </summary>
+        public bool HasPlayer
+        {
+            get
+            {
+                if (forceMouse || SwitchInput.I.ConnectedCount <= 0) return true;
+                return SwitchInput.I.IsConnected(joyconIndex);
+            }
+        }
+
         /// <summary>この砲手の色（カーソル・予測線と同じ）。獲得通知などで使う</summary>
         public Color PlayerColor => cursorColor;
 
@@ -239,7 +255,7 @@ namespace Pirates
             }
 
             // ビーム使用中はこの砲は撃てないので、予測線は出さない
-            UpdateTrajectory(status != "waiting" && shooter.IsAlive && !items.IsBeamActive);
+            UpdateTrajectory(status != "waiting" && shooter.IsAlive && !items.IsBeamActive && HasPlayer);
         }
 
         // エイムアシスト：入力のカーソル(inputCursor)に「敵船へ寄るずれ」を足して、最終のカーソル(cursor)にする。
@@ -482,7 +498,7 @@ namespace Pirates
         // 砲手ごとの色付きカーソル（クールタイム中は小さく）
         void OnGUI()
         {
-            if (Event.current.type != EventType.Repaint || !shooter.IsAlive) return;
+            if (Event.current.type != EventType.Repaint || !shooter.IsAlive || !HasPlayer) return;
 
             // アイテムを持っている間は、そのアイテムのカーソルの大きさ・画像に切り替える
             ItemAsset item = items != null ? items.CursorItem : null;
