@@ -40,7 +40,7 @@ namespace Title
         [Tooltip("選択肢。画面に並べた順に入れる")]
         [SerializeField] RectTransform[] buttons;
 
-        [Tooltip("buttons と同じ順で、移動先のシーン名")]
+        [Tooltip("buttons と同じ順で、移動先のシーン名。空（または足りない分）は、そのボタンの Button.onClick を呼ぶ（Resultのタイトルへ戻るボタンなど）")]
         [SerializeField] string[] sceneNames;
 
         [Header("操作感")]
@@ -279,7 +279,7 @@ namespace Title
             Vector2 p = c.rect.anchoredPosition;
             for (int i = 0; i < buttons.Length; i++)
             {
-                if (buttons[i] == null) continue;
+                if (buttons[i] == null || !buttons[i].gameObject.activeInHierarchy) continue; // 非表示のボタンは選べない
                 Rect r = buttons[i].rect;
                 r.position += buttons[i].anchoredPosition;
                 if (r.Contains(p)) return i;
@@ -307,12 +307,15 @@ namespace Title
 
         void Decide(int button)
         {
-            if (button < 0 || button >= sceneNames.Length) return;
+            if (button < 0 || button >= buttons.Length) return;
 
-            string scene = sceneNames[button];
+            string scene = button < sceneNames.Length ? sceneNames[button] : null;
             if (string.IsNullOrEmpty(scene))
             {
-                Debug.LogWarning($"Select: シーン名が未設定 (index {button})");
+                // シーン名が無ければ、uGUIの Button を押したことにする（遷移などはその onClick 側が行う）
+                Button ui = buttons[button] != null ? buttons[button].GetComponent<Button>() : null;
+                if (ui != null && ui.interactable) ui.onClick.Invoke();
+                else Debug.LogWarning($"Select: シーン名も Button も未設定 (index {button})");
                 return;
             }
 
