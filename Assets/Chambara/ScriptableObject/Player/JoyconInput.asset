@@ -16,17 +16,26 @@ MonoBehaviour:
   frontAxis: 5
   recenterButton: 1
   calibrationAngle: 90
-  swingTime: 0.3
+  swingStartSpeed: 300
+  swingEndSpeed: 90
+  swingMinPeakSpeed: 900
   swingAngle: 45
+  swingTime: 0.3
   swingCooldown: 0.3
   swingBuffer: 0.3
-  gravityFollow: 5
+  thrustImpulse: 0.02
+  thrustWindow: 0.1
+  thrustMaxTipSpeed: 1000
+  thrustMaxTurn: 20
   thrustForwardDot: 0.142
-  thrustLockout: 0.3
-  invertThrustAccel: 0
+  thrustLockout: 0.4
+  gravityFollow: 5
+  invertThrustAccel: 1
   guardButton: 0
-  perpendicularTolerance: 45
+  perpendicularTolerance: 80
   verticalRange: 45
   sideDeadZone: 5
+  guardHysteresis: 10
+  guardGraceTime: 0.1
   useStick: 1
   stickThreshold: 0.5
