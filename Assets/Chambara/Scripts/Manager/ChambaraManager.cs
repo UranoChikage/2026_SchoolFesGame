@@ -3,6 +3,7 @@ using System.Collections;
 using Common;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
 namespace Chambara
 {
@@ -56,16 +57,21 @@ namespace Chambara
 
         [Header("Match Settings")]
         [SerializeField] int winScore = 2;                 // 何本先取で勝ちか
-        [SerializeField] Key nextRoundKey = Key.Space;     // 1本取った後、このキーで次のラウンドへ（決着後は再戦）
+        [SerializeField] Key nextRoundKey = Key.Space;     // 1本取った後、このキーで次のラウンドへ（決着後はタイトルへ）
         [SerializeField] SwitchButton nextRoundButton = SwitchButton.Confirm;   // Joy-Con（1P・2Pどちらでも）で次へ進むボタン。ZR/ZL
         [SerializeField] float winnerResultDelay = 1.5f;   // 決着のスコア表示から WinnerResult を呼ぶまで（実時間・秒）
         [SerializeField] WinnerResult winnerResult;        // 未設定ならシーンから探す
+
+        [Header("Title Settings")]
+        [SerializeField] GameObject titleUi;               // 決着後、ボタンを押すと出す「タイトル」UI（シーンに置いて非表示にしておく）
+        [SerializeField] string titleSceneName = "Select"; // 「タイトル」UIが出ている時にボタンを押すと戻るシーン
 
         readonly int[] scores = new int[2];
         public int[] Scores => scores;                     // 取った本数（[0]:1P [1]:2P）
         public int LastRoundWinner { get; private set; } = -1;   // 直前のラウンドで1本取った方（-1:引き分け）
         bool waitingNextRound;                             // 次のラウンドへ進むボタン待ち
-        bool waitingRematch;                               // 決着後、再戦するボタン待ち
+        bool waitingTitleUi;                               // 決着後、「タイトル」UIを出すボタン待ち
+        bool waitingTitle;                                 // 「タイトル」UIが出ていて、タイトルへ戻るボタン待ち
 
         private void Awake()
         {
@@ -84,7 +90,9 @@ namespace Chambara
         public void ReadyGame()
         {
             waitingNextRound = false;
-            waitingRematch = false;
+            waitingTitleUi = false;
+            waitingTitle = false;
+            if (titleUi != null) titleUi.SetActive(false);
             LastRoundWinner = -1;
             sim = new ChambaraSimulator(rule);
             players = new[]
@@ -124,9 +132,10 @@ namespace Chambara
                 foreach (var p in players) p.Render();
             }
 
-            if ((waitingNextRound || waitingRematch) && NextPressed())
+            if ((waitingNextRound || waitingTitleUi || waitingTitle) && NextPressed())
             {
-                if (waitingRematch) Rematch();
+                if (waitingTitle) BackToTitle();
+                else if (waitingTitleUi) ShowTitleUi();
                 else NextRound();
             }
         }
@@ -150,8 +159,8 @@ namespace Chambara
             yield return new WaitForSecondsRealtime(winnerResultDelay);
             if (winnerResult != null) winnerResult.Play(winner, scores[0], scores[1]);
             else Debug.LogWarning("WinnerResult がシーンにありません");
-            Debug.Log($"{nextRoundKey} / Joy-Con の {nextRoundButton} で再戦");
-            waitingRematch = true;
+            Debug.Log($"{nextRoundKey} / Joy-Con の {nextRoundButton} で「タイトル」を出す");
+            waitingTitleUi = true;
         }
 
         // 次へ進む操作（キーボード、または1P・2Pどちらかの Joy-Con）
@@ -165,13 +174,23 @@ namespace Chambara
             return false;
         }
 
-        // 決着後、スコアを0に戻して同じキャラでもう一試合
-        public void Rematch()
+        // 決着後、「タイトル」UIを出す。もう一度押すとタイトルへ戻る
+        void ShowTitleUi()
         {
-            if (!waitingRematch) return;
-            waitingRematch = false;
-            Array.Clear(scores, 0, scores.Length);
-            Restart();
+            waitingTitleUi = false;
+            if (titleUi != null) titleUi.SetActive(true);
+            else Debug.LogWarning("ChambaraManager の titleUi が未設定です");
+            Debug.Log($"{nextRoundKey} / Joy-Con の {nextRoundButton} で {titleSceneName} へ戻る");
+            waitingTitle = true;
+        }
+
+        // タイトル（選択画面）へ戻る
+        void BackToTitle()
+        {
+            waitingTitle = false;
+            StopAllCoroutines();
+            SetTimeScale(1f);
+            SceneManager.LoadScene(titleSceneName);
         }
 
         // プレイヤーを作り直して、次のラウンドを Ready から始める（UIボタンや Joy-Con からも呼べる）
@@ -261,6 +280,10 @@ namespace Chambara
             }
             SetTimeScale(slowTimeScale);
             onImpact();
+
+            // 当たってヒットストップが始まったら、終わる（スローの速さに戻る）まで待つ
+            // 待たずに戻すと、後からヒットストップがスローの速さに戻してしまい、スローが解除されない
+            while (hitStop != null && hitStop.IsPlaying) yield return null;
 
             yield return new WaitForSecondsRealtime(slowDuration);
 
