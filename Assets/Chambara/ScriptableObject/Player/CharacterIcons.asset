@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 714b75b458c24fed9e1097d0adcbafb3, type: 3}
+  m_Name: CharacterIcons
+  m_EditorClassIdentifier: Assembly-CSharp::Chambara.CharacterIconList
+  entries:
+  - characterName: Johnson
+    icon: {fileID: 21300000, guid: 859c105ec212e4d47a407396c549955e, type: 3}
+  - characterName: Jennifer
+    icon: {fileID: 21300000, guid: 7259541a38ee766469cbccc4c98c5a4d, type: 3}
+  - characterName: Thomas
+    icon: {fileID: 21300000, guid: a2242090e84af2a439791d007236ebdd, type: 3}
+  - characterName: Machiko
+    icon: {fileID: 21300000, guid: b82f79de5a9a6644f85eccd370e0c4a9, type: 3}
+  - characterName: Alien
+    icon: {fileID: 21300000, guid: ba4de0414c9676b47bbcccccaac98e22, type: 3}

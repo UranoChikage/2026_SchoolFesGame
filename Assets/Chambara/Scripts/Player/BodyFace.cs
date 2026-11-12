@@ -70,7 +70,7 @@ namespace Chambara
 
         Face SelectFace()
         {
-            if (player.Lost) return Face.Troubled;
+            if (player.Lost) return player.InResult ? Face.Sad : Face.Troubled;   // 決着演出では泣き顔
             if (player.Won) return Face.Happy;
             return (player.Data != null ? player.Data.state : PlayerState.Idle) switch
             {
