@@ -74,6 +74,7 @@ namespace Chambara
         bool waitingNextRound;                             // 次のラウンドへ進むボタン待ち
         bool waitingTitleUi;                               // 決着後、「タイトル」UIを出すボタン待ち
         bool waitingTitle;                                 // 「タイトル」UIが出ていて、タイトルへ戻るボタン待ち
+        readonly bool[] titlePressed = new bool[2];        // 決着後、1P・2PそれぞれがJoy-Conのボタンを押したか
 
         private void Awake()
         {
@@ -104,6 +105,7 @@ namespace Chambara
             waitingNextRound = false;
             waitingTitleUi = false;
             waitingTitle = false;
+            ResetTitlePressed();
             if (titleUi != null) titleUi.SetActive(false);
             LastRoundWinner = -1;
             sim = new ChambaraSimulator(rule);
@@ -144,12 +146,13 @@ namespace Chambara
                 foreach (var p in players) p.Render();
             }
 
-            if ((waitingNextRound || waitingTitleUi || waitingTitle) && NextPressed())
+            if (waitingTitle)
             {
-                if (waitingTitle) BackToTitle();
-                else if (waitingTitleUi) ShowTitleUi();
-                else NextRound();
+                // タイトルへ戻るのは1P・2P両方が押してから（同時でなくてよい）。キーボードはキー1つで戻る
+                if (BothPressed()) BackToTitle();
             }
+            else if (waitingTitleUi && NextPressed()) ShowTitleUi();
+            else if (waitingNextRound && NextPressed()) NextRound();
         }
 
         // ラウンドの結果（スコア）を見せ終わったときに呼ぶ（ClashCamera から）
@@ -186,13 +189,33 @@ namespace Chambara
             return false;
         }
 
+        // 決着後の操作：キーボードはキー1つで true。Joy-Con は1P・2Pそれぞれが一度ずつ押したら true
+        bool BothPressed()
+        {
+            if (Keyboard.current != null && Keyboard.current[nextRoundKey].wasPressedThisFrame)
+            {
+                ResetTitlePressed();
+                return true;
+            }
+            for (int i = 0; i < 2; i++)
+            {
+                if (SwitchInput.I.ButtonDown(i, nextRoundButton)) titlePressed[i] = true;
+            }
+            if (!titlePressed[0] || !titlePressed[1]) return false;
+            ResetTitlePressed();
+            return true;
+        }
+
+        void ResetTitlePressed() => titlePressed[0] = titlePressed[1] = false;
+
         // 決着後、「タイトル」UIを出す。もう一度押すとタイトルへ戻る
         void ShowTitleUi()
         {
             waitingTitleUi = false;
             if (titleUi != null) titleUi.SetActive(true);
             else Debug.LogWarning("ChambaraManager の titleUi が未設定です");
-            Debug.Log($"{nextRoundKey} / Joy-Con の {nextRoundButton} で {titleSceneName} へ戻る");
+            Debug.Log($"{nextRoundKey} / Joy-Con の {nextRoundButton}（1P・2P両方）で {titleSceneName} へ戻る");
+            ResetTitlePressed();   // 「タイトル」UIを出したときの押下は数えない
             waitingTitle = true;
         }
 

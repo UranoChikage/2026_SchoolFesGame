@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.Serialization;
 
 namespace Chambara
@@ -21,6 +22,11 @@ namespace Chambara
         [SerializeField] GameObject tearsEffect;
         [SerializeField, Tooltip("頭の中心から見た位置（x:右 y:上 z:前）")] Vector3 tearsOffset = new Vector3(0f, 0f, 0.1f);
         GameObject tears;
+
+        [SerializeField] UnityEvent on1PWin;
+        [SerializeField] UnityEvent on2PWin;
+
+        [SerializeField] UnityEvent onPlay;
 
         private void Start()
         {
@@ -64,6 +70,11 @@ namespace Chambara
                 tears = Instantiate(tearsEffect, rig.Head);
                 tears.transform.position = rig.HeadCenter + rig.Head.rotation * tearsOffset;
             }
+
+            if (winner == 0) on1PWin?.Invoke();
+            else on2PWin?.Invoke();
+
+            onPlay?.Invoke();
         }
     }
 }
