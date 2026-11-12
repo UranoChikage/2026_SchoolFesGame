@@ -7485,13 +7485,21 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1254012572873308010, guid: 4c9914546edff42459dc39bae3b2ddea, type: 3}
+      propertyPath: cursorSize
+      value: 80
+      objectReference: {fileID: 0}
+    - target: {fileID: 2760502413634369657, guid: 4c9914546edff42459dc39bae3b2ddea, type: 3}
+      propertyPath: cursorSize
+      value: 80
+      objectReference: {fileID: 0}
     - target: {fileID: 2812325108386783744, guid: 4c9914546edff42459dc39bae3b2ddea, type: 3}
       propertyPath: rudder
       value: 
       objectReference: {fileID: 859830823}
-    - target: {fileID: 3312140120932352368, guid: 4c9914546edff42459dc39bae3b2ddea, type: 3}
-      propertyPath: maxHealth
-      value: 500
+    - target: {fileID: 3492139961676536614, guid: 4c9914546edff42459dc39bae3b2ddea, type: 3}
+      propertyPath: cursorSize
+      value: 80
       objectReference: {fileID: 0}
     - target: {fileID: 3579663890758369582, guid: 4c9914546edff42459dc39bae3b2ddea, type: 3}
       propertyPath: m_Name
@@ -7513,10 +7521,6 @@ PrefabInstance:
       propertyPath: input
       value: 
       objectReference: {fileID: 859830823}
-    - target: {fileID: 8481343348621125902, guid: 4c9914546edff42459dc39bae3b2ddea, type: 3}
-      propertyPath: capsizeAngle
-      value: 70
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

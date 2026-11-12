@@ -593,7 +593,7 @@ MonoBehaviour:
   lateralDamping: 4
   angularDamping: 2
   slowBrake: 3
-  capsizeAngle: 90
+  capsizeAngle: 70
   sinkDuration: 5
   sinkSpeed: 0.8
   sinkRollSpeed: 6
@@ -610,7 +610,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 01a2c5549d3e9a54bad902f564e4f8b9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Pirates.ShipHealth
-  maxHealth: 1000
+  maxHealth: 500
 --- !u!114 &1217050267796578090
 MonoBehaviour:
   m_ObjectHideFlags: 0
