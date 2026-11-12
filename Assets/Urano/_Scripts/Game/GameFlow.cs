@@ -126,6 +126,15 @@ namespace Pirates
             StopIfPlaying(sunkOutroDirector);
 
             startRequested = autoStart;
+
+            // 【診断】導入Timelineが再生されるたびに、いつ・誰が呼んだかをログに出す（原因が分かったら消す）
+            if (introDirector != null)
+            {
+                introDirector.played += d => Debug.Log(
+                    $"[GameFlow診断] 導入Timelineが再生開始 t={Time.realtimeSinceStartup:F2} phase={Phase} IsOpening={SceneTransition.IsOpening}", this);
+                introDirector.stopped += d => Debug.Log(
+                    $"[GameFlow診断] 導入Timelineが停止 t={Time.realtimeSinceStartup:F2} phase={Phase}", this);
+            }
         }
 
         static void StopIfPlaying(PlayableDirector director)
@@ -150,6 +159,8 @@ namespace Pirates
             switch (Phase)
             {
                 case GamePhase.Standby:
+                    // Play On Awake のTimelineは Start より後に動き出すことがあるので、開始するまで毎フレーム止める
+                    StopIfPlaying(introDirector);
                     if (SceneTransition.IsOpening)
                     {
                         if (GameInput.StartPressed()) startRequested = true; // 開き終わったら始める
