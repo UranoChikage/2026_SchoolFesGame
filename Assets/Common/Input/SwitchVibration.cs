@@ -36,6 +36,26 @@ namespace Common
         {
             if (device == null) devices.Remove(index);
             else devices[index] = device;
+            Diag($"Register index={index} device={(device != null ? device.GetType().Name : "解除")} 登録数={devices.Count}");
+        }
+
+        // 【診断】実機でログが見られないので、開発ビルドのときだけ画面の隅にも出す。原因が分かったら消す
+        static readonly List<string> diagLines = new List<string>();
+        static void Diag(string message)
+        {
+            Debug.Log("[Vibration診断] " + message);
+            diagLines.Add($"{Time.realtimeSinceStartup:F1}s {message}");
+            if (diagLines.Count > 10) diagLines.RemoveAt(0);
+        }
+
+        // 【診断】デバイス未登録のまま呼ばれたことを、番号ごとに1回だけ知らせる。原因が分かったら消す
+        static readonly HashSet<int> warned = new HashSet<int>();
+        static bool TryGet(int index, string what, out ISwitchVibrateInput device)
+        {
+            if (devices.TryGetValue(index, out device)) return true;
+            if (warned.Add(index))
+                Diag($"index={index} の振動デバイスが未登録です（{what}）。登録済み番号=[{string.Join(",", devices.Keys)}]");
+            return false;
         }
 
         /// <summary>そのコントローラー番号に振動デバイスが登録済みか</summary>
@@ -44,13 +64,13 @@ namespace Common
         /// <summary>弱め（低周波）の振動。duration が負なら Stop するまで続く</summary>
         public static void Low(int index, float duration = -1f)
         {
-            if (devices.TryGetValue(index, out var d)) d.AmplitudeLowRandomVibrate(duration);
+            if (TryGet(index, "Low", out var d)) d.AmplitudeLowRandomVibrate(duration);
         }
 
         /// <summary>強め（高周波）の振動。duration が負なら Stop するまで続く</summary>
         public static void High(int index, float duration = -1f)
         {
-            if (devices.TryGetValue(index, out var d)) d.AmplitudeHighRandomVibrate(duration);
+            if (TryGet(index, "High", out var d)) d.AmplitudeHighRandomVibrate(duration);
         }
 
         public static void Stop(int index)
@@ -72,6 +92,19 @@ namespace Common
                 float dt = Time.unscaledDeltaTime;
                 foreach (var d in devices.Values) d.Update(dt);
             }
+
+            // 【診断】開発ビルドのときだけ、画面左下に振動の状態を出す
+            GUIStyle style;
+            void OnGUI()
+            {
+                if (!Debug.isDebugBuild) return;
+                if (style == null) style = new GUIStyle(GUI.skin.label) { fontSize = 22, normal = { textColor = Color.yellow } };
+                string text = $"Vibration 登録=[{string.Join(",", devices.Keys)}]
+" + string.Join("
+", diagLines);
+                float h = 34f * (diagLines.Count + 1);
+                GUI.Label(new Rect(10f, Screen.height - h - 10f, Screen.width - 20f, h), text, style);
+            }
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -83,11 +116,21 @@ namespace Common
         }
         /// <summary>bnvib を再生する（他の振動と同時に鳴る）。戻り値は再生ID、失敗時 -1</summary>
         public static int Play(int index, string path)
-            => devices.TryGetValue(index, out var d) ? d.PlayResources(path) : -1;
+        {
+            if (!TryGet(index, "Play", out var d)) return -1;
+            int id = d.PlayResources(path);
+            Diag($"Play index={index} path={path} → 再生ID={id}");
+            return id;
+        }
 
         /// <summary>bnvib をループ再生する。止めるときは戻り値を StopPlay に渡す</summary>
         public static int Loop(int index, string path)
-            => devices.TryGetValue(index, out var d) ? d.PlayResources(path, true) : -1;
+        {
+            if (!TryGet(index, "Loop", out var d)) return -1;
+            int id = d.PlayResources(path, true);
+            Diag($"Loop index={index} path={path} → 再生ID={id}");
+            return id;
+        }
 
         /// <summary>Play / Loop が返したIDの再生だけを止める</summary>
         public static void StopPlay(int index, int playId)
