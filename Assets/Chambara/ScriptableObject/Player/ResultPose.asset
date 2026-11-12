@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 06c77b70af8a4e08ac1a742ca19d51ce, type: 3}
+  m_Name: ResultPose
+  m_EditorClassIdentifier: Assembly-CSharp::Chambara.ResultPoseConfig
+  victoryRaise: 0.15
+  victorySpread: 0.05
+  victoryBladeTilt: 15
+  victoryPumpHeight: 0.06
+  victoryPumpSpeed: 5
+  victoryLeanBack: 8
+  victoryHeadUp: 12
+  defeatDelay: 0.4
+  defeatSink: 0.2
+  defeatSinkStiffness: 100
+  defeatSinkDamping: 9
+  defeatBend: 20
+  defeatHeadDrop: 20
+  defeatHandGap: 0.03
+  sobStartDelay: 0.6
+  sobAngle: 5
+  sobHeight: 0.02
+  sobSpeed: 7
+  droppedSwordPos: {x: 0.35, y: 0.02, z: 0.3}
+  droppedSwordYaw: -30
+  swordDropTime: 0.35
+  handSpeed: 10

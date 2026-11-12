@@ -169,6 +169,27 @@ namespace Chambara
             clashRoutine = StartCoroutine(ChangeClashModeAfterLive());
         }
 
+        //試合の決着演出：他のカメラを全部止めて、resultCamera だけで1画面にする
+        //次の試合が Ready になると ChangePlayingMode でプレイヤーカメラに戻る（resultCamera を止めるのは WinnerResult）
+        public void ChangeResultMode(Camera resultCamera)
+        {
+            if (slowCameraRoutine != null) StopCoroutine(slowCameraRoutine);
+            slowCameraRoutine = null;
+            if (clashRoutine != null) StopCoroutine(clashRoutine);
+            clashRoutine = null;
+            if (clashCamera != null)
+            {
+                clashCamera.SetTarget(null);
+                clashCamera.gameObject.SetActive(false);
+            }
+            slowCamera.gameObject.SetActive(false);
+            playerCamera.gameObject.SetActive(false);
+            if (playerCamera2 != null) playerCamera2.gameObject.SetActive(false);
+            mainCamera.gameObject.SetActive(false);
+            resultCamera.gameObject.SetActive(true);
+            SetDivided(false);
+        }
+
         private static PlayerBehaviour Opponent(PlayerBehaviour p)
         {
             PlayerBehaviour[] players = ChambaraManager.Instance.Players;
