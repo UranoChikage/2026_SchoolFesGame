@@ -3,8 +3,8 @@ using UnityEngine;
 namespace Common
 {
     /// <summary>
-    /// SDK�ɒ��ڐG�镔���BSDK�������ւ���Ƃ��͂�������������N���X��V�������B
-    /// �e���\�b�h�́uindex ���L���v�Ƃ����O��ŌĂ΂��̂ŁA�ڑ��`�F�b�N�͕s�v�B
+    /// SDKに直接触る部分。SDKを差し替えるときはこれを実装したクラスを新しく作る。
+    /// 各メソッドは「index が有効」という前提で呼ばれるので、接続チェックは不要。
     /// </summary>
     public interface ISwitchInputBackend
     {
@@ -15,7 +15,7 @@ namespace Common
         bool TryGetDirection(int index, out Vector3 x, out Vector3 y, out Vector3 z);
         bool ReadButton(int index, SwitchButton button);
 
-        /// <summary>�R���g���[���[�ݒ��ʂ��o���B�Ή����Ȃ��o�b�N�G���h�͉������Ȃ��Ă悢</summary>
+        /// <summary>コントローラー設定画面を出す。対応しないバックエンドは何もしなくてよい</summary>
         void ShowControllerSupport();
     }
 }

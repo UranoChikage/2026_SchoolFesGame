@@ -6,12 +6,12 @@ using nn.hid;
 namespace Common
 {
     /// <summary>
-    /// Npad ‚ÌÚ‘±ó‘Ô‚ğ–ˆƒtƒŒ[ƒ€Œ©‚ÄASwitchInput ‚Æ“¯‚¶ index ‚Å NnVibrate ‚ğ SwitchVibration ‚É“o˜^‚·‚éB
-    /// Ú‘±EØ’fE‚¿•û‚Ì•ÏXiŒg‘Ñƒ‚[ƒhÌJoy-Con•ª—£‚È‚Çj‚É’Ç]‚·‚éB
+    /// Npad ã®æ¥ç¶šçŠ¶æ…‹ã‚’æ¯ãƒ•ãƒ¬ãƒ¼ãƒ è¦‹ã¦ã€SwitchInput ã¨åŒã˜ index ã§ NnVibrate ã‚’ SwitchVibration ã«ç™»éŒ²ã™ã‚‹ã€‚
+    /// æ¥ç¶šãƒ»åˆ‡æ–­ãƒ»æŒã¡æ–¹ã®å¤‰æ›´ï¼ˆæºå¸¯ãƒ¢ãƒ¼ãƒ‰â‡”Joy-Conåˆ†é›¢ãªã©ï¼‰ã«è¿½å¾“ã™ã‚‹ã€‚
     /// </summary>
     sealed class NnVibrateInstaller : MonoBehaviour
     {
-        //SwitchInput ‚Ì index ‚Æ“¯‚¶•À‚Ñ‡‚É‚·‚é‚±‚Æi“ü—ÍƒoƒbƒNƒGƒ“ƒh‚Æ‘µ‚¦‚éj
+        //SwitchInput ã® index ã¨åŒã˜ä¸¦ã³é †ã«ã™ã‚‹ã“ã¨ï¼ˆå…¥åŠ›ãƒãƒƒã‚¯ã‚¨ãƒ³ãƒ‰ã¨æƒãˆã‚‹ï¼‰
         static readonly NpadId[] Order =
         {
             NpadId.Handheld,
@@ -35,7 +35,7 @@ namespace Common
             go.AddComponent<NnVibrateInstaller>();
         }
 
-        // Npad.Initialize ‚æ‚è‘O‚ÉG‚ç‚È‚¢‚æ‚¤ABeforeSceneLoad ‚Å‚Í‰½‚à‚¹‚¸ Update ‚ÅŒ©‚é
+        // Npad.Initialize ã‚ˆã‚Šå‰ã«è§¦ã‚‰ãªã„ã‚ˆã†ã€BeforeSceneLoad ã§ã¯ä½•ã‚‚ã›ãš Update ã§è¦‹ã‚‹
         void Update()
         {
             int index = 0;
@@ -50,7 +50,7 @@ namespace Common
                 var s = slots[index];
                 if (s.Id != id || s.Style != style)
                 {
-                    // •Ê‚ÌƒRƒ“ƒgƒ[ƒ‰[^•Ê‚Ì‚¿•û‚É•Ï‚í‚Á‚½F~‚ß‚Ä‚©‚çƒnƒ“ƒhƒ‹‚ğæ‚è’¼‚·
+                    // åˆ¥ã®ã‚³ãƒ³ãƒˆãƒ­ãƒ¼ãƒ©ãƒ¼ï¼åˆ¥ã®æŒã¡æ–¹ã«å¤‰ã‚ã£ãŸï¼šæ­¢ã‚ã¦ã‹ã‚‰ãƒãƒ³ãƒ‰ãƒ«ã‚’å–ã‚Šç›´ã™
                     s.Vib.Stop();
                     s.Id = id;
                     s.Style = style;
@@ -61,7 +61,7 @@ namespace Common
                 index++;
             }
 
-            // Œ¸‚Á‚½•ª‚Í‰ğœ
+            // æ¸›ã£ãŸåˆ†ã¯è§£é™¤
             for (int i = slots.Count - 1; i >= index; i--)
             {
                 slots[i].Vib.Stop();

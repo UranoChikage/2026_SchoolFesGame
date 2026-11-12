@@ -4,10 +4,10 @@ namespace Common
     public interface ISwitchVibrateInput
     {
         void GetVibrationDevice(int id, int padStyle);
-        void AmplitudeLowRandomVibrate(float duration = -1f);   // -1 = Stop‚Ü‚ÅŒp‘±
+        void AmplitudeLowRandomVibrate(float duration = -1f);   // -1 = Stopã¾ã§ç¶™ç¶š
         void AmplitudeHighRandomVibrate(float duration = -1f);
-        void PlayResources(string path);                        // StreamingAssets‚©‚ç‚Ì‘Š‘ÎƒpƒX
+        void PlayResources(string path);                        // StreamingAssetsã‹ã‚‰ã®ç›¸å¯¾ãƒ‘ã‚¹
         void Stop();
-        void Update(float deltaTime);                           // –ˆƒtƒŒ[ƒ€ŒÄ‚Ô
+        void Update(float deltaTime);                           // æ¯ãƒ•ãƒ¬ãƒ¼ãƒ å‘¼ã¶
     }
 }
