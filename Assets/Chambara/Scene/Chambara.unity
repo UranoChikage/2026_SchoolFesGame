@@ -3047,6 +3047,7 @@ MonoBehaviour:
   debugEnterSkip: 1
   duration: 1
   canvasGroup: {fileID: 234741257}
+  isSkipOnStart: 1
 --- !u!1 &914751933
 GameObject:
   m_ObjectHideFlags: 0
