@@ -26,7 +26,7 @@ namespace Chambara
         [SerializeField] CharacterSelectManager manager;
         [Tooltip("カーソルのプレハブ。プレイヤーごとに複製される。未設定なら自動生成")]
         [SerializeField] RectTransform cursorPrefab;
-        [Tooltip("カーソルを置く親。未設定ならこのオブジェクト（RectTransform で無ければ親）")]
+        [Tooltip("カーソルを置く親。移動範囲もこの大きさになる。未設定ならルートCanvas")]
         [SerializeField] RectTransform cursorParent;
 
         [Header("操作感")]
@@ -77,7 +77,11 @@ namespace Chambara
         {
             if (manager == null) manager = FindAnyObjectByType<CharacterSelectManager>();
             if (cursorParent == null)
-                cursorParent = transform as RectTransform ?? transform.parent as RectTransform;
+            {
+                // 置いた GameObject が小さいと移動範囲がそこに制限されるので、既定は画面全体（ルートCanvas）にする
+                var canvas = GetComponentInParent<Canvas>();
+                if (canvas != null) cursorParent = (RectTransform)canvas.rootCanvas.transform;
+            }
             if (manager == null || cursorParent == null)
             {
                 Debug.LogError("GyroCursorSelect: manager か cursorParent が見つかりません");
