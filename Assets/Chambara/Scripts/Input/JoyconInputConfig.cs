@@ -21,9 +21,12 @@ namespace Chambara
         public SwitchButton recenterButton = SwitchButton.Cancel;
         [Tooltip("合わせ直すときに構える剣の角度（真上=0、正面=90）")] public float calibrationAngle = 90f;   // Cancel を押すと剣先が正面を向く
 
-        [Header("攻撃（刃先の向きが swingTime 秒以内に swingAngle 度以上動いたら、動いた向きに振る）")]
-        [Tooltip("この時間（秒）以内に動いた分だけを見る")] public float swingTime = 0.3f;
-        [Tooltip("刃先の向きがこの角度（度）以上動いたら振ったとみなす")] public float swingAngle = 90f;
+        [Header("攻撃（刃先が swingStartSpeed 以上の速さで動き出してから swingAngle 度以上動いたら、動いた向きに振る）")]
+        [Tooltip("刃先がこの速さ（度/秒）を超えたら振り始めとみなす。ゆっくりした振りかぶりで振りが出ないようにする")] public float swingStartSpeed = 300f;
+        [Tooltip("刃先がこの速さ（度/秒）を下回ったら振り終わりとみなす")] public float swingEndSpeed = 150f;
+        [Tooltip("1回の振りとして見る最長の時間（秒）")] public float swingTime = 0.3f;
+        [Tooltip("振り始めから刃先の向きがこの角度（度）以上動いたら振ったとみなす")] public float swingAngle = 60f;
+        [Tooltip("後ろから見た刃先の動き（刃先は長さ1）がこれ未満なら振りにしない（前後にだけ動かしたとき方向がぶれないようにする）")] public float swingMinScreenMove = 0.3f;
         [Tooltip("振った後、この時間（秒）は次の振りを受け付けない（1回の大振りで2回出ないようにする）")] public float swingCooldown = 0.3f;
         [Tooltip("振った入力を覚えておく時間（秒）。硬直中に振っても後から出ないようにする")] public float swingBuffer = 0.1f;
 
@@ -41,6 +44,8 @@ namespace Chambara
         [Tooltip("刃と正面のなす角が 90度±この角度 ならガードの構え")] public float perpendicularTolerance = 30f;
         [Tooltip("刃先の角度（真上=0）がこれ以内なら上向き、180-これ以上なら下向き。間は水平")] public float verticalRange = 45f;
         [Tooltip("上向きのとき、真上からこの角度以上傾けないと左右が決まらない")] public float sideDeadZone = 5f;
+        [Tooltip("今の構えから抜けるときだけ、境目をこの角度（度）広げる。境目で手がぶれても構えが切り替わらないようにする")] public float guardHysteresis = 10f;
+        [Tooltip("構えが外れたり別の向きになったりしても、この時間（秒）続くまでは今の構えを保つ")] public float guardGraceTime = 0.1f;
 
         [Header("移動")]
         public bool useStick = true;
