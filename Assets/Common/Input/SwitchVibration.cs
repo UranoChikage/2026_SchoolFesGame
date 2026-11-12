@@ -81,5 +81,24 @@ namespace Common
             Object.DontDestroyOnLoad(go);
             go.AddComponent<Driver>();
         }
+        /// <summary>bnvib ファイルを再生する。path は StreamingAssets からの相対パス（例: "Vibration/hit.bnvib"）</summary>
+        public static void Play(int index, string path)
+        {
+            if (devices.TryGetValue(index, out var d)) d.PlayResources(path);
+        }
+
+        /// <summary>登録済みの全コントローラーの振動を止める</summary>
+        public static void StopAll()
+        {
+            foreach (var d in devices.Values) d.Stop();
+        }
+        /*
+         　 使う側実装方法
+            SwitchVibration.High(0, 0.2f);                    // 舵取りを0.2秒強めに振動
+            SwitchVibration.Low(1);                           // 砲手1を Stop まで弱めに振動
+            SwitchVibration.Stop(1);
+            SwitchVibration.Play(2, "Vibration/cannon.bnvib"); // bnvib を再生
+            SwitchVibration.HighAll(0.5f);
+          */
     }
 }
