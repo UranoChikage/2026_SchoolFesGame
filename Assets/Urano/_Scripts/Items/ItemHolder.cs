@@ -22,6 +22,7 @@ namespace Pirates
         bool cameraEffectOn;
         SoundHandle beamSound; // ビーム使用中に鳴らす音（終わったら止める）
         bool beamVibrating;    // ビーム使用中の振動を出している間true
+        int beamVibrationId = -1; // ビームの振動データの再生ID（-1＝データ再生ができず代用の振動）
 
         // ビームの見た目（ItemAsset のPrefabがあればそれ、無ければ仮の見た目）
         ItemAsset visualFor;
@@ -284,7 +285,7 @@ namespace Pirates
         {
             CannonStation station = shooter != null ? shooter.Station : null;
             if (station == null) return;
-            station.Vibrate(false, -1f);
+            beamVibrationId = station.LoopVibration(GameVibration.BeamFile);
             beamVibrating = true;
         }
 
@@ -293,7 +294,7 @@ namespace Pirates
             if (!beamVibrating) return;
             beamVibrating = false;
             CannonStation station = shooter != null ? shooter.Station : null;
-            if (station != null) station.StopVibrate();
+            if (station != null) station.StopLoopVibration(beamVibrationId); // Beamの振動だけ止める（他の振動は止めない）
         }
 
         void OnDisable()

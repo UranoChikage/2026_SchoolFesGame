@@ -134,7 +134,7 @@ namespace Pirates
             if (vfx != null) vfx.Play(point, explosionRadius * 2f);
             DrawExplosionRange(point);
             AudioManager.Play(Sfx.CannonExplosion, point);
-            if (source != null && source.Station != null) source.Station.Vibrate(false, GameVibration.MediumPulse); // 撃った砲手に着弾を伝える
+            if (source != null && source.Station != null) source.Station.PlayVibration(GameVibration.ExplosionFile, false, GameVibration.MediumPulse); // 撃った砲手に着弾を伝える
 
             // 範囲内のIDamageableに1回ずつダメージ（コライダーが複数あっても重複させない）
             damaged.Clear();

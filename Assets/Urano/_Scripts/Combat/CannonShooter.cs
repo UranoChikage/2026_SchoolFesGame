@@ -162,7 +162,7 @@ namespace Pirates
             BoatBuoyancy surface = water != null ? water : PlayerTarget.Current?.Water; // 未設定ならプレイヤー船の水面
             ball.Launch(velocity, explosionRadius, damage, hitMask, surface, owner, 15f, this);
             AudioManager.Play(Sfx.CannonFire, origin);
-            Station?.Vibrate(true, GameVibration.ShortPulse);
+            Station?.PlayVibration(GameVibration.FireFile, true, GameVibration.ShortPulse);
 
             nextFireTime = Time.time + cooldown;
             return true;

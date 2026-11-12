@@ -13,6 +13,34 @@ namespace Pirates
         public const float ShortPulse = 0.12f;
         public const float MediumPulse = 0.25f;
 
+        // 振動データ（StreamingAssets からの相対パス）。bnvib は他の振動と同時に鳴る
+        public const string FireFile = "Exprosion.bnvib";      // 大砲の発射
+        public const string ExplosionFile = "Exprosion.bnvib"; // 着弾の爆発
+        public const string BeamFile = "smash.bnvib";          // Beam中（ループ）
+
+        /// <summary>振動データを1回再生する。再生できなければ（デバイス無し・ファイル無し）、代わりに短い振動を出す</summary>
+        public static void PlayFile(int joyconIndex, string path, bool fallbackStrong, float fallbackDuration)
+        {
+            if (SwitchVibration.Play(joyconIndex, path) >= 0) return;
+            if (fallbackStrong) SwitchVibration.High(joyconIndex, fallbackDuration);
+            else SwitchVibration.Low(joyconIndex, fallbackDuration);
+        }
+
+        /// <summary>振動データをループ再生し、再生IDを返す。再生できなければ弱めの継続振動にして -1 を返す</summary>
+        public static int LoopFile(int joyconIndex, string path)
+        {
+            int id = SwitchVibration.Loop(joyconIndex, path);
+            if (id < 0) SwitchVibration.Low(joyconIndex, -1f);
+            return id;
+        }
+
+        /// <summary>LoopFile の振動を止める（IDが -1 なら代わりの継続振動を止める）</summary>
+        public static void StopLoop(int joyconIndex, int playId)
+        {
+            if (playId >= 0) SwitchVibration.StopPlay(joyconIndex, playId);
+            else SwitchVibration.Stop(joyconIndex);
+        }
+
         /// <summary>弱め（低周波）の振動。duration が負なら Stop するまで続く</summary>
         public static void Low(int joyconIndex, float duration) => SwitchVibration.Low(joyconIndex, duration);
 

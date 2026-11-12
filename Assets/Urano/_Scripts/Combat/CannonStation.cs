@@ -118,6 +118,14 @@ namespace Pirates
 
         public void StopVibrate() => GameVibration.Stop(joyconIndex);
 
+        /// <summary>振動データを1回再生（他の振動と同時に鳴る）。再生できなければ短い振動で代用</summary>
+        public void PlayVibration(string path, bool fallbackStrong, float fallbackDuration)
+            => GameVibration.PlayFile(joyconIndex, path, fallbackStrong, fallbackDuration);
+
+        /// <summary>振動データをループ再生して再生IDを返す。止めるときは StopLoopVibration に渡す</summary>
+        public int LoopVibration(string path) => GameVibration.LoopFile(joyconIndex, path);
+        public void StopLoopVibration(int playId) => GameVibration.StopLoop(joyconIndex, playId);
+
         /// <summary>この砲手の色（カーソル・予測線と同じ）。獲得通知などで使う</summary>
         public Color PlayerColor => cursorColor;
 
