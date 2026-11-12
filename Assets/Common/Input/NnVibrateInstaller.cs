@@ -27,6 +27,23 @@ namespace Common
         }
         readonly List<Slot> slots = new List<Slot>();
 
+        // VibrationFramework の初期化済みの組み合わせ。Init と StartThread を呼ばずに Play すると落ちる（サンプルの HidVibrationThread と同じ手順）
+        readonly HashSet<(NpadId, NpadStyle)> initialized = new HashSet<(NpadId, NpadStyle)>();
+        static bool threadStarted;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetStatic() => threadStarted = false;
+
+        void EnsureFramework(NpadId id, NpadStyle style)
+        {
+            if (initialized.Add((id, style))) VibrationFramework.Init(id, style);
+            if (!threadStarted)
+            {
+                VibrationFramework.StartThread();
+                threadStarted = true;
+            }
+        }
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         static void Install()
         {
@@ -54,6 +71,7 @@ namespace Common
                     s.Vib.Stop();
                     s.Id = id;
                     s.Style = style;
+                    EnsureFramework(id, style); // 先に初期化（未初期化のまま Play すると落ちる）
                     s.Vib.GetVibrationDevice((int)id, (int)style);
                     slots[index] = s;
                     SwitchVibration.Register(index, s.Vib);
