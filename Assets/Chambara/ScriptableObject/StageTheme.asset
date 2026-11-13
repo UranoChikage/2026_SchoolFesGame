@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 548327195db7a9c40908b479c6b86922, type: 3}
+  m_Name: StageTheme
+  m_EditorClassIdentifier: Assembly-CSharp::Chambara.StageThemeConfig
+  themes:
+  - name: FloatingCityDusk
+    skybox: {fileID: 2100000, guid: d1ba6ef64f0c48d78afd7103331a29d2, type: 2}
+    stageMaterial: {fileID: 2100000, guid: 78e961be8fdd47be9f76fff91ed5a97f, type: 2}
+  - name: FloatingCityNight
+    skybox: {fileID: 2100000, guid: 78d019266fcd449484d7ece9d8ba4c4a, type: 2}
+    stageMaterial: {fileID: 2100000, guid: 89484767b9bc435da78bd381185554e9, type: 2}
+  - name: HighAltitudeDay
+    skybox: {fileID: 2100000, guid: 76e26f1297564afca3d9a89b4289da26, type: 2}
+    stageMaterial: {fileID: 2100000, guid: a08e15903c3f409a93fe75f89b893a44, type: 2}
+  - name: HighAltitudeNight
+    skybox: {fileID: 2100000, guid: 7e367509214949fea9da8a2de6a8517c, type: 2}
+    stageMaterial: {fileID: 2100000, guid: 03f2d6016eed44c4836c92778deb910c, type: 2}
+  - name: HighAltitudeSunset
+    skybox: {fileID: 2100000, guid: fcb8ce79c7d540daadf82dbcee0dc7d0, type: 2}
+    stageMaterial: {fileID: 2100000, guid: 78e961be8fdd47be9f76fff91ed5a97f, type: 2}
+  - name: SpaceCrimson
+    skybox: {fileID: 2100000, guid: 981731c3cd274a9e8b14177bbc743ea7, type: 2}
+    stageMaterial: {fileID: 2100000, guid: e4e15eeefb974a928caa38a178d532b2, type: 2}
+  - name: Metaverse
+    skybox: {fileID: 2100000, guid: d964eef180b747468d9101331efcfe15, type: 2}
+    stageMaterial: {fileID: 2100000, guid: 5f7b8a640e2b432f80e13c45db7db047, type: 2}
