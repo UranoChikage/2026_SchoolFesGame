@@ -40,6 +40,22 @@ namespace Title
             baseColor = label.color;
             label.text = "";
             SetAlpha(0f);
+            Prewarm();
+        }
+
+        /// <summary>
+        /// 動的フォントは、初めて出す文字をその場で作る（日本語は特に重い。実機Switchだと選んだ瞬間に引っかかる）。
+        /// 使う文字を最初にまとめて作っておき、選んだときの負荷をなくす。
+        /// </summary>
+        void Prewarm()
+        {
+            if (label.font == null || label.font.dynamic == false) return;
+
+            var all = new System.Text.StringBuilder();
+            foreach (string d in descriptions) all.Append(d);
+            if (all.Length == 0) return;
+
+            label.font.RequestCharactersInTexture(all.ToString(), label.fontSize, label.fontStyle);
         }
 
         void Update()
@@ -68,7 +84,7 @@ namespace Title
         {
             Color c = baseColor;
             c.a = baseColor.a * a;
-            label.color = c;
+            if (label.color != c) label.color = c;   // 変わらないフレームは Canvas を汚さない
         }
     }
 }
