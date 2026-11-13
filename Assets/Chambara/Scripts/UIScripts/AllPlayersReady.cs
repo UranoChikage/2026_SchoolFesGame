@@ -21,6 +21,12 @@ namespace Chambara
         [SerializeField, Min(1), Tooltip("待つプレイヤー数（コントローラー番号 0 〜 playerCount-1）")]
         int playerCount = 2;
 
+        [SerializeField, Tooltip("ON: 繋がっている人数ぶんだけ待つ（最大は playerCount、最小は minPlayers）。OFF: 常に playerCount 人を待つ")]
+        bool followConnectedCount = false;
+
+        [SerializeField, Min(1), Tooltip("followConnectedCount が ON のとき、繋がっていなくても最低この人数は待つ")]
+        int minPlayers = 2;
+
         [SerializeField, Tooltip("押してもらうボタン")]
         SwitchButton readyButton = SwitchButton.Cancel;
 
@@ -75,10 +81,15 @@ namespace Chambara
         {
             if (completed) return;
 
+            // いま待つ人数。繋がっている人数に合わせる設定なら、minPlayers 〜 playerCount の範囲に収める
+            int need = followConnectedCount
+                ? Mathf.Clamp(SwitchInput.I.ConnectedCount, Mathf.Min(minPlayers, playerCount), playerCount)
+                : playerCount;
+
             if (debugEnterSkip && DebugEnterPressed())
             {
                 // デバッグ用：Enter で全員OK扱いにして進む
-                for (int i = 0; i < playerCount; i++)
+                for (int i = 0; i < need; i++)
                 {
                     if (ready[i]) continue;
                     ready[i] = true;
@@ -87,7 +98,7 @@ namespace Chambara
                 }
             }
 
-            for (int i = 0; i < playerCount; i++)
+            for (int i = 0; i < need; i++)
             {
                 if (ready[i] || !SwitchInput.I.ButtonDown(i, readyButton)) continue;
 
@@ -96,7 +107,7 @@ namespace Chambara
                 onPlayerReady?.Invoke(i);
             }
 
-            for (int i = 0; i < playerCount; i++) if (!ready[i]) return;
+            for (int i = 0; i < need; i++) if (!ready[i]) return;
 
             completed = true;
             StartCoroutine(Coroutine());

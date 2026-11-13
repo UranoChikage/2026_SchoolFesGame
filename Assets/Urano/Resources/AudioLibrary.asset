@@ -13,84 +13,96 @@ MonoBehaviour:
   m_Name: AudioLibrary
   m_EditorClassIdentifier: Assembly-CSharp::Pirates.AudioLibrary
   cannonFire:
-    clips: []
-    volume: 1
-    pitchRange: {x: 0.95, y: 1.05}
+    clips:
+    - {fileID: 8300000, guid: 4525dbacac8861d46bb1d7efc5dccbe8, type: 3}
+    volume: 0.2
+    pitchRange: {x: 0.5, y: 0.7}
     loop: 0
-    spatialBlend: 0.5
+    spatialBlend: 0.8
     minInterval: 0.03
   cannonExplosion:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 820f8642235760642879b7920e5f6f8e, type: 3}
     volume: 1
     pitchRange: {x: 0.95, y: 1.05}
     loop: 0
     spatialBlend: 0.5
     minInterval: 0.03
   sunk:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 820f8642235760642879b7920e5f6f8e, type: 3}
     volume: 1
     pitchRange: {x: 0.95, y: 1.05}
     loop: 0
     spatialBlend: 0.5
     minInterval: 0.03
   treasurePickup:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 101732ec874f31b40919948dbb35b51b, type: 3}
     volume: 1
     pitchRange: {x: 0.95, y: 1.05}
     loop: 0
     spatialBlend: 0
     minInterval: 0.03
   beam:
-    clips: []
-    volume: 1
+    clips:
+    - {fileID: 8300000, guid: 4fa76fddf3d53ce4e8cdad9e98e3369c, type: 3}
+    volume: 0.2
     pitchRange: {x: 0.95, y: 1.05}
-    loop: 0
+    loop: 1
     spatialBlend: 0
     minInterval: 0.03
   barrier:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 38f9f1576454eaf4783cc545e87f25ea, type: 3}
     volume: 1
     pitchRange: {x: 0.95, y: 1.05}
     loop: 0
     spatialBlend: 0
     minInterval: 0.03
   gameOver:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 8b34087eba0fc8448869b4fcffe13dd1, type: 3}
     volume: 1
     pitchRange: {x: 0.95, y: 1.05}
     loop: 0
     spatialBlend: 0
     minInterval: 0.03
   timeUp:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 6c2d7f17cf824974b81bb54f3e4ffc97, type: 3}
     volume: 1
     pitchRange: {x: 0.95, y: 1.05}
     loop: 0
     spatialBlend: 0
     minInterval: 0.03
   resultCountUp:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: f2ffa4c96b6cd464e977e82756fba4ee, type: 3}
     volume: 1
     pitchRange: {x: 0.95, y: 1.05}
     loop: 0
     spatialBlend: 0
     minInterval: 0.03
   resultFinal:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 2b6a52105e77cd0409e1713c420b9d50, type: 3}
     volume: 1
     pitchRange: {x: 0.95, y: 1.05}
     loop: 0
     spatialBlend: 0
     minInterval: 0.03
   rankS:
-    clips: []
-    volume: 1
+    clips:
+    - {fileID: 8300000, guid: 86cd41b371f6406428a6db83c8db0d24, type: 3}
+    volume: 0.5
     pitchRange: {x: 0.95, y: 1.05}
     loop: 0
     spatialBlend: 0
     minInterval: 0.03
   rankOther:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: fc18521528f556d45850e94595fbce5d, type: 3}
     volume: 1
     pitchRange: {x: 0.95, y: 1.05}
     loop: 0

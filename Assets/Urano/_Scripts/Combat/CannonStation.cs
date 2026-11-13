@@ -384,14 +384,17 @@ namespace Pirates
             if (GameInput.StationSelectPressed(stationNumber)) activeStationNumber = stationNumber;
         }
 
+        /// <summary>カーソルを画面中央に戻し、ジャイロの重力推定を取り直す（キャリブレーション）。停止中でも呼べる</summary>
+        public void Recenter()
+        {
+            cursor = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
+            pointer.Reset();
+        }
+
         // Title の Select と同じ：角速度を積算して動かす。リセット（Cancel）でカーソルを画面中央に戻す
         bool UpdateJoycon()
         {
-            if (GameInput.JoyconRecenterPressed(joyconIndex))
-            {
-                cursor = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
-                pointer.Reset();
-            }
+            if (GameInput.JoyconRecenterPressed(joyconIndex)) Recenter();
 
             AdjustSensitivity();
             cursor += pointer.Rate(joyconIndex, yawRelaxFactor, gravityBlend) * sharedSensitivity * Time.deltaTime;

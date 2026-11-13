@@ -33,6 +33,12 @@ namespace Pirates
         [SerializeField]
         float introDuration = 3f;
 
+        [Header("キャリブレーション（導入のあと）")]
+        [SerializeField]
+        [Tooltip("導入Timelineが終わったら出す「Cancelを押して合わせる」UI（CancelReadyUi）。最初は非表示にしておく。" +
+                 "未設定ならそのまま発進する。UIの AllPlayersReady.onAllReady に GameFlow.CompleteCalibration を繋ぐこと")]
+        GameObject calibrationUi;
+
         [Header("終了演出（時間切れ）")]
         [SerializeField]
         [Tooltip("時間切れの終了Timeline（任意）。終わったらリザルト。未設定ならoutroDurationだけ待つ")]
@@ -86,6 +92,7 @@ namespace Pirates
         CannonStation[] stations;
         float phaseEndTime;
         PlayableDirector outro; // 今回の終了演出（理由で切り替わる）
+        bool calibrating;    // 導入後、全員のCancel待ち
         bool startRequested; // 開始要求済み（ロード画面が開き終わるのを待っている場合を含む）
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -196,8 +203,9 @@ namespace Pirates
                     break;
 
                 case GamePhase.Intro:
+                    if (calibrating) break;   // 全員のCancelを待っている（CompleteCalibration で進む）
                     if (GameInput.SkipPressed()) SkipIntro();
-                    else if (SequenceDone(introDirector)) BeginPlaying();
+                    else if (SequenceDone(introDirector)) EndIntro();
                     break;
 
                 case GamePhase.Playing:
@@ -210,6 +218,25 @@ namespace Pirates
                     if (SequenceDone(outro)) ShowResult();
                     break;
             }
+        }
+
+        // 導入が終わった。キャリブレーションUIがあれば、全員がCancelを押すまで発進を待つ
+        void EndIntro()
+        {
+            if (calibrationUi == null) { BeginPlaying(); return; }
+
+            calibrating = true;
+            calibrationUi.SetActive(true);   // AllPlayersReady は有効になった時に待ち始める
+        }
+
+        /// <summary>全員のキャリブレーションが終わった（AllPlayersReady.onAllReady から呼ぶ）。カーソルを中央に戻して発進する</summary>
+        public void CompleteCalibration()
+        {
+            if (!calibrating) return;
+            calibrating = false;
+            if (calibrationUi != null) calibrationUi.SetActive(false);
+            foreach (CannonStation s in stations) if (s != null) s.Recenter();
+            BeginPlaying();
         }
 
         void BeginPlaying()
@@ -293,7 +320,7 @@ namespace Pirates
                 introDirector.Evaluate();
                 introDirector.Stop();
             }
-            BeginPlaying();
+            EndIntro();   // スキップしてもキャリブレーションは飛ばさない
         }
 
         // 操縦・砲撃・敵スポーンのON/OFFをまとめて切り替える
