@@ -35,9 +35,11 @@ namespace Chambara
         public event Action<GameState> OnGameStateChanged;
         public event Action OnTieClash;        // 相打ちで剣がぶつかった瞬間
         public event Action<int> OnGuarded;    // ガードされた瞬間（引数は攻撃した側）
+        public event Action<int> OnWhiff;      // 空振りした瞬間（引数は攻撃した側）。斬り・突きどちらも
         public event Action<int> OnHit;        // 攻撃が当たった瞬間（引数は攻撃した側）。1本取ったときだけ
         public event Action<int> OnThrustHit;  // 突きが当たって相手がのけぞった瞬間（引数は攻撃した側）。1本にならないとき
         public event Action<PlayerBehaviour> OnKnockback;   // 斬られた方が吹っ飛び始めた瞬間（ヒットストップの後）
+        public event Action OnRoundResult;     // 吹っ飛びを見せ終わり、スコアが入った瞬間（決着ならこの後に勝利演出）
 
         [Header("Slow Motion Settings")]
         [SerializeField] float slowTimeScale = 0.2f;
@@ -160,6 +162,7 @@ namespace Chambara
         public void OnRoundResultShown()
         {
             if (gameState != GameState.Finished || waitingNextRound) return;
+            OnRoundResult?.Invoke();
             if (LastRoundWinner >= 0 && scores[LastRoundWinner] >= winScore)
             {
                 StartCoroutine(ShowWinnerResult(LastRoundWinner));
@@ -394,6 +397,7 @@ namespace Chambara
             {
                 case AttackResult.Whiff:
                     Debug.Log(log + "空振り");
+                    OnWhiff?.Invoke(atk);
                     break;
                 case AttackResult.Guarded:
                     Debug.Log(log + $"{2 - atk}P:ガード");
@@ -413,6 +417,7 @@ namespace Chambara
             {
                 case AttackResult.Whiff:
                     Debug.Log(log + "空振り");
+                    OnWhiff?.Invoke(atk);
                     break;
                 case AttackResult.Guarded:
                     Debug.Log(log + $"{2 - atk}P:ガード");
