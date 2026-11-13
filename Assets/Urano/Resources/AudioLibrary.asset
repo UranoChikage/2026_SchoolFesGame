@@ -86,7 +86,7 @@ MonoBehaviour:
     minInterval: 0.03
   resultFinal:
     clips:
-    - {fileID: 8300000, guid: 2ff9acad4fd23794cbd1da9133fb8781, type: 3}
+    - {fileID: 8300000, guid: 2b6a52105e77cd0409e1713c420b9d50, type: 3}
     volume: 1
     pitchRange: {x: 0.95, y: 1.05}
     loop: 0
@@ -102,7 +102,7 @@ MonoBehaviour:
     minInterval: 0.03
   rankOther:
     clips:
-    - {fileID: 8300000, guid: 2b6a52105e77cd0409e1713c420b9d50, type: 3}
+    - {fileID: 8300000, guid: fc18521528f556d45850e94595fbce5d, type: 3}
     volume: 1
     pitchRange: {x: 0.95, y: 1.05}
     loop: 0
