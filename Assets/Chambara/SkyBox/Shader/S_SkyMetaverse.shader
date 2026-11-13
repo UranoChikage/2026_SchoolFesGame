@@ -108,7 +108,8 @@ Shader "Custom/Skybox/SkyMetaverse"
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 
-            #define MAX_STEPS 96
+            // 軽量化: 96 → 48 (フォグで見えなくなる距離で打ち切る)
+            #define MAX_STEPS 48
             #define TAU 6.28318530718
 
             CBUFFER_START(UnityPerMaterial)
@@ -221,9 +222,10 @@ Shader "Custom/Skybox/SkyMetaverse"
             }
 
             // 遠くでもチラつかないグリッド線 (uv はマス単位)
-            float PristineGrid(float2 uv, float lineWidth)
+            // uvDeriv = 1 ピクセルあたりの uv の変化量 (分岐内で使えるよう外から渡す)
+            float PristineGrid(float2 uv, float2 uvDeriv, float lineWidth)
             {
-                float2 uvDeriv = max(fwidth(uv), 1e-5);
+                uvDeriv = max(uvDeriv, 1e-5);
                 float2 drawWidth = clamp(lineWidth, uvDeriv, 0.5);
                 float2 lineAA = uvDeriv * 1.5;
                 float2 gridUV = 1.0 - abs(frac(uv) * 2.0 - 1.0);
@@ -252,7 +254,7 @@ Shader "Custom/Skybox/SkyMetaverse"
             }
 
             // ホログラムの六角形バリア
-            half3 HexBarrier(float3 rd)
+            half3 HexBarrier(float3 rd, float pixelAngle)
             {
                 float2 uv = rd.xz / (rd.y + 0.35) * _HexScale;
 
@@ -266,7 +268,9 @@ Shader "Custom/Skybox/SkyMetaverse"
                 float2 ap = abs(gv);
                 float hexDist = max(dot(ap, float2(0.5, 0.8660254)), ap.x);
                 float edge = 0.5 - hexDist;
-                float aa = fwidth(edge) + 1e-4;
+                // uv = rd.xz / (rd.y + 0.35) の 1 ピクセルあたりの変化量 (fwidth の代わり)
+                float yc = max(rd.y + 0.35, 0.05);
+                float aa = pixelAngle * _HexScale * (1.0 / yc + length(rd.xz) / (yc * yc)) * 0.7 + 1e-4;
                 float hexLine = 1.0 - smoothstep(_HexLineWidth, _HexLineWidth + aa * 1.5, edge);
                 // 密になりすぎる所は薄く
                 hexLine *= saturate(1.0 - aa * 8.0);
@@ -418,42 +422,57 @@ Shader "Custom/Skybox/SkyMetaverse"
 
                 float3 ro = float3(_ScrollSpeed.x * _Time.y, _CameraHeight, _ScrollSpeed.y * _Time.y);
 
-                // ================= 床 =================
-                // 微分を使うので分岐の外で常に計算する
                 float tGround = ro.y / max(-rd.y, 1e-4);
-                float3 p = ro + rd * tGround;
-                float2 uv = p.xz / _GridSize;
-                float2 uvMajor = uv / _MajorEvery;
+                half3 floorCol = 0;
+                half3 skyCol = 0;
 
-                float minor = PristineGrid(uv, _GridLineWidth);
-                float major = PristineGrid(uvMajor, _GridLineWidth * 1.5 / _MajorEvery);
-                float pixelInMajor = tGround * pixelAngle / (_GridSize * _MajorEvery);
+                // ================= 床 (地平線より下だけ計算) =================
+                [branch]
+                if (rd.y < pixelAngle)
+                {
+                    float3 p = ro + rd * tGround;
+                    float2 uv = p.xz / _GridSize;
+                    float2 uvMajor = uv / _MajorEvery;
 
-                // カメラ位置から広がる波紋
-                float rDist = length(p.xz - ro.xz);
-                float wave = frac(rDist / _WaveSpacing - _Time.y * _WaveSpeed);
-                wave = pow(saturate(1.0 - abs(wave * 2.0 - 1.0)), 10.0) * _WaveIntensity;
-                wave *= saturate(1.0 - tGround * pixelAngle / (_WaveSpacing * 0.05));   // 遠方のチラつき防止
+                    // 1 ピクセルの床上での大きさ (斜めに見る方向ほど伸びる)
+                    float down = max(-rd.y, 0.01);
+                    float2 radial = abs(rd.xz) / max(length(rd.xz), 1e-5);
+                    float2 uvDeriv = tGround * pixelAngle / _GridSize * (1.0 + (1.0 / down - 1.0) * radial);
 
-                half3 floorCol = _FloorColor.rgb;
-                floorCol += _GridColor.rgb * minor * 0.5 * (1.0 + wave);
-                floorCol += _GridMajorColor.rgb * major * (1.0 + wave * 0.5);
-                floorCol += _PulseColor.rgb * GridPulses(uvMajor, pixelInMajor);
+                    float minor = PristineGrid(uv, uvDeriv, _GridLineWidth);
+                    float major = PristineGrid(uvMajor, uvDeriv / _MajorEvery, _GridLineWidth * 1.5 / _MajorEvery);
+                    float pixelInMajor = tGround * pixelAngle / (_GridSize * _MajorEvery);
 
-                // 光沢のある床に空が映り込む
-                float3 rr = float3(rd.x, -rd.y, rd.z);
-                float fresnel = 0.04 + 0.96 * pow(1.0 - saturate(-rd.y), 5.0);
-                floorCol += SkyBase(rr, sunDir) * _FloorReflection * fresnel;
+                    // カメラ位置から広がる波紋
+                    float rDist = length(p.xz - ro.xz);
+                    float wave = frac(rDist / _WaveSpacing - _Time.y * _WaveSpeed);
+                    wave = pow(saturate(1.0 - abs(wave * 2.0 - 1.0)), 10.0) * _WaveIntensity;
+                    wave *= saturate(1.0 - tGround * pixelAngle / (_WaveSpacing * 0.05));   // 遠方のチラつき防止
 
-                float fog = 1.0 - exp(-tGround * _FogDensity);
-                floorCol = lerp(floorCol, _HorizonColor.rgb, fog);
+                    floorCol = _FloorColor.rgb;
+                    floorCol += _GridColor.rgb * minor * 0.5 * (1.0 + wave);
+                    floorCol += _GridMajorColor.rgb * major * (1.0 + wave * 0.5);
+                    floorCol += _PulseColor.rgb * GridPulses(uvMajor, pixelInMajor);
 
-                // ================= 空 =================
-                half3 skyCol = SkyBase(rd, sunDir);
-                skyCol += HexBarrier(rd);
-                skyCol += Particles(rd, pixelAngle);
-                skyCol += Sun(rd, sunDir, pixelAngle);
-                skyCol += PortalRing(rd, pixelAngle);
+                    // 光沢のある床に空が映り込む
+                    float3 rr = float3(rd.x, -rd.y, rd.z);
+                    float fresnel = 0.04 + 0.96 * pow(1.0 - saturate(-rd.y), 5.0);
+                    floorCol += SkyBase(rr, sunDir) * _FloorReflection * fresnel;
+
+                    float fog = 1.0 - exp(-tGround * _FogDensity);
+                    floorCol = lerp(floorCol, _HorizonColor.rgb, fog);
+                }
+
+                // ================= 空 (地平線より上だけ計算) =================
+                [branch]
+                if (rd.y > -pixelAngle)
+                {
+                    skyCol = SkyBase(rd, sunDir);
+                    skyCol += HexBarrier(rd, pixelAngle);
+                    skyCol += Particles(rd, pixelAngle);
+                    skyCol += Sun(rd, sunDir, pixelAngle);
+                    skyCol += PortalRing(rd, pixelAngle);
+                }
 
                 float isSky = smoothstep(-pixelAngle, pixelAngle, rd.y);
                 half3 col = lerp(floorCol, skyCol, isSky);
@@ -464,7 +483,9 @@ Shader "Custom/Skybox/SkyMetaverse"
                 // ================= データの光柱 (2D DDA) =================
                 float S = _GridSize * _BeamCells;
                 float tTop = rd.y > 0.0 ? max((_BeamHeight - ro.y) / rd.y, 0.0) : 1e9;
-                float tEnd = min(min(rd.y < 0.0 ? tGround : 1e9, tTop), _MaxDistance);
+                // フォグでほぼ見えなくなる距離 (透過率 5%) より先は探索しない
+                float tFogEnd = 3.0 / max(_FogDensity, 1e-5);
+                float tEnd = min(min(min(rd.y < 0.0 ? tGround : 1e9, tTop), _MaxDistance), tFogEnd);
 
                 float3 rdSafe = rd + (step(abs(rd), 1e-6) * 1e-6);
                 float3 invRd = 1.0 / rdSafe;

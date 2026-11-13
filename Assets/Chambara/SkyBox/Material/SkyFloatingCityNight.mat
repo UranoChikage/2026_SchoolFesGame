@@ -29,12 +29,12 @@ Material:
     - _CameraHeight: 70
     - _CellSize: 32
     - _DowntownRadius: 700
-    - _DriftSpeed: 4.7
+    - _DriftSpeed: 0
     - _EmptyChance: 0.149
     - _Exposure: 1
     - _FloorHeight: 3.6
     - _FogDensity: 0.0012
-    - _MaxDistance: 3000
+    - _MaxDistance: 616
     - _MinHeight: 10
     - _SkyExponent: 0.4
     - _StarIntensity: 0.6
@@ -43,8 +43,8 @@ Material:
     - _SunGlow: 0.3
     - _TowerChance: 0.127
     - _TowerMultiplier: 6
-    - _TrafficDensity: 0.5
-    - _TrafficSpeed: 14
+    - _TrafficDensity: 0.037
+    - _TrafficSpeed: 5.6
     - _WindowIntensity: 1.5
     - _WindowLitRatio: 0.4
     - _WindowSpacing: 3

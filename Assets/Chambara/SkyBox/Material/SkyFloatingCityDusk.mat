@@ -34,7 +34,7 @@ Material:
     - _Exposure: 1
     - _FloorHeight: 3.6
     - _FogDensity: 0.0009
-    - _MaxDistance: 3000
+    - _MaxDistance: 1043
     - _MinHeight: 10
     - _SkyExponent: 0.4
     - _StarIntensity: 0
@@ -43,8 +43,8 @@ Material:
     - _SunGlow: 0.8
     - _TowerChance: 0.12
     - _TowerMultiplier: 3
-    - _TrafficDensity: 0.5
-    - _TrafficSpeed: 14
+    - _TrafficDensity: 0.021
+    - _TrafficSpeed: 7.9
     - _WindowIntensity: 0.6
     - _WindowLitRatio: 0.25
     - _WindowSpacing: 3

@@ -125,12 +125,19 @@ Shader "Custom/Skybox/SkySpace"
 
                 // ---- 星雲 (ドメインワープした 3D ノイズ) ----
                 float3 p = dir * _NebulaScale;
-                float3 q = float3(SkyFbm3(p, 4), SkyFbm3(p + 5.2, 4), SkyFbm3(p + 9.7, 4));
-                float n = SkyFbm3(p * 1.5 + q * 2.5, 5);
+                // 軽量化: ワープ用ノイズを 3 本 → 2 本・オクターブ数も削減 (Noise3 21 回 → 12 回)
+                float2 q = float2(SkyFbm3(p, 3), SkyFbm3(p + 5.2, 3));
+                float n = SkyFbm3(p * 1.5 + float3(q.x, q.y, q.x + q.y) * 2.5, 4);
                 float dens = saturate((n - (0.7 - _NebulaDensity * 0.4)) * 3.0);
                 dens *= dens;
                 half3 neb = lerp(_NebulaColorA.rgb, _NebulaColorB.rgb, smoothstep(0.35, 0.65, q.x)) * dens;
-                float dust = smoothstep(0.45, 0.7, SkyFbm3(p * 3.0 + 3.1, 4)) * _DustAmount;
+                // 星雲が無いところは暗黒星雲の計算を省く
+                float dust = 0.0;
+                [branch]
+                if (dens > 0.0 && _DustAmount > 0.0)
+                {
+                    dust = smoothstep(0.45, 0.7, SkyFbm3(p * 3.0 + 3.1, 3)) * _DustAmount;
+                }
                 neb *= 1.0 - dust;
                 // 天球を横切る大きな帯にまとめる
                 float band = exp(-pow(dot(dir, normalize(_NebulaAxis.xyz)) / 0.45, 2.0));

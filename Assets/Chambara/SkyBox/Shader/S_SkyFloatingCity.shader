@@ -92,7 +92,8 @@ Shader "Custom/Skybox/SkyFloatingCity"
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 
-            #define MAX_STEPS 256
+            // 軽量化: 256 → 112 (たどり切れない遠方はフォグで埋める)
+            #define MAX_STEPS 112
 
             CBUFFER_START(UnityPerMaterial)
                 float  _CameraHeight;
@@ -375,11 +376,12 @@ Shader "Custom/Skybox/SkyFloatingCity"
                 float3 hitMin = 0, hitMax = 0;
                 float4 hitRnd = 0;
                 float hitTower = 0;
+                bool exhausted = true;
 
                 [loop]
                 for (int i = 0; i < MAX_STEPS; i++)
                 {
-                    if (tCell > tEnd) break;
+                    if (tCell > tEnd) { exhausted = false; break; }
 
                     float3 bmin, bmax; float4 rnd; float tower;
                     GetBuilding(cell, bmin, bmax, rnd, tower);
@@ -397,6 +399,7 @@ Shader "Custom/Skybox/SkyFloatingCity"
                             hitT = tNear;
                             hitN = -sign(rdSafe) * step(tn.yzx, tn) * step(tn.zxy, tn);
                             hitMin = bmin; hitMax = bmax; hitRnd = rnd; hitTower = tower;
+                            exhausted = false;
                             break;
                         }
                     }
@@ -414,6 +417,12 @@ Shader "Custom/Skybox/SkyFloatingCity"
                     float3 p = ro + rd * t;
                     half3 l = _SunColor.rgb * saturate(dot(hitN, sunDir)) + _AmbientColor.rgb * lerp(0.7, 1.0, hitN.y);
                     col = ShadeBuilding(p, hitN, hitMin, hitMax, hitRnd, hitTower, t * pixelAngle, l, sunDir);
+                }
+                else if (exhausted && tCell < tEnd)
+                {
+                    // 探索を打ち切った先 (遠方の街並み) はフォグ
+                    col = _FogColor.rgb;
+                    t = 1e6;
                 }
                 else if (rd.y < 0.0 && tGround < _MaxDistance)
                 {

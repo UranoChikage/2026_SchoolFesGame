@@ -25,19 +25,46 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
-    - _SunSize: 0.025
-    - _SunGlow: 1.2
+    - _Altitude: 1500
+    - _CloudAltitude: 700
+    - _CloudCoverage: 0.298
+    - _CloudOpacity: 1
+    - _CloudScale: 900
+    - _CloudShadow: 0.55
+    - _Exposure: 1
+    - _FieldSize: 120
+    - _ForestAmount: 0.4
+    - _HazeDensity: 0.000074
+    - _LakeAmount: 0.25
+    - _MaxDistance: 14110
     - _NightLights: 0.25
-    - _HazeDensity: 9e-05
+    - _RiverWidth: 40
+    - _SkyExponent: 0.5
+    - _StarIntensity: 0
+    - _SunGlow: 1.2
+    - _SunSize: 0.025
+    - _TownAmount: 0.25
+    - _WindSpeed: 0.01
     m_Colors:
-    - _ZenithColor: {r: 0.15, g: 0.18, b: 0.4, a: 1}
-    - _HorizonColor: {r: 1, g: 0.55, b: 0.3, a: 1}
-    - _HazeColor: {r: 0.95, g: 0.6, b: 0.42, a: 1}
-    - _SunDirection: {r: -0.6, g: 0.06, b: 0.8, a: 0}
-    - _SunColor: {r: 4, g: 2, b: 0.8, a: 1}
-    - _SunGlowColor: {r: 1, g: 0.5, b: 0.2, a: 1}
-    - _GroundLight: {r: 0.75, g: 0.5, b: 0.4, a: 1}
     - _CloudColor: {r: 1.5, g: 0.8, b: 0.5, a: 1}
     - _CloudShadowColor: {r: 0.35, g: 0.25, b: 0.35, a: 1}
+    - _DriftSpeed: {r: 0, g: 4, b: 0, a: 0}
+    - _FieldColorA: {r: 0.39999998, g: 0.5, b: 0.19999996, a: 1}
+    - _FieldColorB: {r: 0.6, g: 0.52, b: 0.29999998, a: 1}
+    - _FieldColorC: {r: 0.29999998, g: 0.39999998, b: 0.16999996, a: 1}
+    - _ForestColor: {r: 0.079999976, g: 0.15999997, b: 0.06999998, a: 1}
+    - _GroundLight: {r: 0.75, g: 0.5, b: 0.4, a: 1}
+    - _HazeColor: {r: 0.95, g: 0.6, b: 0.42, a: 1}
+    - _HorizonColor: {r: 1, g: 0.55, b: 0.3, a: 1}
+    - _RoadColor: {r: 0.21999997, g: 0.21999997, b: 0.22999996, a: 1}
+    - _RoadLightColor: {r: 3, g: 1.4, b: 0.4, a: 1}
+    - _SunColor: {r: 4, g: 2, b: 0.8, a: 1}
+    - _SunDirection: {r: -0.6, g: 0.06, b: 0.8, a: 0}
+    - _SunGlowColor: {r: 1, g: 0.5, b: 0.2, a: 1}
+    - _TownColor: {r: 0.5, g: 0.47999996, b: 0.45999992, a: 1}
+    - _TownLightColor: {r: 3, g: 1.8, b: 0.8, a: 1}
+    - _WaterColor: {r: 0.04, g: 0.09999997, b: 0.15999997, a: 1}
+    - _WindDirection: {r: 1, g: 0, b: 0.3, a: 0}
+    - _ZenithColor: {r: 0.15, g: 0.18, b: 0.4, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

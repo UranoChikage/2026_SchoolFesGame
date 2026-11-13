@@ -16,21 +16,34 @@ MonoBehaviour:
   - name: FloatingCityDusk
     skybox: {fileID: 2100000, guid: d1ba6ef64f0c48d78afd7103331a29d2, type: 2}
     stageMaterial: {fileID: 2100000, guid: 78e961be8fdd47be9f76fff91ed5a97f, type: 2}
+    bakeSkybox: 1
   - name: FloatingCityNight
     skybox: {fileID: 2100000, guid: 78d019266fcd449484d7ece9d8ba4c4a, type: 2}
     stageMaterial: {fileID: 2100000, guid: 89484767b9bc435da78bd381185554e9, type: 2}
+    bakeSkybox: 1
   - name: HighAltitudeDay
     skybox: {fileID: 2100000, guid: 76e26f1297564afca3d9a89b4289da26, type: 2}
     stageMaterial: {fileID: 2100000, guid: a08e15903c3f409a93fe75f89b893a44, type: 2}
+    bakeSkybox: 1
   - name: HighAltitudeNight
     skybox: {fileID: 2100000, guid: 7e367509214949fea9da8a2de6a8517c, type: 2}
     stageMaterial: {fileID: 2100000, guid: 03f2d6016eed44c4836c92778deb910c, type: 2}
+    bakeSkybox: 1
   - name: HighAltitudeSunset
     skybox: {fileID: 2100000, guid: fcb8ce79c7d540daadf82dbcee0dc7d0, type: 2}
     stageMaterial: {fileID: 2100000, guid: 78e961be8fdd47be9f76fff91ed5a97f, type: 2}
+    bakeSkybox: 1
   - name: SpaceCrimson
     skybox: {fileID: 2100000, guid: 981731c3cd274a9e8b14177bbc743ea7, type: 2}
     stageMaterial: {fileID: 2100000, guid: e4e15eeefb974a928caa38a178d532b2, type: 2}
+    bakeSkybox: 1
   - name: Metaverse
     skybox: {fileID: 2100000, guid: d964eef180b747468d9101331efcfe15, type: 2}
     stageMaterial: {fileID: 2100000, guid: 5f7b8a640e2b432f80e13c45db7db047, type: 2}
+    bakeSkybox: 0
+  - name: Sky
+    skybox: {fileID: 2100000, guid: 79c22bf279fb4fed8258475f8bc5652d, type: 2}
+    stageMaterial: {fileID: 2100000, guid: 9b242ce4f4614afb8e5dbd818fc68d13, type: 2}
+    bakeSkybox: 0
+  bakedSkyboxShader: {fileID: 4800000, guid: f742b7d41aea400496b16cfbe9c58658, type: 3}
+  bakeResolution: 1536

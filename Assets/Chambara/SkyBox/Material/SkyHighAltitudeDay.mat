@@ -24,7 +24,47 @@ Material:
     serializedVersion: 3
     m_TexEnvs: []
     m_Ints: []
-    m_Floats: []
-    m_Colors: []
+    m_Floats:
+    - _Altitude: 1500
+    - _CloudAltitude: 700
+    - _CloudCoverage: 0.35
+    - _CloudOpacity: 0.95
+    - _CloudScale: 900
+    - _CloudShadow: 0.55
+    - _Exposure: 1
+    - _FieldSize: 120
+    - _ForestAmount: 0.4
+    - _HazeDensity: 0.00007
+    - _LakeAmount: 0.25
+    - _MaxDistance: 14000
+    - _NightLights: 0
+    - _RiverWidth: 40
+    - _SkyExponent: 0.5
+    - _StarIntensity: 0
+    - _SunGlow: 0.5
+    - _SunSize: 0.01
+    - _TownAmount: 0.25
+    - _WindSpeed: 0.01
+    m_Colors:
+    - _CloudColor: {r: 1.2, g: 1.2, b: 1.2, a: 1}
+    - _CloudShadowColor: {r: 0.6, g: 0.65999997, b: 0.78, a: 1}
+    - _DriftSpeed: {r: 0, g: 4, b: 0, a: 0}
+    - _FieldColorA: {r: 0.39999998, g: 0.5, b: 0.19999996, a: 1}
+    - _FieldColorB: {r: 0.6, g: 0.52, b: 0.29999998, a: 1}
+    - _FieldColorC: {r: 0.29999998, g: 0.39999998, b: 0.16999996, a: 1}
+    - _ForestColor: {r: 0.079999976, g: 0.15999997, b: 0.06999998, a: 1}
+    - _GroundLight: {r: 1.1, g: 1.05, b: 1, a: 1}
+    - _HazeColor: {r: 0.7, g: 0.8, b: 0.92, a: 1}
+    - _HorizonColor: {r: 0.65, g: 0.8, b: 0.95, a: 1}
+    - _RoadColor: {r: 0.21999997, g: 0.21999997, b: 0.22999996, a: 1}
+    - _RoadLightColor: {r: 3, g: 1.4, b: 0.4, a: 1}
+    - _SunColor: {r: 5, g: 4.8, b: 4.4, a: 1}
+    - _SunDirection: {r: 0.4, g: 0.6, b: 0.5, a: 0}
+    - _SunGlowColor: {r: 1, g: 0.9, b: 0.75, a: 1}
+    - _TownColor: {r: 0.5, g: 0.47999996, b: 0.45999992, a: 1}
+    - _TownLightColor: {r: 3, g: 1.8, b: 0.8, a: 1}
+    - _WaterColor: {r: 0.04, g: 0.09999997, b: 0.15999997, a: 1}
+    - _WindDirection: {r: 1, g: 0, b: 0.3, a: 0}
+    - _ZenithColor: {r: 0.09999997, g: 0.29999998, b: 0.8, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

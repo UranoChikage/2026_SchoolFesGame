@@ -26,7 +26,7 @@ RenderSettings:
   m_AmbientIntensity: 1
   m_AmbientMode: 0
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
-  m_SkyboxMaterial: {fileID: 2100000, guid: d1ba6ef64f0c48d78afd7103331a29d2, type: 2}
+  m_SkyboxMaterial: {fileID: 2100000, guid: 7e367509214949fea9da8a2de6a8517c, type: 2}
   m_HaloStrength: 0.5
   m_FlareStrength: 1
   m_FlareFadeSpeed: 3
@@ -1986,7 +1986,7 @@ MonoBehaviour:
   stageRenderers:
   - {fileID: 1205613062}
   isDebugMode: 0
-  debugThemeIndex: 2
+  debugThemeIndex: 7
 --- !u!4 &634319077
 Transform:
   m_ObjectHideFlags: 0

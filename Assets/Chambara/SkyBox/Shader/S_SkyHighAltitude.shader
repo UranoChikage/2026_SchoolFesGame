@@ -201,23 +201,30 @@ Shader "Custom/Skybox/SkyHighAltitude"
                 float2 bf = frac(p / 40.0);
                 float streetD = min(min(bf.x, 1.0 - bf.x), min(bf.y, 1.0 - bf.y)) * 40.0;
                 float street = (1.0 - smoothstep(3.0, 3.0 + fw, streetD)) * saturate(6.0 / max(fw, 1e-3));
-                float2 cell = floor(p / 10.0);
-                float rh = SkyHash21(cell);
-                half3 roof = _TownColor.rgb * (0.55 + 0.9 * rh);
-                roof = lerp(roof, half3(0.55, 0.28, 0.22), step(0.85, SkyHash21(cell + 4.4)) * 0.8); // 赤い屋根
-                roof = lerp(roof, _TownColor.rgb, smoothstep(3.0, 12.0, fw));
+                float lr = 1.5;
+                float avgLight = 0.5 * 3.14 * lr * lr / 144.0;
+                float lights = avgLight;
+                half3 roof = _TownColor.rgb;
+                // 屋根と明かりの細かい計算は、町の中で近いところだけ
+                [branch]
+                if (town > 0.0 && fw < 12.0)
+                {
+                    float2 cell = floor(p / 10.0);
+                    float rh = SkyHash21(cell);
+                    half3 roofNear = _TownColor.rgb * (0.55 + 0.9 * rh);
+                    roofNear = lerp(roofNear, half3(0.55, 0.28, 0.22), step(0.85, SkyHash21(cell + 4.4)) * 0.8); // 赤い屋根
+                    roof = lerp(roofNear, _TownColor.rgb, smoothstep(3.0, 12.0, fw));
+
+                    // 夜の町明かり (遠くでは平均値に)
+                    float2 lc = floor(p / 12.0);
+                    float3 lh = SkyHash33(float3(lc, 2.0));
+                    float2 lpos = (lc + 0.2 + lh.xy * 0.6) * 12.0;
+                    float ld = length(p - lpos);
+                    float pointLight = step(0.5, lh.z) * exp(-ld * ld / (lr * lr + fw * fw)) * (lr * lr) / (lr * lr + fw * fw);
+                    lights = lerp(pointLight, avgLight, smoothstep(4.0, 12.0, fw));
+                }
                 half3 townCol = lerp(roof, _RoadColor.rgb, street);
                 col = lerp(col, townCol, town);
-
-                // 夜の町明かり (遠くでは平均値に)
-                float2 lc = floor(p / 12.0);
-                float3 lh = SkyHash33(float3(lc, 2.0));
-                float2 lpos = (lc + 0.2 + lh.xy * 0.6) * 12.0;
-                float ld = length(p - lpos);
-                float lr = 1.5;
-                float pointLight = step(0.5, lh.z) * exp(-ld * ld / (lr * lr + fw * fw)) * (lr * lr) / (lr * lr + fw * fw);
-                float avgLight = 0.5 * 3.14 * lr * lr / 144.0;
-                float lights = lerp(pointLight, avgLight, smoothstep(4.0, 12.0, fw));
                 light = _TownLightColor.rgb * lights * 3.0 * town + _RoadLightColor.rgb * street * town * 0.25;
 
                 // ---- 幹線道路 ----
@@ -229,7 +236,8 @@ Shader "Custom/Skybox/SkyHighAltitude"
 
                 // ---- 川と湖 ----
                 float rn = SkyFbm2(p / (_FieldSize * 25.0) + 11.0, 5);
-                float rd = abs(rn - 0.5) * fw / max(fwidth(rn), 1e-6); // m に換算した川の中心からの距離
+                // m に換算した川の中心からの距離 (ノイズの平均的な傾きで近似。分岐内で使えるよう微分を使わない)
+                float rd = abs(rn - 0.5) * _FieldSize * 25.0 * 1.5;
                 float river = (1.0 - smoothstep(_RiverWidth * 0.5, _RiverWidth * 0.5 + fw, rd)) * saturate(_RiverWidth / max(fw, 1e-3) + 0.2);
                 float ln = SkyFbm2(p / (_FieldSize * 10.0) + 21.0, 5);
                 float lth = lerp(0.8, 0.55, _LakeAmount);
@@ -249,49 +257,81 @@ Shader "Custom/Skybox/SkyHighAltitude"
                 float2 camXZ = _DriftSpeed.xy * _Time.y;
                 float2 wind = normalize(_WindDirection.xz + 1e-5) * _WindSpeed * _Time.y;
                 half3 haze = HazeColor(dir, sunDir);
+                // 1 ピクセルの角度 (微分は分岐の外で取る)
+                float pixelAngle = max(length(fwidth(dir)), 1e-5);
 
-                // ---- 空 ----
-                half3 sky = SkyColor(dir, sunDir, true);
-                if (_StarIntensity > 0.0)
+                half3 col;
+
+                [branch]
+                if (dir.y >= 0.0)
                 {
-                    float2 s1 = SkyStars(dir, 280.0, 0.65, 0.18, 0.5);
-                    float2 s2 = SkyStars(dir, 100.0, 0.8, 0.12, 0.5);
-                    sky += (SkyStarColor(s1.y) * s1.x + SkyStarColor(s2.y) * s2.x * 1.8) * _StarIntensity * smoothstep(0.0, 0.2, dir.y);
+                    // ---- 空 ----
+                    col = SkyColor(dir, sunDir, true);
+                    [branch]
+                    if (_StarIntensity > 0.0)
+                    {
+                        float2 s1 = SkyStars(dir, 280.0, 0.65, 0.18, 0.5);
+                        float2 s2 = SkyStars(dir, 100.0, 0.8, 0.12, 0.5);
+                        col += (SkyStarColor(s1.y) * s1.x + SkyStarColor(s2.y) * s2.x * 1.8) * _StarIntensity * smoothstep(0.0, 0.2, dir.y);
+                    }
+                    col = lerp(col, haze, 1.0 - smoothstep(0.0, 0.06, dir.y));
                 }
-                sky = lerp(sky, haze, 1.0 - smoothstep(0.0, 0.06, dir.y));
+                else
+                {
+                    // ---- 地上 ----
+                    float down = max(-dir.y, 1e-4);
+                    float tGround = min(_Altitude / down, _MaxDistance);
+                    // 斜めに見るほど 1 ピクセルが地面で長く伸びる
+                    float fw = max(tGround * pixelAngle / max(down, 0.02), 1e-3);
 
-                // ---- 地上 (ピクセル微分を使うので分岐の外で計算する) ----
-                float down = max(-dir.y, 1e-4);
-                float tGround = min(_Altitude / down, _MaxDistance);
-                float2 gp = camXZ + dir.xz * tGround;
-                float fw = max(max(fwidth(gp.x), fwidth(gp.y)), 1e-3);
+                    float groundHaze = 1.0 - exp(-tGround * _HazeDensity);
+                    groundHaze = max(groundHaze, step(_MaxDistance * 0.999, tGround));
 
-                float water;
-                half3 nightLight;
-                half3 albedo = GroundAlbedo(gp, fw, water, nightLight);
+                    [branch]
+                    if (groundHaze > 0.995)
+                    {
+                        // ほぼ霞で見えない遠方は模様を計算しない
+                        col = haze;
+                    }
+                    else
+                    {
+                        float2 gp = camXZ + dir.xz * tGround;
 
-                // 雲の影
-                float2 shadowUV = (gp + sunDir.xz * (_CloudAltitude / max(sunDir.y, 0.05))) / _CloudScale;
-                float cloudShadow = SkyCloudLayer(shadowUV, wind, _CloudCoverage, 0.4).x * _CloudShadow * step(0.0, sunDir.y);
+                        float water;
+                        half3 nightLight;
+                        half3 albedo = GroundAlbedo(gp, fw, water, nightLight);
 
-                half3 ground = albedo * _GroundLight.rgb * (1.0 - cloudShadow);
+                        // 雲の影 (雲本体より軽い近似)
+                        float cloudShadow = 0.0;
+                        [branch]
+                        if (_CloudShadow > 0.0 && sunDir.y > 0.0)
+                        {
+                            float2 shadowUV = (gp + sunDir.xz * (_CloudAltitude / max(sunDir.y, 0.05))) / _CloudScale;
+                            float n = SkyFbm2(shadowUV + wind, 4);
+                            float th = 1.0 - _CloudCoverage;
+                            cloudShadow = smoothstep(th - 0.2, th + 0.2, n) * _CloudShadow;
+                        }
 
-                // 水面: 空の映り込み + 太陽 (月) のきらめき
-                float3 rdir = normalize(float3(dir.x, abs(dir.y), dir.z));
-                float fres = lerp(0.1, 1.0, pow(1.0 - down, 5.0));
-                half3 waterCol = lerp(_WaterColor.rgb * _GroundLight.rgb, SkyColor(rdir, sunDir, false), fres);
-                float glint = pow(saturate(dot(rdir, sunDir)), 400.0) * 3.0 + pow(saturate(dot(rdir, sunDir)), 40.0) * 0.15;
-                waterCol += _SunColor.rgb * glint * (1.0 - cloudShadow);
-                ground = lerp(ground, waterCol, water);
+                        half3 ground = albedo * _GroundLight.rgb * (1.0 - cloudShadow);
 
-                ground += nightLight * _NightLights;
+                        // 水面: 空の映り込み + 太陽 (月) のきらめき
+                        [branch]
+                        if (water > 0.0)
+                        {
+                            float3 rdir = normalize(float3(dir.x, abs(dir.y), dir.z));
+                            float fres = lerp(0.1, 1.0, pow(1.0 - down, 5.0));
+                            half3 waterCol = lerp(_WaterColor.rgb * _GroundLight.rgb, SkyColor(rdir, sunDir, false), fres);
+                            float glint = pow(saturate(dot(rdir, sunDir)), 400.0) * 3.0 + pow(saturate(dot(rdir, sunDir)), 40.0) * 0.15;
+                            waterCol += _SunColor.rgb * glint * (1.0 - cloudShadow);
+                            ground = lerp(ground, waterCol, water);
+                        }
 
-                // 空気遠近法
-                float groundHaze = 1.0 - exp(-tGround * _HazeDensity);
-                groundHaze = max(groundHaze, step(_MaxDistance * 0.999, tGround));
-                ground = lerp(ground, haze, groundHaze);
+                        ground += nightLight * _NightLights;
 
-                half3 col = dir.y < 0.0 ? ground : sky;
+                        // 空気遠近法
+                        col = lerp(ground, haze, groundHaze);
+                    }
+                }
                 // 地平線のつなぎ目をなじませる
                 col = lerp(col, haze, (1.0 - smoothstep(0.0, 0.01, abs(dir.y))) * 0.8);
 
