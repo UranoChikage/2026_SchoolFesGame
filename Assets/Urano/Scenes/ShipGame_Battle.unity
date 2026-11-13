@@ -8501,7 +8501,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3492139961676536614, guid: 4c9914546edff42459dc39bae3b2ddea, type: 3}
       propertyPath: forceMouse
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3492139961676536614, guid: 4c9914546edff42459dc39bae3b2ddea, type: 3}
       propertyPath: leadAmount
