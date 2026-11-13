@@ -1,90 +1,59 @@
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace Title
 {
     /// <summary>
-    /// 選ばれているゲームの紹介文を、レガシー Text に出す（切り替わるときはフェードする）。
+    /// 選ばれているゲームの紹介文を切り替える。
+    /// 紹介文はあらかじめ全部 Canvas に出しておき（文字を作り直さない）、CanvasGroup のアルファだけで見せる/隠す。
+    /// 文字の差し替えが無いので、動的フォントの字形生成やメッシュ再構築が起きない。
     ///
     /// ■ 置き方
-    ///   紹介文用の Text(Legacy) にこれを付け、Expander に SelectLayout を割り当てる。
-    ///   descriptions は SelectLayout の子と同じ順（左→右）。
-    ///   日本語を出すので、Text の Font には NotoSansJP-Bold.ttf など日本語対応のものを指定すること。
+    ///   空の GameObject にこれを付け、紹介文の Text を子に並べる（パネルと同じ順で左→右）。
+    ///   子の CanvasGroup は自動で集める（無ければ追加する）ので、groups の設定は不要。
+    ///   Expander に SelectLayout を割り当てる。
+    ///   日本語を出すので、各 Text の Font には NotoSansJP-Bold.ttf など日本語対応のものを指定すること。
     /// </summary>
-    [RequireComponent(typeof(Text))]
     public class SelectDescription : MonoBehaviour
     {
         [Tooltip("どのパネルが選ばれているかを読む相手")]
         [SerializeField] SelectPanelExpander expander;
 
-        [Tooltip("パネルと同じ順の紹介文。1〜2行に収める（改行はそのまま入れてよい）")]
-        [TextArea(2, 3)]
-        [SerializeField] string[] descriptions =
-        {
-            "2〜4人 ／ 協力プレイ\n舵輪を回して荒波を越えろ！仲間と力を合わせ、大海原のお宝を奪え！",
-            "2人専用 ／ 対戦プレイ\nJoy-Conを振って斬りかかれ！一瞬で勝負が決まる、短期決戦のチャンバラ！",
-        };
-
-        [Tooltip("切り替えの片道にかける秒数（消えて、現れるので合計はこの2倍）")]
+        [Tooltip("切り替えにかける秒数（出る側と消える側が同時に動く）")]
         [SerializeField] float fadeTime = 0.12f;
 
-        Text label;
-        int shown = -1;      // いま表示している番号
-        int wanted = -1;     // 表示したい番号
-        float alpha;         // 0〜1
-        Color baseColor;
+        CanvasGroup[] groups;
 
         void Awake()
         {
-            label = GetComponent<Text>();
-            baseColor = label.color;
-            label.text = "";
-            SetAlpha(0f);
-            Prewarm();
-        }
+            int count = transform.childCount;
+            groups = new CanvasGroup[count];
+            for (int i = 0; i < count; i++)
+            {
+                var child = transform.GetChild(i);
+                var group = child.GetComponent<CanvasGroup>();
+                if (group == null) group = child.gameObject.AddComponent<CanvasGroup>();
 
-        /// <summary>
-        /// 動的フォントは、初めて出す文字をその場で作る（日本語は特に重い。実機Switchだと選んだ瞬間に引っかかる）。
-        /// 使う文字を最初にまとめて作っておき、選んだときの負荷をなくす。
-        /// </summary>
-        void Prewarm()
-        {
-            if (label.font == null || label.font.dynamic == false) return;
+                group.alpha = 0f;
+                group.interactable = false;
+                group.blocksRaycasts = false;
+                groups[i] = group;
+            }
 
-            var all = new System.Text.StringBuilder();
-            foreach (string d in descriptions) all.Append(d);
-            if (all.Length == 0) return;
-
-            label.font.RequestCharactersInTexture(all.ToString(), label.fontSize, label.fontStyle);
+            if (count == 0)
+                Debug.LogWarning("SelectDescription: 子に紹介文がありません。Text を子として並べてください", this);
         }
 
         void Update()
         {
-            if (expander != null) wanted = expander.SelectedIndex;
+            int wanted = expander != null ? expander.SelectedIndex : -1;
+            float step = Time.deltaTime / Mathf.Max(fadeTime, 0.0001f);
 
-            // 表示中の文が違うなら、まず消す。消えきったら差し替えて、また出す
-            if (wanted != shown)
+            for (int i = 0; i < groups.Length; i++)
             {
-                alpha = Mathf.MoveTowards(alpha, 0f, Time.deltaTime / Mathf.Max(fadeTime, 0.0001f));
-                if (alpha <= 0f)
-                {
-                    shown = wanted;
-                    label.text = (shown >= 0 && shown < descriptions.Length) ? descriptions[shown] : "";
-                }
+                float target = i == wanted ? 1f : 0f;
+                if (groups[i].alpha != target)
+                    groups[i].alpha = Mathf.MoveTowards(groups[i].alpha, target, step);
             }
-            else if (shown >= 0)
-            {
-                alpha = Mathf.MoveTowards(alpha, 1f, Time.deltaTime / Mathf.Max(fadeTime, 0.0001f));
-            }
-
-            SetAlpha(alpha);
-        }
-
-        void SetAlpha(float a)
-        {
-            Color c = baseColor;
-            c.a = baseColor.a * a;
-            if (label.color != c) label.color = c;   // 変わらないフレームは Canvas を汚さない
         }
     }
 }
