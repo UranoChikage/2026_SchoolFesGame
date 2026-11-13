@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: SkyStormRed
+  m_Shader: {fileID: 4800000, guid: a31b554045a14241956afc8be08b68f5, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties:
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs: []
+    m_Ints: []
+    m_Floats:
+    - _FlashInterval: 3
+    - _FlashChance: 0.85
+    m_Colors:
+    - _SkyColor: {r: 0.22, g: 0.05, b: 0.04, a: 1}
+    - _CloudDarkColor: {r: 0.05, g: 0.01, b: 0.012, a: 1}
+    - _CloudLightColor: {r: 0.32, g: 0.07, b: 0.06, a: 1}
+    - _FlashColor: {r: 3.2, g: 1.5, b: 3.6, a: 1}
+    - _RainColor: {r: 0.2, g: 0.06, b: 0.06, a: 1}
+    - _SeaColor: {r: 0.03, g: 0.008, b: 0.008, a: 1}
+    - _HazeColor: {r: 0.2, g: 0.05, b: 0.045, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1
