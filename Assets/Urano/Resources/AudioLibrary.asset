@@ -38,7 +38,7 @@ MonoBehaviour:
     minInterval: 0.03
   treasurePickup:
     clips:
-    - {fileID: 8300000, guid: 776beebbbfa81b04b8cf48eab35dd7a8, type: 3}
+    - {fileID: 8300000, guid: 101732ec874f31b40919948dbb35b51b, type: 3}
     volume: 1
     pitchRange: {x: 0.95, y: 1.05}
     loop: 0
