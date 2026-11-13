@@ -14,7 +14,7 @@ namespace Chambara
         [System.Serializable]
         class PlayerCallUi
         {
-            [Tooltip("斬ったときに出す UI")]
+            [Tooltip("斬ったときに出す UI（子の TextMeshPro に「右アタック！」などを入れる）")]
             public GameObject attackPrefab;
             [Tooltip("突いたときに出す UI")]
             public GameObject thrustPrefab;
@@ -33,6 +33,10 @@ namespace Chambara
         [SerializeField] PlayerCallUi player1 = new PlayerCallUi();
         [SerializeField] PlayerCallUi player2 = new PlayerCallUi();
 
+        [Header("斬り UI")]
+        [SerializeField, Tooltip("振った向きごとの表示（上・右上・右・右下・下・左下・左・左上の順）")]
+        string[] attackLabels = { "上アタック！", "右上アタック！", "右アタック！", "右下アタック！", "下アタック！", "左下アタック！", "左アタック！", "左上アタック！" };
+
         [Header("ガード UI")]
         [SerializeField, Tooltip("ガードの向きごとの表示（上・右・下・左の順）")]
         string[] guardLabels = { "上ガード", "右ガード", "下ガード", "左ガード" };
@@ -47,6 +51,7 @@ namespace Chambara
 
         readonly Dictionary<GameObject, List<GameObject>> pools = new Dictionary<GameObject, List<GameObject>>();   // Prefab ごとの生成済み UI
 
+        ChambaraManager subscribedManager;   // 吹っ飛び演出の開始を受け取る
         PlayerBehaviour[] subscribed;   // 今イベントを登録しているプレイヤー（ラウンドごとに作り直されるので監視する）
         System.Action<PlayerState, int>[] handlers = new System.Action<PlayerState, int>[2];
         PlayerState[] lastStates = new PlayerState[2];   // 同じ状態が毎フレーム通知されることがあるので、変わった瞬間だけ反応する
@@ -62,6 +67,12 @@ namespace Chambara
         void UpdateSubscription()
         {
             var manager = ChambaraManager.Instance;
+            if (manager != subscribedManager)
+            {
+                if (subscribedManager != null) subscribedManager.OnKnockback -= OnKnockback;
+                subscribedManager = manager;
+                if (manager != null) manager.OnKnockback += OnKnockback;
+            }
             PlayerBehaviour[] players = manager != null ? manager.Players : null;
             if (players == subscribed) return;
             Unsubscribe();
@@ -80,7 +91,28 @@ namespace Chambara
             }
         }
 
-        void OnDestroy() => Unsubscribe();
+        void OnDestroy()
+        {
+            Unsubscribe();
+            if (subscribedManager != null) subscribedManager.OnKnockback -= OnKnockback;
+            subscribedManager = null;
+        }
+
+        // 吹っ飛び演出に切り替わったら、出ている UI をすべて消す（ガード中にやられたときに残らないように）
+        void OnKnockback(PlayerBehaviour loser) => HideAll();
+
+        void HideAll()
+        {
+            HideGuard(player1);
+            HideGuard(player2);
+            foreach (List<GameObject> pool in pools.Values)
+            {
+                foreach (GameObject g in pool)
+                {
+                    if (g != null) g.SetActive(false);
+                }
+            }
+        }
 
         void Unsubscribe()
         {
@@ -116,6 +148,11 @@ namespace Chambara
             GameObject go = Get(prefab, ui.spawnArea);
             go.transform.localPosition = RandomPosition(ui.spawnArea);
             go.transform.SetAsLastSibling();   // 新しく出したものを手前に
+            if (state == PlayerState.Attack && dir >= 0 && dir < attackLabels.Length)
+            {
+                TMP_Text text = go.GetComponentInChildren<TMP_Text>(true);
+                if (text != null) text.text = attackLabels[dir];
+            }
             go.SetActive(true);                // アクティブにし直すと Animator は最初から再生される
         }
 

@@ -35,7 +35,9 @@ namespace Chambara
         {
             Fighter def = players[1 - atk];
             if (Distance > r.attackRange) return AttackResult.Whiff;
-            if (def.state == PlayerState.Guard && DirectionDiff(Mirror(def.dir), dir) <= 1) return AttackResult.Guarded;
+            // dir は刃が動いていく方向なので、刃が来るのはその反対側（例：振り下ろし=下 は上から来る → 上ガードで防ぐ）
+            int from = (dir + r.directions / 2) % r.directions;
+            if (def.state == PlayerState.Guard && DirectionDiff(Mirror(def.dir), from) <= 1) return AttackResult.Guarded;
             return AttackResult.Hit;
         }
 
