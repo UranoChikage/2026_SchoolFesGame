@@ -56,7 +56,7 @@ MonoBehaviour:
     sound:
       clips:
       - {fileID: 8300000, guid: 2ff9acad4fd23794cbd1da9133fb8781, type: 3}
-      volume: 1
+      volume: 0.226
       pitchRandom: 0
   defaultHit:
     clips: []
