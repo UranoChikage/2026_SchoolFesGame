@@ -248,6 +248,7 @@ MonoBehaviour:
   sceneNames:
   - ShipGame_Battle
   - ChambaraSelect
+  clearPoolOnStart: 1
   sensitivity: 12000
   sensitivityMin: 12000
   sensitivityMax: 30000

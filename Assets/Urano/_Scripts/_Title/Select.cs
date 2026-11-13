@@ -46,6 +46,10 @@ namespace Title
         [Tooltip("buttons と同じ順で、移動先のシーン名。空（または足りない分）は、そのボタンの Button.onClick を呼ぶ（Resultのタイトルへ戻るボタンなど）")]
         [SerializeField] string[] sceneNames;
 
+        [Header("開始時")]
+        [Tooltip("ON: このシーンに入った時に Pool を全て破棄する（Select画面用）。Resultでは Pool の船を使うので OFF のままにすること")]
+        [SerializeField] bool clearPoolOnStart = false;
+
         [Header("操作感")]
         [Tooltip("1度の回転あたりの移動量(px)")]
         [SerializeField] float sensitivity = 15f;
@@ -130,6 +134,8 @@ namespace Title
                 enabled = false;
                 return;
             }
+
+            if (clearPoolOnStart) Pirates.PoolManager.Clear();
 
             ApplyColor();
         }
