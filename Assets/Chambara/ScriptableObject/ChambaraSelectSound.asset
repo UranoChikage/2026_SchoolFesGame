@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b96bdc7e40ad4823b04b18a6d67d4f77, type: 3}
+  m_Name: ChambaraSelectSound
+  m_EditorClassIdentifier: Assembly-CSharp::Chambara.ChambaraSelectSoundConfig
+  move:
+    clips:
+    - {fileID: 8300000, guid: 77eefec4f3a8d4b45b8901ef205e2e2d, type: 3}
+    volume: 0.6
+    pitchRandom: 0.05
+  pick:
+    clips:
+    - {fileID: 8300000, guid: 5bda786ad759c894981daf30aee3a58c, type: 3}
+    volume: 1
+    pitchRandom: 0.05
+  unpick:
+    clips:
+    - {fileID: 8300000, guid: da1b2348fe643b942826e5a0c4bd53d1, type: 3}
+    volume: 1
+    pitchRandom: 0.05
+  ready:
+    clips:
+    - {fileID: 8300000, guid: 38f9f1576454eaf4783cc545e87f25ea, type: 3}
+    volume: 1
+    pitchRandom: 0
+  start:
+    clips:
+    - {fileID: 8300000, guid: 8ac82afd6e7601c4489614822d929ca8, type: 3}
+    volume: 1
+    pitchRandom: 0

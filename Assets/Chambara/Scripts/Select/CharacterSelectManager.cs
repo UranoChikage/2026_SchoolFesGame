@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 
 namespace Chambara
@@ -9,7 +10,7 @@ namespace Chambara
     public enum SelectPhase
     {
         Selecting,  // 選んでいる最中
-        Starting,   // 2人とも決まって、開始までの待ち時間（戻るで取り消せる）
+        Starting,   // 2人とも決まって、開始待ち（決定で開始・戻るで取り消せる）
         Loading     // 開始が確定して、シーンを読み込むまでの演出時間
     }
 
@@ -56,11 +57,21 @@ namespace Chambara
         [SerializeField, Range(10f, 89f)] float navigationAngle = 60f;
 
         [Header("Start")]
-        [Tooltip("2人とも準備完了してから開始が確定するまで（実時間）。この間は戻るで取り消せる")]
+        [Tooltip("ON: 2人とも準備完了しても、どちらかが決定（ZR）を押すまで開始しないOFF: startDelay 経てば自動で開始")]
+        [SerializeField] bool waitConfirmToStart = true;
+        [Tooltip("waitConfirmToStart が OFF のとき、2人とも準備完了してから開始が確定するまで（実時間）。この間は戻るで取り消せる")]
         [SerializeField] float startDelay = 1.0f;
         [Tooltip("開始が確定してからシーンを読み込むまで（実時間）。暗転などの演出用")]
         [SerializeField] float loadDelay = 0.5f;
         [SerializeField] string gameSceneName = "Chambara";
+
+        [Header("Events (Inspector)")]
+        [Tooltip("2人とも準備完了したとき（ZR待ちになった）")]
+        [SerializeField] UnityEvent onAllReady = new UnityEvent();
+        [Tooltip("準備完了の状態から、どちらかが戻るで取り消したとき")]
+        [SerializeField] UnityEvent onAllReadyCanceled = new UnityEvent();
+        [Tooltip("ZRで開始が確定したとき")]
+        [SerializeField] UnityEvent onStartConfirmed = new UnityEvent();
 
         [Header("Debug")]
         [Tooltip("キーボードで操作する（1P: WASD/Space/左Shift  2P: テンキー8462/5/0）")]
@@ -181,7 +192,7 @@ namespace Chambara
 
         public void Confirm(int player)
         {
-            // 待ち時間中に決定 → すぐ開始
+            // 2人とも準備完了で決定（ZR） → 開始
             if (phase == SelectPhase.Starting)
             {
                 BeginLoading();
@@ -244,7 +255,7 @@ namespace Chambara
         void BeginStarting()
         {
             SetPhase(SelectPhase.Starting);
-            startRoutine = StartCoroutine(StartingRoutine());
+            if (!waitConfirmToStart) startRoutine = StartCoroutine(StartingRoutine());
         }
 
         void CancelStarting()
@@ -284,8 +295,13 @@ namespace Chambara
         void SetPhase(SelectPhase next)
         {
             if (phase == next) return;
+            var prev = phase;
             phase = next;
             OnPhaseChanged?.Invoke(next);
+
+            if (next == SelectPhase.Starting) onAllReady.Invoke();
+            else if (next == SelectPhase.Selecting && prev == SelectPhase.Starting) onAllReadyCanceled.Invoke();
+            else if (next == SelectPhase.Loading) onStartConfirmed.Invoke();
         }
 
         // ---- カーソル移動先探し ----

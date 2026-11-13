@@ -63,6 +63,7 @@ namespace Chambara
         [SerializeField] int winScore = 2;                 // 何本先取で勝ちか
         [SerializeField] Key nextRoundKey = Key.Space;     // 1本取った後、このキーで次のラウンドへ（決着後はタイトルへ）
         [SerializeField] SwitchButton nextRoundButton = SwitchButton.Confirm;   // Joy-Con（1P・2Pどちらでも）で次へ進むボタン。ZR/ZL
+        [SerializeField] float autoNextRoundDelay = 3f;    // 1本取った後（引き分け含む）、この秒数（実時間）で自動的に次のラウンドへ。0以下なら自動で進まない（ボタンでも先に進める）
         [SerializeField] float winnerResultDelay = 1.5f;   // 決着のスコア表示から WinnerResult を呼ぶまで（実時間・秒）
         [SerializeField] WinnerResult winnerResult;        // 未設定ならシーンから探す
 
@@ -73,7 +74,8 @@ namespace Chambara
         readonly int[] scores = new int[2];
         public int[] Scores => scores;                     // 取った本数（[0]:1P [1]:2P）
         public int LastRoundWinner { get; private set; } = -1;   // 直前のラウンドで1本取った方（-1:引き分け）
-        bool waitingNextRound;                             // 次のラウンドへ進むボタン待ち
+        bool waitingNextRound;                             // 次のラウンドへ進む待ち（ボタンか時間経過）
+        float nextRoundWaitStart;                          // 次のラウンド待ちになった時刻（Time.unscaledTime）
         bool waitingTitleUi;                               // 決着後、「タイトル」UIを出すボタン待ち
         bool waitingTitle;                                 // 「タイトル」UIが出ていて、タイトルへ戻るボタン待ち
         readonly bool[] titlePressed = new bool[2];        // 決着後、1P・2PそれぞれがJoy-Conのボタンを押したか
@@ -154,7 +156,7 @@ namespace Chambara
                 if (BothPressed()) BackToTitle();
             }
             else if (waitingTitleUi && NextPressed()) ShowTitleUi();
-            else if (waitingNextRound && NextPressed()) NextRound();
+            else if (waitingNextRound && (NextPressed() || NextRoundTimeUp())) NextRound();
         }
 
         // ラウンドの結果（スコア）を見せ終わったときに呼ぶ（ClashCamera から）
@@ -168,8 +170,8 @@ namespace Chambara
                 StartCoroutine(ShowWinnerResult(LastRoundWinner));
                 return;
             }
-            Debug.Log($"{scores[0]} - {scores[1]}　{nextRoundKey} で次のラウンドへ");
-            waitingNextRound = true;
+            Debug.Log($"{scores[0]} - {scores[1]}　{autoNextRoundDelay} 秒後（または {nextRoundKey}）で次のラウンドへ");
+            BeginWaitNextRound();
         }
 
         IEnumerator ShowWinnerResult(int winner)
@@ -180,6 +182,15 @@ namespace Chambara
             Debug.Log($"{nextRoundKey} / Joy-Con の {nextRoundButton} で「タイトル」を出す");
             waitingTitleUi = true;
         }
+
+        // 次のラウンド待ちを始める（時間経過で自動的に進む）
+        void BeginWaitNextRound()
+        {
+            waitingNextRound = true;
+            nextRoundWaitStart = Time.unscaledTime;   // スロー中でも実時間で数える
+        }
+
+        bool NextRoundTimeUp() => autoNextRoundDelay > 0f && Time.unscaledTime - nextRoundWaitStart >= autoNextRoundDelay;
 
         // 次へ進む操作（キーボード、または1P・2Pどちらかの Joy-Con）
         bool NextPressed()
@@ -477,8 +488,8 @@ namespace Chambara
             // 引き分けは吹っ飛び演出もスコア表示もないので、ポイントなしですぐやり直し待ちにする
             if (loser < 0)
             {
-                Debug.Log($"ポイントなし　{nextRoundKey} でやり直し");
-                waitingNextRound = true;
+                Debug.Log($"ポイントなし　{autoNextRoundDelay} 秒後（または {nextRoundKey}）でやり直し");
+                BeginWaitNextRound();
             }
         }
 

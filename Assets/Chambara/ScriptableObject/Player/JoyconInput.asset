@@ -23,11 +23,12 @@ MonoBehaviour:
   swingTime: 0.3
   swingCooldown: 0.3
   swingBuffer: 0.3
-  thrustImpulse: 0.02
+  thrustImpulse: 0.05
   thrustWindow: 0.1
-  thrustMaxTipSpeed: 1000
-  thrustMaxTurn: 20
-  thrustForwardDot: 0.142
+  thrustMinAccel: 1.2
+  thrustMaxTipSpeed: 400
+  thrustMaxTurn: 30
+  thrustForwardDot: 0.6
   thrustLockout: 0.4
   gravityFollow: 5
   invertThrustAccel: 1
