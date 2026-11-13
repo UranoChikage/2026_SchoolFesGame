@@ -13,21 +13,24 @@ MonoBehaviour:
   m_Name: AudioLibrary
   m_EditorClassIdentifier: Assembly-CSharp::Pirates.AudioLibrary
   cannonFire:
-    clips: []
-    volume: 1
-    pitchRange: {x: 0.95, y: 1.05}
+    clips:
+    - {fileID: 8300000, guid: 4525dbacac8861d46bb1d7efc5dccbe8, type: 3}
+    volume: 0.2
+    pitchRange: {x: 0.5, y: 0.7}
     loop: 0
-    spatialBlend: 0.5
+    spatialBlend: 0.8
     minInterval: 0.03
   cannonExplosion:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 820f8642235760642879b7920e5f6f8e, type: 3}
     volume: 1
     pitchRange: {x: 0.95, y: 1.05}
     loop: 0
     spatialBlend: 0.5
     minInterval: 0.03
   sunk:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 6411e39666099a84c8e7d3dae96f6e54, type: 3}
     volume: 1
     pitchRange: {x: 0.95, y: 1.05}
     loop: 0
@@ -41,21 +44,24 @@ MonoBehaviour:
     spatialBlend: 0
     minInterval: 0.03
   beam:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 4fa76fddf3d53ce4e8cdad9e98e3369c, type: 3}
     volume: 1
     pitchRange: {x: 0.95, y: 1.05}
-    loop: 0
+    loop: 1
     spatialBlend: 0
     minInterval: 0.03
   barrier:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 38f9f1576454eaf4783cc545e87f25ea, type: 3}
     volume: 1
     pitchRange: {x: 0.95, y: 1.05}
     loop: 0
     spatialBlend: 0
     minInterval: 0.03
   gameOver:
-    clips: []
+    clips:
+    - {fileID: 0}
     volume: 1
     pitchRange: {x: 0.95, y: 1.05}
     loop: 0
@@ -69,28 +75,32 @@ MonoBehaviour:
     spatialBlend: 0
     minInterval: 0.03
   resultCountUp:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: f2ffa4c96b6cd464e977e82756fba4ee, type: 3}
     volume: 1
     pitchRange: {x: 0.95, y: 1.05}
     loop: 0
     spatialBlend: 0
     minInterval: 0.03
   resultFinal:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 2ff9acad4fd23794cbd1da9133fb8781, type: 3}
     volume: 1
     pitchRange: {x: 0.95, y: 1.05}
     loop: 0
     spatialBlend: 0
     minInterval: 0.03
   rankS:
-    clips: []
-    volume: 1
+    clips:
+    - {fileID: 8300000, guid: 0337c496b2bf9ed48b35dd7779345f84, type: 3}
+    volume: 0.5
     pitchRange: {x: 0.95, y: 1.05}
     loop: 0
     spatialBlend: 0
     minInterval: 0.03
   rankOther:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: f2ffa4c96b6cd464e977e82756fba4ee, type: 3}
     volume: 1
     pitchRange: {x: 0.95, y: 1.05}
     loop: 0
