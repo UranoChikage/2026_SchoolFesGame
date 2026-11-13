@@ -20,7 +20,7 @@ MonoBehaviour:
   clash:
     clips:
     - {fileID: 8300000, guid: 0337c496b2bf9ed48b35dd7779345f84, type: 3}
-    volume: 1
+    volume: 0.525
     pitchRandom: 0.05
   weaponHits:
   - weaponName: Sinai

@@ -3383,7 +3383,8 @@ MonoBehaviour:
   winScore: 2
   nextRoundKey: 1
   nextRoundButton: 0
-  winnerResultDelay: 1.5
+  autoNextRoundDelay: 3
+  winnerResultDelay: 3
   winnerResult: {fileID: 958807562}
   titleUi: {fileID: 0}
   titleSceneName: Select
@@ -3942,6 +3943,15 @@ MonoBehaviour:
     - {fileID: 0}
     - {fileID: 0}
     - {fileID: 0}
+  attackLabels:
+  - "\u4E0A\u30A2\u30BF\u30C3\u30AF\uFF01"
+  - "\u53F3\u4E0A\u30A2\u30BF\u30C3\u30AF\uFF01"
+  - "\u53F3\u30A2\u30BF\u30C3\u30AF\uFF01"
+  - "\u53F3\u4E0B\u30A2\u30BF\u30C3\u30AF\uFF01"
+  - "\u4E0B\u30A2\u30BF\u30C3\u30AF\uFF01"
+  - "\u5DE6\u4E0B\u30A2\u30BF\u30C3\u30AF\uFF01"
+  - "\u5DE6\u30A2\u30BF\u30C3\u30AF\uFF01"
+  - "\u5DE6\u4E0A\u30A2\u30BF\u30C3\u30AF\uFF01"
   guardLabels:
   - "\u4E0A\u30AC\u30FC\u30C9"
   - "\u53F3\u30AC\u30FC\u30C9"
