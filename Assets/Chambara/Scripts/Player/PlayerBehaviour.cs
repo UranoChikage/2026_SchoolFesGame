@@ -83,9 +83,13 @@ namespace Chambara
         /// <summary>このプレイヤーの武器名（SwordModels の名前）</summary>
         public string SwordName { get; private set; }
 
+        /// <summary>画面に出すキャラクター名（ModelList の DisplayName。空ならキャラクター名）</summary>
+        public string DisplayName { get; private set; }
+
         public void Init(int playerIndex, string modelName, string swordName, ChambaraSimulator sim, Transform edge, Transform opponentEdge)
         {
             ModelName = modelName;
+            DisplayName = playerModels != null ? playerModels.GetDisplayName(modelName) : modelName;
             SwordName = swordName;
             this.sim = sim;
             this.playerIndex = playerIndex;
