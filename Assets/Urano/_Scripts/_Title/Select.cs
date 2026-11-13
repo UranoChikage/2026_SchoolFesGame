@@ -154,18 +154,8 @@ namespace Title
 
             UpdateSensitivity();
 
-            // コントローラー設定はどのプレイヤーからでも呼べる。
-            // アプレットは同期的に画面を奪うので、開いたらこのフレームは何も読まない
-            for (int i = 0; i < spawned; i++)
-            {
-                if (!cursors[i].rect.gameObject.activeSelf) continue;
-                if (SwitchInput.I.ButtonDown(i, SwitchButton.Option))
-                {
-                    SwitchInput.I.ShowControllerSupport();
-                    ResetAll();
-                    return;
-                }
-            }
+            // パネルを広げる対象は、乗っているカーソルのうち一番若い番号（1P優先）
+            int expandTarget = -1;
 
             for (int i = 0; i < spawned; i++)
             {
@@ -176,7 +166,7 @@ namespace Title
 
                 Move(i, c);
                 c.hovered = FindHovered(c);
-                if (expander != null && c.hovered >= 0) expander.Select(c.hovered);
+                if (expandTarget < 0 && c.hovered >= 0) expandTarget = c.hovered;
 
                 if (c.hovered >= 0 && SwitchInput.I.ButtonDown(i, SwitchButton.Confirm))
                 {
@@ -184,6 +174,8 @@ namespace Title
                     return;
                 }
             }
+
+            if (expander != null && expandTarget >= 0) expander.Select(expandTarget);
 
             ApplyColor();
 
@@ -320,13 +312,27 @@ namespace Title
             return -1;
         }
 
+        Image[] buttonImages;
+
+        /// <summary>ボタンの Image（毎フレーム GetComponent しないよう初回だけ集める）</summary>
+        Image ButtonImage(int i)
+        {
+            if (buttonImages == null || buttonImages.Length != buttons.Length)
+            {
+                buttonImages = new Image[buttons.Length];
+                for (int k = 0; k < buttons.Length; k++)
+                    if (buttons[k] != null) buttonImages[k] = buttons[k].GetComponent<Image>();
+            }
+            return buttonImages[i];
+        }
+
         /// <summary>誰か1人でも乗っていればハイライトする</summary>
         void ApplyColor()
         {
             for (int i = 0; i < buttons.Length; i++)
             {
                 if (buttons[i] == null) continue;
-                var image = buttons[i].GetComponent<Image>();
+                var image = ButtonImage(i);
                 if (image == null) continue;
 
                 bool hovered = false;

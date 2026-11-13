@@ -29,6 +29,8 @@ namespace Title
         [Tooltip("広がる/狭まるまでの目安の秒数")]
         [SerializeField] float smoothTime = 0.25f;
 
+        const float SettleEpsilon = 0.002f;
+
         LayoutElement[] panels;
         float[] weights;
         float[] velocities;
@@ -72,6 +74,20 @@ namespace Title
             for (int i = 0; i < panels.Length; i++)
             {
                 float target = selected < 0 ? 1f : (i == selected ? selectedWeight : otherWeight);
+
+                // ほぼ目標に着いたら固定する。SmoothDamp は目標に漸近するだけで、
+                // 見えない差でも毎フレームレイアウトを再構築し続けてしまうため
+                if (Mathf.Abs(weights[i] - target) < SettleEpsilon && Mathf.Abs(velocities[i]) < SettleEpsilon)
+                {
+                    if (weights[i] != target)
+                    {
+                        weights[i] = target;
+                        velocities[i] = 0f;
+                        panels[i].flexibleWidth = target;
+                    }
+                    continue;
+                }
+
                 weights[i] = Mathf.SmoothDamp(weights[i], target, ref velocities[i], smoothTime);
                 panels[i].flexibleWidth = weights[i];
             }
