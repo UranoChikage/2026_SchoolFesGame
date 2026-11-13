@@ -72,6 +72,7 @@ namespace Chambara
                 sb.AppendLine($"刃先の速さ: {joycon.TipSpeed:F0}度/秒{(joycon.InStroke ? "　振り中" : "")}");
                 sb.AppendLine($"振り: 最高 {joycon.StrokePeakSpeed:F0}度/秒（swingMinPeakSpeed）　回った量 {joycon.StrokeTravel:F0}度（swingAngle）");
                 sb.AppendLine($"突きの勢い: {joycon.ThrustImpulse:F2}　直近の最大 {joycon.ThrustImpulsePeak:F2}（thrustImpulse）　回った量 {joycon.ThrustTurn:F0}度（thrustMaxTurn）");
+                sb.AppendLine($"前向きの加速度: 直近の最大 {joycon.ThrustAccelPeak:F2}G（thrustMinAccel）");
             }
             else if (player != null)
             {

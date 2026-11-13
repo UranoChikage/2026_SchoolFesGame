@@ -29,13 +29,14 @@ namespace Chambara
         [Tooltip("振った・突いた後、この時間（秒）以内に始まった動きは振りにしない（構えに戻す動きで出ないようにする）")] public float swingCooldown = 0.3f;
         [Tooltip("振り・突きの入力を覚えておく時間（秒）。硬直・移動が明ける直前に振っても出る")] public float swingBuffer = 0.1f;
 
-        [Header("突き（重力を除いた加速度をためた「前へ出た勢い」が thrustImpulse を超えたら突く）")]
-        [Tooltip("前へ出た勢い（G・秒。0.1 ≒ 秒速1m）がこれを超えたら突いたとみなす。出にくければ下げ、勝手に出るなら上げる")] public float thrustImpulse = 0.1f;
-        [Tooltip("勢いをためる時間（秒）。これより前の加速度は消えていく")] public float thrustWindow = 0.15f;
-        [Tooltip("刃先がこの速さ（度/秒）より速く回っている間は突きにしない（振りと区別する）")] public float thrustMaxTipSpeed = 250f;
-        [Tooltip("勢いをためている間（直近 thrustWindow 秒）に刃先がこの角度（度）以上回ったら突きにしない。振り上げ・振り下ろしで突きが出るなら下げ、突いても出ないなら上げる")] public float thrustMaxTurn = 20f;
-        [Range(0f, 1f), Tooltip("勢いの向きと前方の cos がこれ以上なら前へ突いたとみなす")] public float thrustForwardDot = 0.5f;
-        [Tooltip("振った後、この時間（秒）突きを受け付けない。振り終わりの急停止で突きが出ないようにする")] public float thrustLockout = 0.3f;
+        [Header("突き（重力を除いた加速度をためた「前へ出た勢い」が thrustImpulse を超え、直前に強く前へ押し出していたら突く）")]
+        [Tooltip("前へ出た勢い（G・秒。0.1 ≒ 秒速1m）がこれを超えたら突いたとみなす。出にくければ下げ、勝手に出るなら上げる")] public float thrustImpulse = 0.05f;
+        [Tooltip("勢いをためる時間（秒）。これより前の加速度は消えていく")] public float thrustWindow = 0.1f;
+        [Tooltip("前向きの加速度（G）がこれ以上の瞬間が直前（thrustWindow の2倍以内）にないと突きにしない。軽く動かしただけ・傾けただけ（重力の漏れ）で出るなら上げ、突いても出ないなら下げる")] public float thrustMinAccel = 1.2f;
+        [Tooltip("刃先がこの速さ（度/秒）より速く回っている瞬間の加速度は thrustMinAccel の判定に使わない（剣を回したときの遠心力を突きと間違えない）")] public float thrustMaxTipSpeed = 400f;
+        [Tooltip("直近 thrustWindow 秒に刃先がこの角度（度）以上回っていたら突きにしない（勢いは消さずにためておく）。振り上げ・振り下ろしで突きが出るなら下げ、突いても出ないなら上げる")] public float thrustMaxTurn = 30f;
+        [Range(0f, 1f), Tooltip("勢いの向きと前方の cos がこれ以上なら前へ突いたとみなす。上下に動かして出るなら上げる")] public float thrustForwardDot = 0.6f;
+        [Tooltip("振り（攻撃）が出た後、この時間（秒）突きを受け付けない。振り終わりの急停止で突きが出ないようにする")] public float thrustLockout = 0.3f;
         [Tooltip("重力の向きを推定し直す速さ。ほぼ静止しているときだけ寄せる")] public float gravityFollow = 5f;
         [Tooltip("引いたときに突きが出る（前へ突いても出ない）場合はチェックする（加速度の符号を反転）")] public bool invertThrustAccel = false;
 
