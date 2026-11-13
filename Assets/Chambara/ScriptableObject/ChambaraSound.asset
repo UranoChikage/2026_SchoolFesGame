@@ -22,6 +22,11 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 0337c496b2bf9ed48b35dd7779345f84, type: 3}
     volume: 0.525
     pitchRandom: 0.05
+  step:
+    clips:
+    - {fileID: 8300000, guid: da1b2348fe643b942826e5a0c4bd53d1, type: 3}
+    volume: 0.596
+    pitchRandom: 0.05
   weaponHits:
   - weaponName: Sinai
     sound:

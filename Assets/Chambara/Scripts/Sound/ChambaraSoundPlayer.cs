@@ -45,6 +45,7 @@ namespace Chambara
         private void Start()
         {
             BodyRig.OnKnockbackPlayed += OnKnockback;
+            PlayerBehaviour.OnStepped += OnStepped;
             DisableOtherListeners();
             var m = ChambaraManager.Instance;
             if (m == null) return;
@@ -55,7 +56,8 @@ namespace Chambara
 
         private void OnDestroy()
         {
-            BodyRig.OnKnockbackPlayed -= OnKnockback;   // static なので外し忘れるとシーンをまたいで残る
+            BodyRig.OnKnockbackPlayed -= OnKnockback;
+            PlayerBehaviour.OnStepped -= OnStepped;   // static なので外し忘れるとシーンをまたいで残る
             var m = ChambaraManager.Instance;
             if (m == null) return;
             m.OnGameStateChanged -= OnGameStateChanged;
@@ -66,6 +68,8 @@ namespace Chambara
         void OnWhiff(int attacker) => Play(config != null ? config.Whiff : null);
 
         void OnTieClash() => Play(config != null ? config.Clash : null);
+
+        void OnStepped(PlayerBehaviour player, bool forward) => Play(config != null ? config.Step : null);
 
         // 吹っ飛ぶたび（リプレイのやり直しも含む）に、吹っ飛ばした側の武器の音を鳴らす
         void OnKnockback(PlayerBehaviour knocked)

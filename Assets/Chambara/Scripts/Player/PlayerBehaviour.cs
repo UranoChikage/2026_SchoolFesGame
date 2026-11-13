@@ -58,6 +58,7 @@ namespace Chambara
         public Transform Body => bodyRig != null && bodyRig.Body != null ? bodyRig.Body : transform;   // 体の中心（吹っ飛びの追尾用）
 
         public event Action<PlayerState, int> OnStateChanged;
+        public static event Action<PlayerBehaviour, bool> OnStepped;   // 1歩踏み出した瞬間（プレイヤー, true:前 false:後ろ）。突きで前へ出る・押されるときは呼ばない
 
         IChambaraInputContext input;
         ISwordTracking tracking;
@@ -168,6 +169,7 @@ namespace Chambara
             if (frontPressed != backPressed && sim.TryStep(playerIndex, frontPressed))
             {
                 MoveToTarget(stepTime, jumpHeight);
+                OnStepped?.Invoke(this, frontPressed);
                 pose = -1;
                 poseHold = 0f;   // 歩くと構えの溜めはやり直し
                 SetState(PlayerState.Idle, -1);

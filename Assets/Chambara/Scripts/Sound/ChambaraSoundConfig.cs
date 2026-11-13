@@ -17,6 +17,9 @@ namespace Chambara
         [Header("相殺（共通）")]
         [SerializeField] SoundEntry clash = new SoundEntry();
 
+        [Header("移動（共通）。1歩踏み出すたびに鳴る")]
+        [SerializeField] SoundEntry step = new SoundEntry();
+
         [Header("攻撃を当てた音（武器ごと）")]
         [Tooltip("武器名は SwordModels の Name と同じにする（Sinai, Sword, Bat, Pikopiko, LightSword など）")]
         [SerializeField] WeaponSound[] weaponHits;
@@ -25,6 +28,7 @@ namespace Chambara
 
         public SoundEntry Whiff => whiff;
         public SoundEntry Clash => clash;
+        public SoundEntry Step => step;
 
         /// <summary>武器名に対応するヒット音。登録が無ければ defaultHit</summary>
         public SoundEntry GetHit(string weaponName)
