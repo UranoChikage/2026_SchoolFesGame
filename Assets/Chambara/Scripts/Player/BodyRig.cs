@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace Chambara
@@ -73,6 +74,9 @@ namespace Chambara
         Sword sword;
         Transform floatPivot, chest, neck;
         public Transform Body => floatPivot;   // 体の中心。吹っ飛び中もここが一緒に動く
+
+        /// <summary>吹っ飛びが始まった瞬間（ClashCamera のやり直しのたびにも呼ばれる）。引数は吹っ飛んだ方</summary>
+        public static event Action<PlayerBehaviour> OnKnockbackPlayed;
         Vector3 floatRest;   // Player のローカル座標
         Vector3 chestEuler, headEuler;
         Spring hair;
@@ -239,6 +243,7 @@ namespace Chambara
             knockbackOffset = Vector3.zero;
             knockbackVel = new Vector3(0f, knockbackUp, -knockbackSpeed);
             knockbackFlip = knockbackTwist = 0f;
+            OnKnockbackPlayed?.Invoke(player);
         }
 
         // floatPos: 吹っ飛びが無いときの体の位置。体と剣（手）をまとめて、そこを中心に動かす・回す

@@ -79,9 +79,13 @@ namespace Chambara
         /// <summary>このプレイヤーのキャラクター名（ModelList の名前）</summary>
         public string ModelName { get; private set; }
 
+        /// <summary>このプレイヤーの武器名（SwordModels の名前）</summary>
+        public string SwordName { get; private set; }
+
         public void Init(int playerIndex, string modelName, string swordName, ChambaraSimulator sim, Transform edge, Transform opponentEdge)
         {
             ModelName = modelName;
+            SwordName = swordName;
             this.sim = sim;
             this.playerIndex = playerIndex;
             Data = sim.players[playerIndex];

@@ -1,0 +1,59 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d995286c50f4330479a13a3d228b4262, type: 3}
+  m_Name: ChambaraSound
+  m_EditorClassIdentifier: Assembly-CSharp::Chambara.ChambaraSoundConfig
+  whiff:
+    clips:
+    - {fileID: 8300000, guid: fc3d678b3fc5f464fba5ddf975447fbf, type: 3}
+    volume: 1
+    pitchRandom: 0.05
+  clash:
+    clips:
+    - {fileID: 8300000, guid: 0337c496b2bf9ed48b35dd7779345f84, type: 3}
+    volume: 1
+    pitchRandom: 0.05
+  weaponHits:
+  - weaponName: Sinai
+    sound:
+      clips:
+      - {fileID: 8300000, guid: 6411e39666099a84c8e7d3dae96f6e54, type: 3}
+      volume: 1
+      pitchRandom: 0
+  - weaponName: Pikopiko
+    sound:
+      clips:
+      - {fileID: 8300000, guid: f2ffa4c96b6cd464e977e82756fba4ee, type: 3}
+      volume: 1
+      pitchRandom: 0
+  - weaponName: Sword
+    sound:
+      clips:
+      - {fileID: 8300000, guid: 38f9f1576454eaf4783cc545e87f25ea, type: 3}
+      volume: 1
+      pitchRandom: 0
+  - weaponName: Bat
+    sound:
+      clips:
+      - {fileID: 8300000, guid: 17844ca25e063c347af23a9b58d455ad, type: 3}
+      volume: 1
+      pitchRandom: 0
+  - weaponName: LightSword
+    sound:
+      clips:
+      - {fileID: 8300000, guid: 2ff9acad4fd23794cbd1da9133fb8781, type: 3}
+      volume: 1
+      pitchRandom: 0
+  defaultHit:
+    clips: []
+    volume: 1
+    pitchRandom: 0.05
