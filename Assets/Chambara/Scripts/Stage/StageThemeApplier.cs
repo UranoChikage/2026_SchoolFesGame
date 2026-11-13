@@ -40,6 +40,23 @@ namespace Chambara
                     if (r != null) r.sharedMaterial = currentTheme.stageMaterial;
                 }
             }
+
+            SpawnThemeObjects();
+        }
+
+        /// <summary>
+        /// テーマ専用の Prefab を、Prefab に保存された位置・回転のまま生成する
+        /// </summary>
+        void SpawnThemeObjects()
+        {
+            if (currentTheme.spawnPrefabs == null) return;
+
+            foreach (var prefab in currentTheme.spawnPrefabs)
+            {
+                if (prefab == null) continue;
+                var t = prefab.transform;
+                Instantiate(prefab, t.position, t.rotation);
+            }
         }
 
         void Start()

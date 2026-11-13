@@ -17,6 +17,8 @@ namespace Chambara
             public Material stageMaterial;
             [Tooltip("ON: 開始時に Skybox をキューブマップへ1回だけ焼き付けて表示する（描画コストがほぼ0になる代わりに、空の動きが止まる）")]
             public bool bakeSkybox;
+            [Tooltip("このテーマのときに Awake で生成する Prefab。位置・回転は Prefab に保存された値（ワールド座標）をそのまま使う")]
+            public GameObject[] spawnPrefabs;
         }
 
         [SerializeField] Theme[] themes;
