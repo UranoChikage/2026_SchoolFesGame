@@ -306,16 +306,6 @@ namespace Chambara
             transform.position = Vector3.Lerp(edgePos, opponentEdgePos, Data.position)
                                - baseRotation * Vector3.forward * (leanBack * lean);
 
-            // 仮表示：負け=黒 怯み=黄 攻撃=赤 突き=マゼンタ ガード=青 通常=白
-            if (rend == null) return;
-            rend.material.color = Lost ? Color.black : Data.state switch
-            {
-                PlayerState.Stun   => Color.yellow,
-                PlayerState.Attack => Color.red,
-                PlayerState.Thrust => Color.magenta,
-                PlayerState.Guard  => Color.blue,
-                _                  => Color.white,
-            };
         }
     }
 }
