@@ -14,12 +14,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Chambara.PlayerModels
   playerModels:
   - Name: Johnson
+    DisplayName: "\u30B8\u30E7\u30F3\u30BD\u30F3"
     Model: {fileID: 2740000851433725649, guid: 7fd9c54615050d14787fd4db580d6aeb, type: 3}
   - Name: Jennifer
+    DisplayName: "\u30B8\u30A7\u30CB\u30D5\u30A1\u30FC"
     Model: {fileID: 4943379614342368441, guid: 99cf101e8a5b1e545ac4472967dc10c6, type: 3}
   - Name: Thomas
+    DisplayName: "\u30C8\u30FC\u30DE\u30B9"
     Model: {fileID: 3625936930193976682, guid: 348c3dc24d5b1e54181c8ad2a9ce4ac4, type: 3}
   - Name: Machiko
+    DisplayName: "\u30DE\u30C1\u30B3"
     Model: {fileID: 4946895977744286649, guid: 37c1cfa05d2ff944e83cad41e7f4bdd2, type: 3}
   - Name: Alien
+    DisplayName: "\uFF1F\uFF1F\uFF1F"
     Model: {fileID: 2745201151087801122, guid: df9d4e6563626f94280e30dfaba33a4b, type: 3}

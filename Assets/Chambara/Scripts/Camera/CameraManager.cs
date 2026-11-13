@@ -11,6 +11,10 @@ namespace Chambara
 
 
         [SerializeField] Camera mainCamera;
+        public Camera MainCamera => mainCamera;
+
+        bool introPlaying;     // StageIntro の導入演出中
+        Camera introCamera;    // 導入演出で使っているカメラ
 
         [Header("SlowCamera Settings")]
         [SerializeField] private Camera slowCamera;
@@ -125,6 +129,38 @@ namespace Chambara
             ChangePlayingMode();
 
             mainCamera.gameObject.SetActive(false);
+
+            // 導入演出中なら分割画面にせず演出カメラのままにする
+            if (introPlaying) ApplyIntroCameras();
+        }
+
+        //導入演出（StageIntro）の間は introCam だけで1画面にする
+        public void BeginIntro(Camera introCam)
+        {
+            if (introCam == null) return;
+            introPlaying = true;
+            introCamera = introCam;
+            ApplyIntroCameras();
+        }
+
+        //導入演出を終えてプレイヤーカメラ（分割画面）に戻す
+        public void EndIntro()
+        {
+            if (!introPlaying) return;
+            introPlaying = false;
+            if (introCamera != null) introCamera.gameObject.SetActive(false);
+            introCamera = null;
+            if (playerCamera2 != null) ChangePlayingMode();
+        }
+
+        private void ApplyIntroCameras()
+        {
+            if (playerCamera != null) playerCamera.gameObject.SetActive(false);
+            if (playerCamera2 != null) playerCamera2.gameObject.SetActive(false);
+            if (slowCamera != null) slowCamera.gameObject.SetActive(false);
+            if (mainCamera != null && mainCamera != introCamera) mainCamera.gameObject.SetActive(false);
+            introCamera.gameObject.SetActive(true);
+            SetDivided(false);
         }
 
         private void SetPlayerCameraPos(Transform p,Camera camera,Vector3 cameraOffset)
