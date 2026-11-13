@@ -42,9 +42,26 @@ namespace Chambara
         [SerializeField] float duration = 1f;
         [SerializeField] CanvasGroup canvasGroup;
 
+        [SerializeField] bool isSkipOnStart = false;
+
         public bool IsReady(int player) => ready != null && player >= 0 && player < ready.Length && ready[player];
 
         void OnEnable() => ResetReady();
+
+        private void Start()
+        {
+            StartCoroutine(SkipCoroutine());
+        }
+
+        IEnumerator SkipCoroutine()
+        {
+            yield return null;
+            if (isSkipOnStart)
+            {
+                onAllReady?.Invoke();
+                transform.root.gameObject.SetActive(false);
+            }
+        }
 
         /// <summary>全員を未OKに戻して、もう一度待ち始める</summary>
         public void ResetReady()

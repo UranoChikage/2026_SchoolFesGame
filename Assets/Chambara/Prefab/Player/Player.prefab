@@ -496,11 +496,15 @@ MonoBehaviour:
   handMove: 0.1
   straightTilt: 1
   windupRatio: 0.3
+  thrustPull: 0.15
+  thrustReach: 0.35
+  thrustPullRatio: 0.4
   guardOffset: {x: -0.2, y: 0.3}
   guardTilt: 0
   lostAngle: 150
   lostDrop: 0.3
   returnSpeed: 15
+  trackingSpeed: 40
   previewState: 1
   previewDir: 4
   previewSwing: 0
@@ -1219,6 +1223,7 @@ GameObject:
   - component: {fileID: 5320780338969236651}
   - component: {fileID: 4719265830147758213}
   - component: {fileID: 7170576937681483606}
+  - component: {fileID: 6690045137440373581}
   m_Layer: 6
   m_Name: Player
   m_TagString: Untagged
@@ -1341,6 +1346,11 @@ MonoBehaviour:
   attackRecovery: 0.33
   parriedStun: 0.8
   clashStun: 0.5
+  thrustStartup: 0.15
+  thrustRecovery: 0.4
+  thrustGuardedStun: 1.2
+  thrustHitStun: 1
+  thrustPushTime: 0.2
   stepTime: 0.25
   jumpHeight: 0.3
   attackImpact: 0.5
@@ -1430,6 +1440,32 @@ MonoBehaviour:
   knockbackFlipSpeed: 900
   knockbackTwistSpeed: 0
   poseConfig: {fileID: 11400000, guid: a3f7997ce09044bfb704bc9adb2ab117, type: 2}
+--- !u!114 &6690045137440373581
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8364186468782269292}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c468eac91821aad4ab6c37a1de45b5dc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Chambara.GuardBarrier
+  player: {fileID: 2389350721131182169}
+  barrier: {fileID: 0}
+  barrierMaterial: {fileID: 2100000, guid: 8723e36f1fb6421cb0f31b4c6204bde9, type: 2}
+  directions: 8
+  center: {x: 0, y: 1, z: 0.54}
+  offset: 0.9
+  size: {x: 2.35, y: 1.41}
+  tilt: 143.4
+  fadeInSpeed: 12
+  fadeOutSpeed: 8
+  popScale: 0.6
+  turnSpeed: 20
+  hitDecay: 4
+  hitPunch: 0.25
 --- !u!1 &9032446081639304592
 GameObject:
   m_ObjectHideFlags: 0
