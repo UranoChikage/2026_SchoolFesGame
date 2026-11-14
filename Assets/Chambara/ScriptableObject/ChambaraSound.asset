@@ -31,8 +31,8 @@ MonoBehaviour:
   - weaponName: Sinai
     sound:
       clips:
-      - {fileID: 8300000, guid: 33328ad95704bc348beeee7b75001ff7, type: 3}
-      volume: 1
+      - {fileID: 8300000, guid: 90c9602db4f9056499ea2acaff0d3163, type: 3}
+      volume: 0.63
       pitchRandom: 0
   - weaponName: Pikopiko
     sound:
