@@ -77,6 +77,15 @@ Shader "Custom/Skybox/SkyMetaverse"
         _BeamHeight   ("Beam Height (m)", Range(10, 1000)) = 260
         _BeamWidth    ("Beam Width (m)", Range(0.05, 5)) = 0.6
         _MaxDistance  ("Max Distance (描画距離 m)", Range(100, 6000)) = 2500
+        [IntRange] _BeamSteps ("Beam Steps (光柱の探索回数 少ないほど軽い)", Range(4, 64)) = 24
+
+        // ON にすると機能を省いて軽くなる
+        [Header(Performance)]
+        [Toggle(_SKY_NO_BEAMS)]     _DisableBeams     ("Disable Data Beams", Float) = 0
+        [Toggle(_SKY_NO_PARTICLES)] _DisableParticles ("Disable Particles", Float) = 0
+        [Toggle(_SKY_NO_HEX)]       _DisableHex       ("Disable Hex Barrier", Float) = 0
+        [Toggle(_SKY_NO_PORTAL)]    _DisablePortal    ("Disable Portal Ring", Float) = 0
+        [Toggle(_SKY_NO_PULSES)]    _DisablePulses    ("Disable Grid Pulses / Ripples", Float) = 0
 
         [Header(Fog)]
         _FogDensity   ("Fog Density", Range(0, 0.01)) = 0.0015
@@ -105,11 +114,16 @@ Shader "Custom/Skybox/SkyMetaverse"
             #pragma vertex vert
             #pragma fragment frag
             #pragma target 3.5
+            #pragma shader_feature_local_fragment _ _SKY_NO_BEAMS
+            #pragma shader_feature_local_fragment _ _SKY_NO_PARTICLES
+            #pragma shader_feature_local_fragment _ _SKY_NO_HEX
+            #pragma shader_feature_local_fragment _ _SKY_NO_PORTAL
+            #pragma shader_feature_local_fragment _ _SKY_NO_PULSES
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 
-            // 軽量化: 96 → 48 (フォグで見えなくなる距離で打ち切る)
-            #define MAX_STEPS 48
+            // 光柱の探索回数の上限 (実際の回数は _BeamSteps)
+            #define MAX_STEPS 64
             #define TAU 6.28318530718
 
             CBUFFER_START(UnityPerMaterial)
@@ -173,6 +187,7 @@ Shader "Custom/Skybox/SkyMetaverse"
                 float  _BeamHeight;
                 float  _BeamWidth;
                 float  _MaxDistance;
+                float  _BeamSteps;
 
                 float  _FogDensity;
 
@@ -214,6 +229,14 @@ Shader "Custom/Skybox/SkyMetaverse"
                 p = frac(p * float3(123.34, 456.21, 789.53));
                 p += dot(p, p.yzx + 45.32);
                 return frac((p.x + p.y) * p.z);
+            }
+
+            // 3 つの乱数を 1 回で作る (Hash31 を 3 回呼ぶより軽い)
+            float3 Hash33(float3 p)
+            {
+                p = frac(p * float3(123.34, 456.21, 789.53));
+                p += dot(p, p.yzx + 45.32);
+                return frac(float3((p.x + p.y) * p.z, (p.y + p.z) * p.x, (p.z + p.x) * p.y));
             }
 
             float2 ModPos(float2 x, float2 m)
@@ -300,7 +323,9 @@ Shader "Custom/Skybox/SkyMetaverse"
                     float3 id = floor(q);
                     float3 f = frac(q) - 0.5;
                     float h = Hash31(id);
-                    float3 off = (float3(Hash31(id + 1.7), Hash31(id + 3.3), Hash31(id + 5.9)) - 0.5) * 0.6;
+                    // 出ない粒は位置計算を省く
+                    if (h < 1.0 - _ParticleDensity) continue;
+                    float3 off = (Hash33(id + 1.7) - 0.5) * 0.6;
                     float d = length(f - off);
 
                     float size = _ParticleSize * (0.4 + h);
@@ -308,7 +333,6 @@ Shader "Custom/Skybox/SkyMetaverse"
                     float drawSize = max(size, pix);
                     float p = (1.0 - smoothstep(drawSize * 0.5, drawSize, d)) * (size / drawSize);
                     p += exp(-d / (drawSize * 1.5)) * 0.15;
-                    p *= step(1.0 - _ParticleDensity, h);
                     p *= 0.5 + 0.5 * sin(_Time.y * (1.5 + h * 3.0) + h * 60.0);
                     col += _ParticleColor.rgb * p * (layer == 0 ? 1.0 : 0.6);
                 }
@@ -320,7 +344,10 @@ Shader "Custom/Skybox/SkyMetaverse"
             {
                 float3 right, up;
                 Basis(sunDir, right, up);
-                float front = step(0.0, dot(rd, sunDir));
+                float sd = dot(rd, sunDir);
+                // 太陽から十分離れた方向はにじみも 0 なので計算しない
+                [branch] if (sd < cos(min(_SunSize * 5.0, 3.0))) return 0;
+                float front = step(0.0, sd);
                 float2 s = float2(dot(rd, right), dot(rd, up)) / _SunSize;
                 float r = length(s);
 
@@ -345,7 +372,10 @@ Shader "Custom/Skybox/SkyMetaverse"
                 float3 right, up;
                 Basis(dir, right, up);
 
-                float ang = acos(clamp(dot(rd, dir), -1.0, 1.0));
+                float cd = dot(rd, dir);
+                // リングの外側 (にじみも届かない範囲) は計算しない
+                [branch] if (cd < cos(min(_RingRadius * 1.07 + _RingWidth * 40.0 + pixelAngle * 4.0, 3.1))) return 0;
+                float ang = acos(clamp(cd, -1.0, 1.0));
                 float theta = atan2(dot(rd, up), dot(rd, right)) / TAU;   // -0.5..0.5
                 float aa = pixelAngle * 1.5;
                 float segN = floor(_RingSegments);   // 整数にしないと atan2 の継ぎ目でズレる
@@ -443,16 +473,21 @@ Shader "Custom/Skybox/SkyMetaverse"
                     float major = PristineGrid(uvMajor, uvDeriv / _MajorEvery, _GridLineWidth * 1.5 / _MajorEvery);
                     float pixelInMajor = tGround * pixelAngle / (_GridSize * _MajorEvery);
 
+                    float wave = 0;
+                #ifndef _SKY_NO_PULSES
                     // カメラ位置から広がる波紋
                     float rDist = length(p.xz - ro.xz);
-                    float wave = frac(rDist / _WaveSpacing - _Time.y * _WaveSpeed);
+                    wave = frac(rDist / _WaveSpacing - _Time.y * _WaveSpeed);
                     wave = pow(saturate(1.0 - abs(wave * 2.0 - 1.0)), 10.0) * _WaveIntensity;
                     wave *= saturate(1.0 - tGround * pixelAngle / (_WaveSpacing * 0.05));   // 遠方のチラつき防止
+                #endif
 
                     floorCol = _FloorColor.rgb;
                     floorCol += _GridColor.rgb * minor * 0.5 * (1.0 + wave);
                     floorCol += _GridMajorColor.rgb * major * (1.0 + wave * 0.5);
+                #ifndef _SKY_NO_PULSES
                     floorCol += _PulseColor.rgb * GridPulses(uvMajor, pixelInMajor);
+                #endif
 
                     // 光沢のある床に空が映り込む
                     float3 rr = float3(rd.x, -rd.y, rd.z);
@@ -468,10 +503,16 @@ Shader "Custom/Skybox/SkyMetaverse"
                 if (rd.y > -pixelAngle)
                 {
                     skyCol = SkyBase(rd, sunDir);
+                #ifndef _SKY_NO_HEX
                     skyCol += HexBarrier(rd, pixelAngle);
+                #endif
+                #ifndef _SKY_NO_PARTICLES
                     skyCol += Particles(rd, pixelAngle);
+                #endif
                     skyCol += Sun(rd, sunDir, pixelAngle);
+                #ifndef _SKY_NO_PORTAL
                     skyCol += PortalRing(rd, pixelAngle);
+                #endif
                 }
 
                 float isSky = smoothstep(-pixelAngle, pixelAngle, rd.y);
@@ -481,11 +522,18 @@ Shader "Custom/Skybox/SkyMetaverse"
                 col += _HorizonGlowColor.rgb * exp(-abs(rd.y) / _HorizonGlowWidth);
 
                 // ================= データの光柱 (2D DDA) =================
+            #ifndef _SKY_NO_BEAMS
                 float S = _GridSize * _BeamCells;
                 float tTop = rd.y > 0.0 ? max((_BeamHeight - ro.y) / rd.y, 0.0) : 1e9;
                 // フォグでほぼ見えなくなる距離 (透過率 5%) より先は探索しない
                 float tFogEnd = 3.0 / max(_FogDensity, 1e-5);
-                float tEnd = min(min(min(rd.y < 0.0 ? tGround : 1e9, tTop), _MaxDistance), tFogEnd);
+                // 探索回数で届く距離 (斜め方向でも足りるよう 0.7 倍) より先は探索しない
+                int beamSteps = (int)clamp(_BeamSteps, 1.0, (float)MAX_STEPS);
+                float tStepsEnd = beamSteps * S * 0.7;
+                float tEnd = min(min(min(min(rd.y < 0.0 ? tGround : 1e9, tTop), _MaxDistance), tFogEnd), tStepsEnd);
+                // 探索の打ち切り距離で急に消えないよう、手前からフェードさせる
+                float fadeStart = min(_MaxDistance, tStepsEnd) * 0.6;
+                float fadeEnd   = min(_MaxDistance, tStepsEnd);
 
                 float3 rdSafe = rd + (step(abs(rd), 1e-6) * 1e-6);
                 float3 invRd = 1.0 / rdSafe;
@@ -498,7 +546,7 @@ Shader "Custom/Skybox/SkyMetaverse"
 
                 half3 beams = 0;
                 [loop]
-                for (int i = 0; i < MAX_STEPS; i++)
+                for (int i = 0; i < beamSteps; i++)
                 {
                     if (tCell > tEnd) break;
 
@@ -520,13 +568,15 @@ Shader "Custom/Skybox/SkyMetaverse"
                         float flow = 0.6 + 0.4 * sin(y * 0.12 - _Time.y * 5.0 + h0 * 40.0);
 
                         half3 bc = lerp(_BeamColorA.rgb, _BeamColorB.rgb, step(0.5, Hash21(cell + 9.2)));
-                        beams += bc * (core + halo) * inH * flow * exp(-tc * _FogDensity);
+                        float fade = 1.0 - smoothstep(fadeStart, fadeEnd, tc);
+                        beams += bc * (core + halo) * inH * flow * exp(-tc * _FogDensity) * fade;
                     }
 
                     if (tMax.x < tMax.y) { tCell = tMax.x; tMax.x += tDelta.x; cell.x += stepDir.x; }
                     else                 { tCell = tMax.y; tMax.y += tDelta.y; cell.y += stepDir.y; }
                 }
                 col += beams;
+            #endif
 
                 return half4(col * _Exposure, 1.0);
             }

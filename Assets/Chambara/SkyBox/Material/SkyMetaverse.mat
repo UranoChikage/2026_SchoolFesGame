@@ -24,7 +24,67 @@ Material:
     serializedVersion: 3
     m_TexEnvs: []
     m_Ints: []
-    m_Floats: []
-    m_Colors: []
+    m_Floats:
+    - _BeamCells: 3
+    - _BeamChance: 0.02
+    - _BeamHeight: 260
+    - _BeamSteps: 11
+    - _BeamWidth: 0.6
+    - _CameraHeight: 20
+    - _DisableBeams: 0
+    - _DisableHex: 0
+    - _DisableParticles: 0
+    - _DisablePortal: 0
+    - _DisablePulses: 0
+    - _Exposure: 1
+    - _FloorReflection: 0.147
+    - _FogDensity: 0.0015
+    - _GridLineWidth: 0.04
+    - _GridSize: 10.8
+    - _HexFlicker: 0.03
+    - _HexIntensity: 0.25
+    - _HexLineWidth: 0.03
+    - _HexScale: 8
+    - _HexScanSpeed: 0.25
+    - _HorizonGlowWidth: 0.04
+    - _MajorEvery: 3
+    - _MaxDistance: 443
+    - _ParticleDensity: 0.22
+    - _ParticleRise: 1.52
+    - _ParticleScale: 19
+    - _ParticleSize: 0.062
+    - _PortalIntensity: 0.15
+    - _PulseDensity: 0.131
+    - _PulseSpeed: 2.23
+    - _RingRadius: 0.55
+    - _RingSegments: 27
+    - _RingSpeed: 0.05
+    - _RingWidth: 0.006
+    - _SkyExponent: 0.5
+    - _SunGlow: 0.6
+    - _SunSize: 0.178
+    - _SunStripes: 10
+    - _WaveIntensity: 1.5
+    - _WaveSpacing: 160
+    - _WaveSpeed: 0.25
+    m_Colors:
+    - _BeamColorA: {r: 0.2, g: 1.5, b: 3, a: 1}
+    - _BeamColorB: {r: 2.5, g: 0.3, b: 2, a: 1}
+    - _FloorColor: {r: 0.005, g: 0, b: 0.02, a: 1}
+    - _GridColor: {r: 0.1, g: 0.6, b: 1.6, a: 1}
+    - _GridMajorColor: {r: 0.6, g: 0.3, b: 2.4, a: 1}
+    - _HexColor: {r: 0.2, g: 0.8, b: 1.6, a: 1}
+    - _HorizonColor: {r: 0.21999997, g: 0.04, b: 0.31999996, a: 1}
+    - _HorizonGlowColor: {r: 1.6, g: 0.25, b: 1.3, a: 1}
+    - _ParticleColor: {r: 0.6, g: 1.4, b: 2, a: 1}
+    - _PulseColor: {r: 2.5, g: 3, b: 4, a: 1}
+    - _RingColor: {r: 0.3, g: 1.8, b: 3, a: 1}
+    - _RingColor2: {r: 2.5, g: 0.4, b: 2.2, a: 1}
+    - _RingDirection: {r: 0, g: 0.42, b: 1, a: 0}
+    - _ScrollSpeed: {r: 0, g: 3, b: 0, a: 0}
+    - _SunColorBottom: {r: 3, g: 0.3, b: 1.4, a: 1}
+    - _SunColorTop: {r: 3, g: 2.4, b: 0.6, a: 1}
+    - _SunDirection: {r: 0, g: 0.12, b: 1, a: 0}
+    - _ZenithColor: {r: 0.01, g: 0.005, b: 0.044999972, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
